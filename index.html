@@ -1,0 +1,1721 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#13331F">
+<title>Admissão · Posto Trevo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --verde:#13331F;--verde2:#1E7A3D;--ouro:#F6C945;--creme:#F7F5EC;--papel:#fff;
+  --tinta:#1a1f1b;--cinza:#5f665f;--linha:#e2ddcc;--suave:#efebdc;
+  --erro:#b3261e;--erro-bg:#fbeceb;--azul:#2a6fdb;--verm:#d6452f;--r:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Source Sans 3',system-ui,-apple-system,sans-serif;background:var(--creme);color:var(--tinta);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh}
+h1,h2,h3,.disp{font-family:'Archivo Black',Impact,sans-serif;font-weight:400;margin:0;letter-spacing:.005em;line-height:1.1}
+h1{font-size:clamp(28px,6vw,40px);text-transform:uppercase}
+h2{font-size:22px;text-transform:uppercase}
+h3{font-size:15px;text-transform:uppercase;letter-spacing:.04em}
+p{margin:.5em 0}
+a{color:var(--verde2)}
+button{font:inherit;cursor:pointer}
+[hidden]{display:none!important}
+
+/* topo */
+.demo-strip{background:var(--ouro);color:var(--verde);text-align:center;font-weight:700;font-size:13px;padding:6px 12px}
+.top{background:var(--verde);color:var(--creme)}
+.top-in{max-width:1080px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.top svg{width:40px;height:40px;flex:none}
+.brand{font-family:'Archivo Black',sans-serif;font-size:18px;letter-spacing:.06em;color:var(--ouro);line-height:1}
+.brand-sub{font-size:13px;opacity:.85;margin-top:3px}
+.top .sp{flex:1}
+.top .lnk{background:none;border:1px solid rgba(247,245,236,.35);color:var(--creme);border-radius:999px;padding:6px 14px;font-size:14px}
+
+.wrap{max-width:780px;margin:0 auto;padding:20px 16px 64px}
+.wrap.largo{max-width:1080px}
+.wrap.estreito{max-width:420px}
+.card{background:var(--papel);border-radius:var(--r);padding:22px;box-shadow:0 1px 0 var(--linha),0 8px 24px -18px rgba(19,51,31,.35);margin-bottom:16px}
+.muted{color:var(--cinza)}
+.eyebrow{font-weight:700;color:var(--verde2);text-transform:uppercase;letter-spacing:.08em;font-size:13px;margin:0 0 6px}
+
+/* botões */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:12px 20px;font-weight:700;font-size:16px;text-decoration:none;min-height:46px;transition:transform .05s,filter .15s}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.pri{background:var(--verde);color:var(--ouro)}
+.btn.pri:hover:not(:disabled){filter:brightness(1.15)}
+.btn.ouro{background:var(--ouro);color:var(--verde)}
+.btn.sec{background:var(--suave);color:var(--verde)}
+.btn.sec:hover{background:#e6e1cd}
+.btn.perigo{background:var(--erro-bg);color:var(--erro)}
+.btn.wa{background:#1f9d55;color:#fff}
+.btn.big{width:100%;min-height:54px;font-size:17px}
+.btn.sm{min-height:38px;padding:8px 14px;font-size:14px;border-radius:10px}
+.nav{display:flex;gap:10px;justify-content:space-between;position:sticky;bottom:0;padding:12px 0 calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--creme) 30%)}
+.nav .btn{flex:1}
+.nav .btn.pri{flex:2}
+
+/* etapas */
+.steps{list-style:none;display:flex;gap:6px;padding:0;margin:0 0 18px}
+.steps li{flex:1;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--cinza)}
+.steps li::before{content:"";height:6px;border-radius:6px;background:var(--linha)}
+.steps li.done::before{background:var(--verde2)}
+.steps li.cur::before{background:var(--ouro)}
+.steps li.cur{color:var(--verde);font-weight:700}
+@media(max-width:560px){.steps li em{display:none}.steps li.cur em{display:inline}.steps li.cur{flex:3}}
+.steps em{font-style:normal}
+
+/* formulário */
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px 12px;margin-top:16px}
+.fld{grid-column:span 12;display:flex;flex-direction:column;gap:5px;min-width:0}
+.fld.h{grid-column:span 6}.fld.t{grid-column:span 4}.fld.q{grid-column:span 3}.fld.g{grid-column:span 8}
+@media(max-width:600px){.fld.h,.fld.g{grid-column:span 12}.fld.t,.fld.q{grid-column:span 6}}
+.sub{grid-column:span 12;margin-top:10px;padding-top:14px;border-top:1px dashed var(--linha)}
+label{font-weight:600;font-size:15px}
+.req{color:var(--verm);font-weight:700}
+input,select,textarea{font:inherit;font-size:16px;width:100%;min-height:48px;border:1.5px solid var(--linha);border-radius:10px;padding:10px 12px;background:#fdfcf8;color:var(--tinta);outline:none;transition:border .15s,box-shadow .15s}
+textarea{min-height:110px;resize:vertical}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--verde) 50%),linear-gradient(135deg,var(--verde) 50%,transparent 50%);background-position:calc(100% - 18px) 21px,calc(100% - 13px) 21px;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
+input:focus,select:focus,textarea:focus{border-color:var(--verde2);box-shadow:0 0 0 3px rgba(246,201,69,.45)}
+.fld small{color:var(--cinza);font-size:13px}
+.fld .err{color:var(--erro);font-size:13px;font-style:normal;font-weight:600;min-height:0}
+.fld.inv input,.fld.inv select{border-color:var(--erro);background:var(--erro-bg)}
+
+/* boas-vindas */
+.hero h1{margin-bottom:8px}
+.lista-check{list-style:none;padding:0;margin:10px 0 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+@media(max-width:560px){.lista-check{grid-template-columns:1fr}}
+.lista-check li{position:relative;padding-left:26px}
+.lista-check li::before{content:"";position:absolute;left:0;top:4px;width:16px;height:16px;border-radius:50%;background:var(--ouro);box-shadow:inset 0 0 0 4px var(--verde)}
+.aviso{background:#fff6d6;border-left:5px solid var(--ouro);border-radius:10px;padding:12px 14px;margin:14px 0}
+.aviso.erro{background:var(--erro-bg);border-color:var(--erro)}
+
+/* anexos */
+.docs{display:grid;gap:12px;margin-top:14px}
+.doc{border:1.5px solid var(--linha);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;background:#fdfcf8}
+.doc.ok{border-color:#b9d8c2;background:#f3faf5}
+.doc-h{display:flex;gap:12px;align-items:flex-start}
+.doc-h small{display:block;color:var(--cinza);font-weight:400;font-size:13px}
+.doc-ic{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--suave);color:var(--verde)}
+.doc.ok .doc-ic{background:var(--verde2);color:#fff}
+.doc.falta .doc-ic{background:var(--ouro)}
+.files{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.files li{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--linha);border-radius:10px;padding:6px 6px 6px 12px;font-size:14px}
+.files li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.files li em{color:var(--cinza);font-style:normal;font-size:12px}
+.x{border:0;background:var(--suave);color:var(--erro);width:32px;height:32px;border-radius:8px;font-size:20px;line-height:1}
+.file{align-self:flex-start;cursor:pointer}
+.up{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--verde2);font-weight:600}
+.spin{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--linha);border-top-color:var(--verde2);animation:gira .8s linear infinite;display:inline-block}
+@keyframes gira{to{transform:rotate(360deg)}}
+
+/* revisão */
+.pend{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:8px}
+.pend li{display:flex;gap:10px;align-items:center;justify-content:space-between;background:#fff;border-radius:10px;padding:8px 8px 8px 12px;font-size:14px}
+details{border-top:1px solid var(--linha);padding:12px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-weight:700;display:flex;justify-content:space-between;align-items:center;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:20px;color:var(--verde2)}
+details[open] summary::after{content:"–"}
+dl.kv{display:grid;grid-template-columns:minmax(120px,38%) 1fr;gap:6px 14px;margin:12px 0 0;font-size:15px}
+dl.kv dt{color:var(--cinza)}
+dl.kv dd{margin:0;font-weight:600;word-break:break-word}
+.termo{max-height:280px;overflow:auto;border:1.5px solid var(--linha);border-radius:12px;padding:6px 16px;font-size:14px;background:#fdfcf8}
+.termo h3{margin:12px 0 4px;font-size:14px}
+.aceite{display:flex;gap:12px;align-items:flex-start;margin:16px 0;font-weight:600;cursor:pointer}
+.aceite input{width:24px;height:24px;min-height:0;flex:none;accent-color:var(--verde2);margin-top:1px}
+
+/* telas finais */
+.fim{text-align:center;padding:40px 24px}
+.fim .selo{width:76px;height:76px;border-radius:50%;margin:0 auto 18px;display:grid;place-items:center;font-size:38px;background:var(--verde2);color:#fff}
+.fim .selo.erro{background:var(--erro)}
+.fim .selo.neutro{background:var(--ouro);color:var(--verde)}
+
+/* RH */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--verde);color:var(--creme);border-radius:var(--r);padding:16px}
+.kpi b{display:block;font-family:'Archivo Black',sans-serif;font-size:34px;color:var(--ouro);line-height:1;font-weight:400}
+.kpi span{font-size:14px;opacity:.9}
+.kpi.claro{background:var(--papel);color:var(--tinta);box-shadow:0 1px 0 var(--linha)}
+.kpi.claro b{color:var(--verde)}
+.barra{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.barra .busca{flex:1;min-width:200px}
+.filtros{display:flex;gap:6px;flex-wrap:wrap}
+.filtros button{border:1.5px solid var(--linha);background:var(--papel);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;color:var(--cinza)}
+.filtros button.on{background:var(--verde);border-color:var(--verde);color:var(--ouro)}
+.itens{display:grid;gap:10px}
+.item{background:var(--papel);border-radius:14px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:6px 14px;align-items:center;box-shadow:0 1px 0 var(--linha);cursor:pointer}
+.item:hover{box-shadow:0 0 0 2px var(--ouro)}
+.item .nome{font-weight:700;font-size:17px}
+.item .meta{font-size:14px;color:var(--cinza);display:flex;gap:10px;flex-wrap:wrap}
+.item .acoes{display:flex;gap:8px;align-items:center;grid-row:span 2}
+@media(max-width:600px){.item{grid-template-columns:1fr}.item .acoes{grid-row:auto}}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:13px;font-weight:700;white-space:nowrap}
+.chip::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.s-novo{background:#eef0ea;color:#55605a}
+.s-prog{background:#e7effc;color:#1f56ad}
+.s-env{background:#fff1c2;color:#7a5a00}
+.s-cor{background:#fde7e3;color:#a3331f}
+.s-ok{background:#dff2e5;color:#17663a}
+.s-can{background:#eee;color:#777}
+.vazio{text-align:center;padding:48px 20px;color:var(--cinza)}
+.det-top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between}
+.det-acoes{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.datas{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--cinza);margin-top:8px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.cols{grid-template-columns:1fr}}
+.cols .card{margin:0}
+.chk{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:8px}
+.chk li{display:flex;gap:10px;align-items:flex-start;font-size:15px}
+.chk .m{flex:none;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:13px;font-weight:700}
+.chk .m.ok{background:var(--verde2);color:#fff}
+.chk .m.no{background:var(--erro-bg);color:var(--erro)}
+.chk .m.op{background:var(--suave);color:var(--cinza)}
+.chk a{display:block;font-size:13px}
+
+/* modal + toast */
+.modal{position:fixed;inset:0;background:rgba(19,51,31,.55);display:grid;place-items:center;padding:16px;z-index:50}
+.modal-c{width:100%;max-width:480px;margin:0;max-height:92vh;overflow:auto}
+.modal-c h2{margin-bottom:10px}
+.modal-acoes{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.linkbox{display:flex;gap:8px;margin:12px 0}
+.linkbox input{font-size:14px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;display:grid;gap:8px;width:min(92vw,440px)}
+.tst{background:var(--verde);color:var(--creme);padding:12px 16px;border-radius:12px;font-weight:600;box-shadow:0 10px 30px -10px rgba(0,0,0,.4);animation:sobe .2s ease-out}
+.tst.erro{background:var(--erro);color:#fff}
+@keyframes sobe{from{opacity:0;transform:translateY(8px)}}
+.carregando{display:grid;place-items:center;gap:14px;padding:80px 0;color:var(--cinza)}
+.carregando .spin{width:34px;height:34px;border-width:4px}
+
+/* relatórios */
+.tab-wrap{overflow-x:auto;margin-top:6px}
+.tab{width:100%;border-collapse:collapse;font-size:14px}
+.tab th{text-align:left;font-weight:700;color:var(--verde);background:var(--suave);padding:9px 10px;white-space:nowrap}
+.tab td{padding:9px 10px;border-top:1px solid var(--linha);vertical-align:top}
+.tab tr.hoje td{background:#fff6d6}
+.tab td a{color:var(--verde2);font-weight:600;text-decoration:none}
+.tag-hoje{display:inline-block;margin-left:6px;background:var(--ouro);color:var(--verde);border-radius:6px;padding:0 6px;font-size:12px;font-weight:700}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:10px}
+@media(max-width:600px){.cols3{grid-template-columns:1fr}}
+.tam{list-style:none;padding:0;margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px}
+.tam li{display:inline-flex;gap:8px;align-items:center;background:var(--suave);border-radius:8px;padding:4px 10px;font-size:14px}
+.tam li b{color:var(--verde2)}
+
+/* comunicados */
+.modelos{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips label{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--linha);border-radius:999px;padding:6px 14px;font-size:14px;cursor:pointer;background:#fdfcf8}
+.chips label:has(input:checked){background:var(--verde);border-color:var(--verde);color:var(--ouro)}
+.chips input{width:16px;height:16px;min-height:0;accent-color:var(--ouro)}
+.resumo-env{font-weight:700;color:var(--verde2);margin:12px 0 0}
+.bolha{background:#dcf8c6;border-radius:12px 12px 12px 2px;padding:12px 14px;white-space:pre-wrap;font-size:15px;max-width:520px;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.barra-prog{height:10px;border-radius:10px;background:var(--suave);overflow:hidden;margin:10px 0 4px}
+.barra-prog i{display:block;height:100%;background:var(--verde2);border-radius:10px;transition:width .3s}
+.dest{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:12px 0;border-top:1px solid var(--linha)}
+.dest:first-child{border-top:0}
+.dest small{color:var(--cinza);display:block}
+.dest.ok .nome{color:var(--cinza)}
+.dest .lado{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.lnk2{background:none;border:0;color:var(--cinza);text-decoration:underline;font-size:13px;padding:4px}
+
+/* painel de RH */
+.abas{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;margin:4px 0 16px;border-bottom:2px solid var(--linha)}
+.abas>button:not(.btn){border:0;background:none;padding:10px 14px;font-weight:700;color:var(--cinza);border-bottom:3px solid transparent;margin-bottom:-2px;font-size:15px}
+.abas>button.on{color:var(--verde);border-bottom-color:var(--ouro)}
+.abas .cnt{display:inline-block;min-width:20px;padding:0 6px;border-radius:10px;background:var(--suave);font-size:12px;margin-left:2px;text-align:center}
+.abas .sp{flex:1}
+.abas .btn{margin:0 0 6px}
+.s-desl{background:#f1e4e1;color:#7d2a1c}
+.kpi.alerta b{color:var(--erro)}
+.lista-ev{list-style:none;padding:0;margin:12px 0 0}
+.lista-ev li{display:grid;grid-template-columns:110px 1fr auto;gap:4px 14px;padding:12px 0;border-top:1px solid var(--linha);align-items:start}
+.lista-ev li:first-child{border-top:0}
+.lista-ev .dt{font-weight:700;color:var(--verde);font-size:14px}
+.lista-ev small{display:block;color:var(--cinza);margin-top:2px}
+.lista-ev a{font-size:13px;display:block;margin-top:2px}
+@media(max-width:600px){.lista-ev li{grid-template-columns:1fr auto}.lista-ev .dt{grid-column:span 2}}
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.modal-c.largo{max-width:640px}
+.fld.inv textarea{border-color:var(--erro);background:var(--erro-bg)}
+.tab small{font-size:12px}
+.tab .lnk2{padding:0 4px}
+
+/* impressão (ficha do RH) */
+.only-print{display:none}
+@media print{
+  body{background:#fff;font-size:12px}
+  .top,.demo-strip,.no-print,.nav,#toast{display:none!important}
+  .wrap{max-width:none;padding:0}
+  .card{box-shadow:none;border:1px solid #bbb;border-radius:6px;padding:12px;margin-bottom:10px;break-inside:avoid}
+  .cols{grid-template-columns:1fr 1fr;gap:10px}
+  .only-print{display:block}
+  dl.kv{font-size:12px;gap:3px 10px}
+  .assin{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px}
+  .assin div{border-top:1px solid #000;padding-top:4px;text-align:center}
+  .chk a{display:none}
+  .tab{font-size:10px}
+  .tab th,.tab td{padding:4px 6px}
+  .tab td a{color:#000}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" aria-live="polite"></div>
+
+<script>
+/* ═══════════ CONFIGURAÇÃO ═══════════ */
+const CONFIG = {
+  // Cole aqui a URL do Apps Script (termina em /exec). Em branco = modo demonstração.
+  API_URL: 'https://script.google.com/macros/s/AKfycbwlcSxpCCp0CW290uAuL5xz64Qb792shpW3_Gexv2scUonLK3EqY4z2agMo6E6LWwTE/exec',
+  EMPRESA: 'RCJ Combustíveis – Posto Trevo',
+  CNPJ: '37.372.802/0001-32',
+  CONTATO_RH: 'RH do Posto Trevo – (64) 98445-4698 (WhatsApp) ou (64) 3051-4698'
+};
+const DEMO = !CONFIG.API_URL;
+
+/* ═══════════ DEFINIÇÕES ═══════════ */
+const UFS = 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ');
+const SN = ['Sim', 'Não'];
+const STATUS = {
+  novo:        { l: 'Link enviado',          c: 's-novo' },
+  preenchendo: { l: 'Em preenchimento',      c: 's-prog' },
+  enviado:     { l: 'Aguardando conferência', c: 's-env' },
+  correcao:    { l: 'Correção solicitada',   c: 's-cor' },
+  aprovado:    { l: 'Ativo',                 c: 's-ok' },
+  desligado:   { l: 'Desligado',             c: 's-desl' },
+  cancelado:   { l: 'Cancelado',             c: 's-can' }
+};
+const EDITAVEL = ['novo', 'preenchendo', 'correcao'];
+const CARGOS = ['Frentista', 'Frentista caixa', 'Caixa', 'Gerente', 'Subgerente', 'Trocador de óleo', 'Lavador',
+  'Atendente de conveniência', 'Auxiliar administrativo', 'Serviços gerais'];
+
+const V = {
+  cpf: v => cpfOk(v) ? '' : 'CPF inválido – confira os números',
+  pis: v => pisOk(v) ? '' : 'PIS inválido – confira os números',
+  cep: v => dig(v).length === 8 ? '' : 'CEP deve ter 8 números',
+  tel: v => [10, 11].includes(dig(v).length) ? '' : 'Telefone com DDD, ex.: (64) 99999-0000',
+  email: v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) ? '' : 'E-mail inválido',
+  titulo: v => dig(v).length === 12 ? '' : 'O título tem 12 números',
+  nasc: v => { const i = idade(v); return i === null ? 'Data inválida' : (i < 14 || i > 80) ? 'Confira o ano de nascimento' : ''; },
+  passado: v => { const d = data(v); return !d ? 'Data inválida' : d > new Date() ? 'Data no futuro' : ''; },
+  data: v => data(v) ? '' : 'Data inválida'
+};
+
+const SECOES = [
+  { id: 'pessoais', t: 'Dados pessoais', curto: 'Pessoais', d: 'Preencha exatamente como está nos seus documentos.', campos: [
+    { k: 'nome', l: 'Nome completo', req: 1, auto: 'name' },
+    { k: 'nome_social', l: 'Nome social', hint: 'Só se você usa um nome diferente do registro.' },
+    { k: 'nascimento', l: 'Data de nascimento', t: 'date', req: 1, w: 'h', v: V.nasc },
+    { k: 'sexo', l: 'Sexo', t: 'select', op: ['Masculino', 'Feminino'], req: 1, w: 'h' },
+    { k: 'raca_cor', l: 'Raça/cor', t: 'select', op: ['Branca', 'Preta', 'Parda', 'Amarela', 'Indígena', 'Prefiro não informar'], req: 1, w: 'h', hint: 'Autodeclaração exigida pelo eSocial.' },
+    { k: 'estado_civil', l: 'Estado civil', t: 'select', op: ['Solteiro(a)', 'Casado(a)', 'União estável', 'Divorciado(a)', 'Separado(a)', 'Viúvo(a)'], req: 1, w: 'h' },
+    { k: 'escolaridade', l: 'Escolaridade', t: 'select', req: 1, op: ['Não alfabetizado', 'Até o 5º ano incompleto', '5º ano completo',
+      '6º ao 9º ano incompleto', 'Ensino fundamental completo', 'Ensino médio incompleto', 'Ensino médio completo',
+      'Superior incompleto', 'Superior completo', 'Pós-graduação', 'Mestrado', 'Doutorado'] },
+    { k: 'nacionalidade', l: 'Nacionalidade', req: 1, def: 'Brasileira', w: 't' },
+    { k: 'nat_cidade', l: 'Cidade onde nasceu', req: 1, w: 't' },
+    { k: 'nat_uf', l: 'UF onde nasceu', t: 'select', op: UFS, req: 1, w: 't' },
+    { k: 'mae', l: 'Nome da mãe', req: 1 },
+    { k: 'pai', l: 'Nome do pai' },
+    { k: 'pcd', l: 'Pessoa com deficiência?', t: 'select', op: SN, req: 1, w: 'h' },
+    { k: 'pcd_tipo', l: 'Tipo de deficiência', t: 'select', op: ['Física', 'Auditiva', 'Visual', 'Intelectual', 'Mental', 'Reabilitado(a)'], req: 1, w: 'h', show: d => d.pcd === 'Sim' }
+  ]},
+  { id: 'documentos', t: 'Documentos', curto: 'Documentos', d: 'Os números dos seus documentos. As fotos você envia na etapa de anexos.', campos: [
+    { k: 'cpf', l: 'CPF', req: 1, w: 'h', mask: '000.000.000-00', v: V.cpf },
+    { k: 'pis', l: 'PIS/NIS', w: 'h', mask: '000.00000.00-0', v: V.pis, hint: 'Aparece na Carteira de Trabalho Digital. Se não souber, deixe em branco.' },
+    { k: 'rg', l: 'RG (número)', req: 1, w: 'h', max: 20 },
+    { k: 'rg_emissao', l: 'Data de emissão do RG', t: 'date', w: 'h', v: V.passado },
+    { k: 'rg_orgao', l: 'Órgão emissor', req: 1, w: 'h', ph: 'Ex.: SSP', max: 15 },
+    { k: 'rg_uf', l: 'UF do RG', t: 'select', op: UFS, req: 1, w: 'h' },
+    { k: 'cnh', l: 'CNH (número)', w: 'h', mask: '00000000000', hint: 'Se tiver.' },
+    { k: 'cnh_categoria', l: 'Categoria', t: 'select', op: ['A', 'B', 'AB', 'C', 'D', 'E', 'AC', 'AD', 'AE'], w: 'q', show: d => !!d.cnh },
+    { k: 'cnh_validade', l: 'Validade', t: 'date', w: 'q', v: V.data, show: d => !!d.cnh },
+    { k: 'reservista', l: 'Certificado de reservista (número)', w: 'h', max: 20, hint: 'Para homens de 18 a 45 anos.', show: d => d.sexo === 'Masculino' },
+    { k: 'primeiro_emprego', l: 'É seu primeiro emprego com carteira assinada?', t: 'select', op: SN, req: 1, w: 'h' }
+  ]},
+  { id: 'contato', t: 'Endereço e contato', curto: 'Contato', d: 'Digite o CEP que o endereço é preenchido sozinho.', campos: [
+    { k: 'cep', l: 'CEP', req: 1, w: 't', mask: '00000-000', v: V.cep, auto: 'postal-code' },
+    { k: 'logradouro', l: 'Rua / Avenida', req: 1, w: 'g', auto: 'address-line1' },
+    { k: 'numero', l: 'Número', req: 1, w: 'q', max: 10 },
+    { k: 'complemento', l: 'Complemento', w: 'q', ph: 'Qd, Lt, Apto' },
+    { k: 'bairro', l: 'Bairro', req: 1, w: 'h' },
+    { k: 'cidade', l: 'Cidade', req: 1, w: 'g' },
+    { k: 'uf', l: 'UF', t: 'select', op: UFS, req: 1, w: 't' },
+    { k: 'celular', l: 'Celular', req: 1, w: 'h', mask: 'tel', v: V.tel, auto: 'tel' },
+    { k: 'celular_whats', l: 'Esse número tem WhatsApp?', t: 'select', op: SN, req: 1, w: 'h' },
+    { k: 'email', l: 'E-mail', t: 'email', w: 'h', v: V.email, auto: 'email' },
+    { k: 'tel_recado', l: 'Telefone para recado', w: 'h', mask: 'tel', v: V.tel }
+  ]},
+  { id: 'extras', t: 'Banco, emergência e uniforme', curto: 'Banco e mais', d: 'Conta para receber o salário, um contato de emergência e os tamanhos do uniforme.', campos: [
+    { sub: 'Conta para o salário' },
+    { k: 'banco', l: 'Banco', req: 1, w: 'h', ph: 'Ex.: Sicoob, Caixa, Nubank' },
+    { k: 'conta_tipo', l: 'Tipo de conta', t: 'select', op: ['Corrente', 'Poupança', 'Salário'], req: 1, w: 'h' },
+    { k: 'agencia', l: 'Agência', req: 1, w: 'h', max: 10 },
+    { k: 'conta', l: 'Conta com dígito', req: 1, w: 'h', max: 20 },
+    { k: 'pix', l: 'Chave PIX', hint: 'Opcional.' },
+    { sub: 'Contato de emergência' },
+    { k: 'emerg_nome', l: 'Nome', req: 1, w: 'h' },
+    { k: 'emerg_parentesco', l: 'Parentesco', req: 1, w: 'q', ph: 'Ex.: mãe' },
+    { k: 'emerg_tel', l: 'Telefone', req: 1, w: 'q', mask: 'tel', v: V.tel },
+    { sub: 'Uniforme' },
+    { k: 'camisa', l: 'Camisa', t: 'select', op: ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XGG'], req: 1, w: 't' },
+    { k: 'calca', l: 'Calça', t: 'select', op: ['34', '36', '38', '40', '42', '44', '46', '48', '50', '52', '54', '56'], req: 1, w: 't' },
+    { k: 'calcado', l: 'Calçado', t: 'select', op: Array.from({ length: 15 }, (_, i) => String(33 + i)), req: 1, w: 't' }
+  ]}
+];
+const CAMPOS = SECOES.flatMap(s => s.campos.filter(f => f.k));
+const CAMPO = Object.fromEntries(CAMPOS.map(f => [f.k, f]));
+
+const DOCS = [
+  { k: 'identidade', l: 'RG ou CNH – frente e verso', req: 1 },
+  { k: 'cpf', l: 'CPF', hint: 'Se o número já aparece no RG ou na CNH, pode pular.' },
+  { k: 'residencia', l: 'Comprovante de residência', hint: 'Conta de luz, água ou internet dos últimos 3 meses.', req: 1 },
+  { k: 'foto', l: 'Foto 3x4 ou selfie de rosto', hint: 'Fundo claro, sem boné e sem óculos escuros.', req: 1 },
+  { k: 'ctps', l: 'Carteira de Trabalho Digital', hint: 'Print da tela do app com seus dados.', req: 1 },
+  { k: 'reservista', l: 'Certificado de reservista', hint: 'Homens de 18 a 45 anos.', show: d => d.sexo === 'Masculino' },
+  { k: 'escolaridade', l: 'Comprovante de escolaridade', hint: 'Certificado, diploma ou declaração da escola.' },
+  { k: 'certidao', l: 'Certidão de nascimento ou casamento' },
+  { k: 'banco', l: 'Comprovante da conta bancária', hint: 'Foto do cartão ou print do app com agência e conta.' },
+  { k: 'vacina', l: 'Cartão de vacinação' },
+  { k: 'outros', l: 'Outros documentos', hint: 'Cursos, CNH, laudo PcD ou o que o RH pedir.' }
+];
+const docsVisiveis = d => DOCS.filter(x => !x.show || x.show(d));
+
+/* ═══════════ UTILITÁRIOS ═══════════ */
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const dig = v => String(v || '').replace(/\D/g, '');
+function data(v) { const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!m) return null; const d = new Date(+m[1], m[2] - 1, +m[3]); return d.getDate() === +m[3] ? d : null; }
+function idade(v) { const d = data(v); if (!d) return null; const h = new Date(); let i = h.getFullYear() - d.getFullYear(); if (h < new Date(h.getFullYear(), d.getMonth(), d.getDate())) i--; return i; }
+const dataBR = v => { const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : (v || ''); };
+const kb = n => { n = +n || 0; return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; };
+function cpfOk(c) { c = dig(c); if (c.length !== 11 || /^(\d)\1+$/.test(c)) return false;
+  for (let t = 9; t < 11; t++) { let s = 0; for (let i = 0; i < t; i++) s += c[i] * (t + 1 - i); if (+c[t] !== (s * 10) % 11 % 10) return false; } return true; }
+function pisOk(p) { p = dig(p); if (p.length !== 11 || /^(\d)\1+$/.test(p)) return false;
+  const w = [3, 2, 9, 8, 7, 6, 5, 4, 3, 2]; let s = 0; for (let i = 0; i < 10; i++) s += p[i] * w[i]; let r = 11 - s % 11; if (r >= 10) r = 0; return r === +p[10]; }
+function mascara(pad, v) {
+  const d = dig(v);
+  if (pad === 'tel') pad = d.length > 10 ? '(00) 00000-0000' : '(00) 0000-0000';
+  let o = '', i = 0;
+  for (const ch of pad) { if (i >= d.length) break; o += ch === '0' ? d[i++] : ch; }
+  return o;
+}
+function toast(msg, tipo) {
+  const t = document.createElement('div'); t.className = 'tst ' + (tipo || ''); t.textContent = msg;
+  $('#toast').appendChild(t); setTimeout(() => t.remove(), tipo === 'erro' ? 6000 : 3200);
+}
+async function copiar(txt) {
+  try { await navigator.clipboard.writeText(txt); }
+  catch (e) { const i = document.createElement('textarea'); i.value = txt; document.body.appendChild(i); i.select(); document.execCommand('copy'); i.remove(); }
+  toast('Link copiado');
+}
+const LOGO = `<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="15" rx="10" ry="14" fill="#1E7A3D" stroke="#F7F5EC" stroke-width="2"/><ellipse cx="49" cy="32" rx="14" ry="10" fill="#F6C945" stroke="#F7F5EC" stroke-width="2"/><ellipse cx="32" cy="49" rx="10" ry="14" fill="#2a6fdb" stroke="#F7F5EC" stroke-width="2"/><ellipse cx="15" cy="32" rx="14" ry="10" fill="#d6452f" stroke="#F7F5EC" stroke-width="2"/><circle cx="32" cy="32" r="8" fill="#F7F5EC" stroke="#13331F" stroke-width="3"/></svg>`;
+const topo = (sub, extra = '') => `${DEMO ? '<div class="demo-strip">Modo demonstração – os dados ficam só neste navegador</div>' : ''}
+  <header class="top"><div class="top-in">${LOGO}<div><div class="brand">POSTO TREVO</div><div class="brand-sub">${esc(sub)}</div></div><div class="sp"></div>${extra}</div></header>`;
+const carregando = (msg, sub) => { app.innerHTML = topo(sub || 'Admissão') + `<div class="carregando"><span class="spin"></span>${esc(msg)}</div>`; };
+const chip = s => `<span class="chip ${(STATUS[s] || {}).c || ''}">${esc((STATUS[s] || { l: s }).l)}</span>`;
+const linkDe = c => location.href.split(/[?#]/)[0] + '?c=' + c;
+const primeiro = n => String(n || '').trim().split(/\s+/)[0] || '';
+
+/* ═══════════ API ═══════════ */
+async function api(acao, dados = {}) {
+  if (DEMO) return mock(acao, JSON.parse(JSON.stringify(dados)));
+  let r;
+  try { r = await fetch(CONFIG.API_URL, { method: 'POST', body: JSON.stringify({ acao, ...dados }) }); }
+  catch (e) { throw new Error('Sem conexão. Verifique a internet e tente de novo.'); }
+  let j; try { j = await r.json(); } catch (e) { throw new Error('O servidor não respondeu corretamente. Tente de novo.'); }
+  if (!j.ok) throw new Error(j.erro || 'Algo deu errado.');
+  return j;
+}
+
+/* Simulação local do backend (usada quando API_URL está vazio) */
+const MOCK = { db: null, k: 'portal_admissao_demo' };
+async function mock(acao, q) {
+  await new Promise(r => setTimeout(r, 150));
+  if (!MOCK.db) { try { MOCK.db = JSON.parse(localStorage.getItem(MOCK.k)); } catch (e) {} MOCK.db = MOCK.db || {}; }
+  const db = MOCK.db; ['adms', 'docs', 'coms', 'eventos'].forEach(k => { db[k] = db[k] || []; }); db.fichas = db.fichas || {};
+  const agora = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', '');
+  const novoId = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, '0')).join('');
+  const adm = c => { const a = db.adms.find(x => x.codigo === c); if (!a) throw new Error('Link inválido ou expirado.'); return a; };
+  const ed = c => { const a = adm(c); if (!EDITAVEL.includes(a.status)) throw new Error('Esta ficha já foi enviada e não pode mais ser alterada.'); return a; };
+  const rh = () => { if (q.senha !== 'trevo2026') throw new Error('Senha incorreta.'); };
+  const docsDe = c => db.docs.filter(d => d.codigo === c);
+  const juntar = () => db.adms.map(a => { const f = db.fichas[a.codigo] || {}; return { ...f, ...a, nome: f.nome || a.nome, ndocs: docsDe(a.codigo).length }; });
+  const arquivo = (a, extra) => { const d = { codigo: a.codigo, tipo: q.tipo, arquivo: q.nome, file_id: 'demo' + novoId(), tamanho: String(Math.round(q.base64.length * .75)), url: '', enviado_em: agora, ...extra }; db.docs.push(d); return d; };
+  const KC = ['cargo', 'data_admissao', 'salario', 'exp_tipo', 'aso_validade'];
+  const contrato = c => Object.fromEntries(KC.filter(k => c && k in c).map(k => [k, c[k]]));
+  const ev = (a, e) => { const o = { codigo: a.codigo, id: novoId().slice(0, 12), criado_em: agora, ...e }; db.eventos.push(o); return o; };
+  let r = {};
+  switch (acao) {
+    case 'abrir': { const a = adm(q.codigo), e = EDITAVEL.includes(a.status);
+      r = { adm: { nome: a.nome, cargo: a.cargo, data_prevista: a.data_prevista, status: a.status, obs_rh: a.status === 'correcao' ? a.obs_rh : '' },
+            ficha: e ? { ...(db.fichas[a.codigo] || {}) } : {}, docs: e ? docsDe(a.codigo) : [] }; break; }
+    case 'salvarFicha': { const a = ed(q.codigo); db.fichas[a.codigo] = q.dados; if (a.status === 'novo') a.status = 'preenchendo'; a.atualizado_em = agora; r = { status: a.status }; break; }
+    case 'enviarDoc': { const a = ed(q.codigo); r = { doc: arquivo(a) }; if (a.status === 'novo') a.status = 'preenchendo'; a.atualizado_em = agora; break; }
+    case 'removerDoc': { const a = ed(q.codigo); db.docs = db.docs.filter(d => !(d.codigo === a.codigo && d.file_id === q.file_id)); break; }
+    case 'finalizar': { const a = ed(q.codigo); if (q.aceite !== true) throw new Error('É preciso aceitar o termo.');
+      db.fichas[a.codigo] = q.dados; Object.assign(a, { nome: q.dados.nome, status: 'enviado', enviado_em: agora, atualizado_em: agora, lgpd_aceite_em: agora, obs_rh: '' }); break; }
+    case 'listar': rh(); r = { itens: juntar().reverse(), eventos: db.eventos }; break;
+    case 'relatorio': rh(); r = { itens: juntar(), eventos: db.eventos }; break;
+    case 'criar': { rh(); if (!q.nome) throw new Error('Informe o nome do colaborador.');
+      const codigo = novoId();
+      db.adms.push({ codigo, nome: q.nome, cargo: q.cargo, data_prevista: q.data_prevista, status: 'novo', obs_rh: '', criado_em: agora, atualizado_em: agora });
+      r = { codigo }; break; }
+    case 'detalhe': { rh(); const a = adm(q.codigo);
+      r = { adm: { ...a, pasta_url: '' }, ficha: { ...(db.fichas[a.codigo] || {}) }, docs: docsDe(a.codigo), eventos: db.eventos.filter(e => e.codigo === a.codigo) }; break; }
+    case 'definirStatus': { rh(); const a = adm(q.codigo);
+      if (q.status === 'correcao' && !String(q.obs || '').trim()) throw new Error('Descreva o que precisa ser corrigido.');
+      a.status = q.status; a.atualizado_em = agora; if (q.status === 'correcao') a.obs_rh = q.obs; if (q.status === 'aprovado') a.aprovado_em = agora; break; }
+    case 'cadastrarFuncionario': { rh(); const d = q.dados || {}; if (!d.nome) throw new Error('Informe o nome do funcionário.');
+      const cpf = dig(d.cpf); const dup = cpf && juntar().find(x => x.status !== 'cancelado' && dig(x.cpf) === cpf);
+      if (dup) throw new Error('Já existe um cadastro com este CPF: ' + dup.nome + '.');
+      const codigo = novoId();
+      db.adms.push({ codigo, nome: d.nome, status: 'aprovado', origem: 'rh', criado_em: agora, atualizado_em: agora, aprovado_em: agora, ...contrato(q.contrato) });
+      db.fichas[codigo] = d; r = { codigo }; break; }
+    case 'salvarFichaRH': { rh(); const a = adm(q.codigo); db.fichas[a.codigo] = q.dados; a.nome = q.dados.nome; a.atualizado_em = agora; break; }
+    case 'atualizarContrato': { rh(); Object.assign(adm(q.codigo), contrato(q.contrato), { atualizado_em: agora }); break; }
+    case 'enviarDocRH': { rh(); const a = adm(q.codigo); q.tipo = 'rh'; r = { doc: arquivo(a, { origem: 'rh', categoria: q.categoria, descricao: q.descricao, evento: q.evento || '' }) }; break; }
+    case 'removerDocRH': { rh(); const a = adm(q.codigo); db.docs = db.docs.filter(d => !(d.codigo === a.codigo && d.file_id === q.file_id)); break; }
+    case 'addEvento': { rh(); const a = adm(q.codigo), e = q.evento || {}; if (!e.data) throw new Error('Informe a data.');
+      const o = ev(a, { tipo: q.tipo, subtipo: e.subtipo || '', data: e.data, data_fim: e.data_fim || '', dias: e.dias || '', periodo: e.periodo || '', descricao: e.descricao || '', cargo: e.cargo || '', salario: e.salario || '' });
+      if (q.tipo === 'cargo') { if (e.cargo) a.cargo = e.cargo; if (e.salario) a.salario = e.salario; }
+      r = { id: o.id }; break; }
+    case 'removerEvento': { rh(); const e = db.eventos.find(x => x.id === q.id && x.codigo === q.codigo); if (!e) throw new Error('Registro não encontrado.');
+      if (['desligamento', 'reintegracao'].includes(e.tipo)) throw new Error('Esse registro faz parte do histórico e não pode ser excluído.');
+      db.eventos = db.eventos.filter(x => x !== e); break; }
+    case 'desligar': { rh(); const a = adm(q.codigo), d = q.dados || {}; if (a.status !== 'aprovado') throw new Error('Só funcionários ativos podem ser desligados.');
+      if (!d.deslig_data || !d.deslig_tipo) throw new Error('Informe a data e o tipo de desligamento.');
+      Object.assign(a, d, { status: 'desligado', deslig_em: agora });
+      ev(a, { tipo: 'desligamento', subtipo: d.deslig_tipo, data: d.deslig_data, descricao: [d.deslig_aviso && 'Aviso prévio: ' + d.deslig_aviso, d.deslig_recontratar && 'Pode ser recontratado: ' + d.deslig_recontratar, d.deslig_motivo].filter(Boolean).join(' · ') });
+      break; }
+    case 'reintegrar': { rh(); const a = adm(q.codigo); if (a.status !== 'desligado') throw new Error('Este funcionário não está desligado.');
+      ['deslig_data', 'deslig_tipo', 'deslig_aviso', 'deslig_recontratar', 'deslig_motivo', 'deslig_em'].forEach(k => { a[k] = ''; }); a.status = 'aprovado';
+      ev(a, { tipo: 'reintegracao', data: iso(hoje0()), descricao: 'Voltou a ficar ativo no painel' }); break; }
+    case 'comunicados': rh(); r = { itens: db.coms.slice().reverse() }; break;
+    case 'criarComunicado': { rh(); if (!q.titulo || !q.mensagem) throw new Error('Preencha o título e a mensagem.');
+      const dest = db.adms.filter(a => a.status === 'aprovado' && (q.codigos || []).includes(a.codigo));
+      if (!dest.length) throw new Error('Nenhum funcionário ativo selecionado.');
+      const em = q.email ? dest.filter(a => /@/.test((db.fichas[a.codigo] || {}).email || '')).map(a => a.codigo) : [];
+      const id = 'c' + Date.now().toString(36);
+      db.coms.push({ codigo: id, quando: agora, titulo: q.titulo, mensagem: q.mensagem, publico: q.publico,
+        destinatarios: dest.map(a => a.codigo).join(','), email_enviados: em.join(','), whats_enviados: '' });
+      r = { id, emails: em.length }; break; }
+    case 'marcarWhats': { rh(); const c = db.coms.find(x => x.codigo === q.id); if (!c) throw new Error('Comunicado não encontrado.');
+      let l = c.whats_enviados ? c.whats_enviados.split(',') : []; l = l.filter(x => x !== q.codigo); if (q.enviado !== false) l.push(q.codigo);
+      c.whats_enviados = l.join(','); r = { whats_enviados: c.whats_enviados }; break; }
+    default: throw new Error('Ação inválida.');
+  }
+  try { localStorage.setItem(MOCK.k, JSON.stringify(db)); } catch (e) {}
+  return JSON.parse(JSON.stringify({ ok: true, ...r }));
+}
+
+/* ═══════════ FORMULÁRIO (compartilhado) ═══════════ */
+function campoHTML(f, d) {
+  if (f.sub) return `<div class="sub"><h3>${esc(f.sub)}</h3></div>`;
+  const val = d[f.k] ?? '', id = 'f_' + f.k;
+  let inp;
+  if (f.t === 'select') {
+    inp = `<select id="${id}" data-k="${f.k}"><option value="">Selecione…</option>${f.op.map(o => `<option${o === val ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+  } else if (f.t === 'textarea') {
+    inp = `<textarea id="${id}" data-k="${f.k}" maxlength="${f.max || 500}">${esc(val)}</textarea>`;
+  } else if (f.list) {
+    inp = `<input id="${id}" data-k="${f.k}" value="${esc(val)}" list="dl_${f.k}" autocomplete="off" maxlength="${f.max || 120}"${f.ph ? ` placeholder="${esc(f.ph)}"` : ''}><datalist id="dl_${f.k}">${f.list.map(o => `<option value="${esc(o)}">`).join('')}</datalist>`;
+  } else {
+    const tipo = f.t === 'date' ? 'date' : f.t === 'email' ? 'email' : 'text';
+    const modo = f.mask ? (f.mask === 'tel' ? 'tel' : 'numeric') : f.t === 'email' ? 'email' : '';
+    inp = `<input id="${id}" data-k="${f.k}" type="${tipo}" value="${esc(val)}" autocomplete="${f.auto || 'off'}"${modo ? ` inputmode="${modo}"` : ''}${f.ph ? ` placeholder="${esc(f.ph)}"` : ''}${f.mask && f.mask !== 'tel' ? ` maxlength="${f.mask.length}"` : ` maxlength="${f.max || 120}"`}>`;
+  }
+  return `<div class="fld ${f.w || ''}" data-wrap="${f.k}"${f.show && !f.show(d) ? ' hidden' : ''}>
+    <label for="${id}">${esc(f.l)}${f.req ? ' <span class="req">*</span>' : ''}</label>${inp}
+    ${f.hint ? `<small>${esc(f.hint)}</small>` : ''}<em class="err"></em></div>`;
+}
+function errosSecao(s, d) {
+  const e = {};
+  s.campos.forEach(f => {
+    if (!f.k || (f.show && !f.show(d))) return;
+    const v = String(d[f.k] || '').trim();
+    if (!v) { if (f.req) e[f.k] = 'Campo obrigatório'; return; }
+    if (f.v) { const m = f.v(v, d); if (m) e[f.k] = m; }
+  });
+  return e;
+}
+
+/* ═══════════ PORTAL DO COLABORADOR ═══════════ */
+const C = { codigo: '', adm: null, ficha: {}, docs: [], passo: 0, subindo: {}, aceite: false, ocupado: false };
+const N = SECOES.length, P_ANEXOS = N + 1, P_REV = N + 2;
+const PASSOS = [...SECOES.map(s => s.curto), 'Anexos', 'Revisão'];
+
+async function iniciarColab(codigo) {
+  C.codigo = codigo;
+  carregando('Abrindo sua ficha…', 'Ficha de admissão');
+  try {
+    const r = await api('abrir', { codigo });
+    C.adm = r.adm; C.ficha = r.ficha || {}; C.docs = r.docs || [];
+    CAMPOS.forEach(f => { if (f.def && !C.ficha[f.k]) C.ficha[f.k] = f.def; });
+    if (!C.ficha.nome && C.adm.nome) C.ficha.nome = C.adm.nome;
+    rColab();
+  } catch (e) {
+    telaFim('erro', 'Link inválido', e.message + ' Fale com o RH do posto para receber um link novo.');
+  }
+}
+function telaFim(tipo, titulo, txt) {
+  app.innerHTML = topo('Ficha de admissão') + `<main class="wrap"><section class="card fim">
+    <div class="selo ${tipo === 'ok' ? '' : tipo}">${tipo === 'ok' ? '✓' : tipo === 'erro' ? '!' : 'i'}</div>
+    <h1>${esc(titulo)}</h1><p class="muted">${esc(txt)}</p></section></main>`;
+}
+function dadosLimpos() {
+  const d = {};
+  CAMPOS.forEach(f => { d[f.k] = f.show && !f.show(C.ficha) ? '' : String(C.ficha[f.k] || '').trim(); });
+  return d;
+}
+function irPara(p) { C.passo = p; rColab(); window.scrollTo({ top: 0, behavior: 'instant' }); }
+
+function rColab() {
+  const st = C.adm.status, nome = primeiro(C.ficha.nome || C.adm.nome);
+  if (st === 'enviado') return telaFim('ok', 'Ficha recebida!', `Obrigado, ${nome}. O RH vai conferir seus dados e documentos e entra em contato se precisar de algo.`);
+  if (st === 'aprovado') return telaFim('ok', 'Cadastro aprovado', `Tudo certo, ${nome}! Seu cadastro foi conferido pelo RH.`);
+  if (st === 'cancelado' || st === 'desligado') return telaFim('neutro', 'Link desativado', 'Este link não está mais ativo. Em caso de dúvida, fale com o RH do posto.');
+  const p = C.passo;
+  let corpo;
+  if (p === 0) corpo = passoInicio();
+  else if (p <= N) corpo = passoSecao(SECOES[p - 1]);
+  else if (p === P_ANEXOS) corpo = passoAnexos();
+  else corpo = passoRevisao();
+  const passos = p ? `<ol class="steps" aria-label="Etapas">${PASSOS.map((n, i) => `<li class="${i + 1 < p ? 'done' : i + 1 === p ? 'cur' : ''}"><em>${i + 1}. ${esc(n)}</em></li>`).join('')}</ol>` : '';
+  app.innerHTML = topo('Ficha de admissão') + `<main class="wrap">${passos}${corpo}</main>`;
+}
+function navHTML(proximo = 'Salvar e continuar') {
+  return `<div class="nav"><button class="btn sec" data-act="voltar">Voltar</button><button class="btn pri" data-act="avancar">${proximo}</button></div>`;
+}
+function passoInicio() {
+  const a = C.adm;
+  const ped = ['RG ou CNH', 'CPF', 'Comprovante de residência', 'Carteira de Trabalho Digital (app)',
+    'Certidão de nascimento ou casamento', 'Comprovante de escolaridade', 'Dados da sua conta bancária'];
+  return `<section class="card hero">
+    <p class="eyebrow">Bem-vindo(a) à equipe</p>
+    <h1>Olá, ${esc(primeiro(a.nome))}!</h1>
+    <p>Que bom ter você no Posto Trevo${a.cargo ? ` como <b>${esc(a.cargo)}</b>` : ''}${a.data_prevista ? `, com início previsto para <b>${esc(dataBR(a.data_prevista))}</b>` : ''}.
+    Para agilizar sua admissão, preencha seus dados e envie fotos dos documentos por aqui. Leva cerca de 15 minutos.</p>
+    ${a.status === 'correcao' && a.obs_rh ? `<div class="aviso"><b>O RH pediu um ajuste:</b><br>${esc(a.obs_rh)}</div>` : ''}
+    <h3 style="margin-top:18px">Separe antes de começar</h3>
+    <ul class="lista-check">${ped.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+    <p class="muted">Pode parar e continuar depois pelo mesmo link: o que você já salvou fica guardado.</p>
+    <button class="btn pri big" data-act="ir" data-p="1">${a.status === 'preenchendo' || a.status === 'correcao' ? 'Continuar preenchendo' : 'Começar'}</button>
+  </section>`;
+}
+function passoSecao(s) {
+  return `<section class="card"><h2>${esc(s.t)}</h2><p class="muted">${esc(s.d)}</p>
+    <div class="grid">${s.campos.map(f => campoHTML(f, C.ficha)).join('')}</div></section>${navHTML()}`;
+}
+function passoAnexos() {
+  return `<section class="card"><h2>Anexos</h2>
+    <p class="muted">Tire as fotos com boa luz, o documento inteiro aparecendo e sem reflexo. Também vale PDF. Os itens com <span class="req">*</span> são obrigatórios.</p>
+    <div class="docs">${docsVisiveis(C.ficha).map(docCard).join('')}</div></section>${navHTML('Revisar e enviar')}`;
+}
+function docCard(d) {
+  const fs = C.docs.filter(x => x.tipo === d.k), n = C.subindo[d.k] || 0, ok = fs.length > 0;
+  return `<div class="doc ${ok ? 'ok' : d.req ? 'falta' : ''}" data-doc="${d.k}">
+    <div class="doc-h"><span class="doc-ic">${ok ? '✓' : d.req ? '!' : '+'}</span>
+      <div><b>${esc(d.l)}${d.req ? ' <span class="req">*</span>' : ''}</b>${d.hint ? `<small>${esc(d.hint)}</small>` : ''}</div></div>
+    ${fs.length ? `<ul class="files">${fs.map(f => `<li><span>${esc(f.arquivo)}</span><em>${kb(f.tamanho)}</em><button class="x" data-act="rmdoc" data-id="${esc(f.file_id)}" aria-label="Remover ${esc(f.arquivo)}">×</button></li>`).join('')}</ul>` : ''}
+    ${n ? `<div class="up"><span class="spin"></span>Enviando…</div>` : ''}
+    <label class="btn sec sm file">${ok ? '+ Adicionar outro' : 'Enviar foto ou PDF'}<input type="file" accept="image/*,application/pdf" multiple data-up="${d.k}" hidden></label>
+  </div>`;
+}
+function pendencias() {
+  const d = dadosLimpos(), p = [];
+  SECOES.forEach((s, i) => {
+    const e = Object.keys(errosSecao(s, d));
+    if (e.length) p.push({ passo: i + 1, txt: `<b>${esc(s.t)}:</b> ${e.map(k => esc(CAMPO[k].l)).join(', ')}` });
+  });
+  const faltam = docsVisiveis(d).filter(x => x.req && !C.docs.some(f => f.tipo === x.k));
+  if (faltam.length) p.push({ passo: P_ANEXOS, txt: `<b>Anexos:</b> ${faltam.map(x => esc(x.l)).join(', ')}` });
+  return p;
+}
+function resumoSecao(s, d) {
+  return `<dl class="kv">${s.campos.filter(f => f.k && (!f.show || f.show(d))).map(f =>
+    `<dt>${esc(f.l)}</dt><dd>${esc(f.t === 'date' ? dataBR(d[f.k]) : d[f.k]) || '—'}</dd>`).join('')}</dl>`;
+}
+function passoRevisao() {
+  const p = pendencias(), d = dadosLimpos();
+  return `<section class="card"><h2>Revisão</h2><p class="muted">Confira seus dados antes de enviar.</p>
+    ${p.length ? `<div class="aviso erro"><b>Falta completar:</b><ul class="pend">${p.map(x => `<li><span>${x.txt}</span><button class="btn sec sm" data-act="ir" data-p="${x.passo}">Corrigir</button></li>`).join('')}</ul></div>` : ''}
+    ${SECOES.map((s, i) => `<details><summary>${esc(s.t)}</summary>${resumoSecao(s, d)}
+      <p><button class="btn sec sm" data-act="ir" data-p="${i + 1}">Editar</button></p></details>`).join('')}
+    <details><summary>Anexos (${C.docs.length})</summary><dl class="kv">${docsVisiveis(d).map(x => {
+      const n = C.docs.filter(f => f.tipo === x.k).length; return `<dt>${esc(x.l)}</dt><dd>${n ? n + ' arquivo(s)' : '—'}</dd>`; }).join('')}</dl>
+      <p><button class="btn sec sm" data-act="ir" data-p="${P_ANEXOS}">Editar</button></p></details>
+  </section>
+  <section class="card"><h2>Privacidade (LGPD)</h2>
+    <div class="termo" tabindex="0">${termoLGPD()}</div>
+    <label class="aceite"><input type="checkbox" id="aceite"${C.aceite ? ' checked' : ''}>
+      <span>Li e concordo com o termo acima e declaro que as informações e os documentos que enviei são verdadeiros.</span></label>
+  </section>
+  <div class="nav"><button class="btn sec" data-act="voltar">Voltar</button>
+    <button class="btn pri" data-act="enviar" id="btnEnviar"${p.length || !C.aceite ? ' disabled' : ''}>Enviar ficha ao RH</button></div>`;
+}
+function termoLGPD() {
+  return `<h3>Termo de ciência – tratamento de dados pessoais</h3>
+  <p>Em cumprimento à Lei Geral de Proteção de Dados (Lei 13.709/2018), informamos como seus dados serão usados.</p>
+  <h3>1. Quem trata seus dados</h3><p>${esc(CONFIG.EMPRESA)}, CNPJ ${esc(CONFIG.CNPJ)}, como empregadora e controladora dos dados.</p>
+  <h3>2. Quais dados</h3><p>Identificação, números e cópias de documentos, endereço, contatos, escolaridade, dados bancários, contato de emergência, tamanhos de uniforme e os arquivos enviados neste portal. Incluem informações que a lei exige do empregador, como raça/cor e deficiência, conforme a sua autodeclaração.</p>
+  <h3>3. Para quê</h3><p>Admissão e registro do contrato de trabalho; envio de informações ao eSocial, FGTS, INSS e demais órgãos; folha e pagamento de salário; benefícios; exames ocupacionais, segurança do trabalho, uniforme e contato em caso de emergência.</p>
+  <h3>4. Base legal</h3><p>Execução do contrato de trabalho e cumprimento de obrigações legais e regulatórias (art. 7º, incisos II e V, e art. 11, inciso II, alínea "a", da LGPD).</p>
+  <h3>5. Com quem compartilhamos</h3><p>Somente quando necessário: escritório de contabilidade responsável pela folha, órgãos públicos, banco para pagamento do salário, clínica de medicina do trabalho e fornecedores de benefícios.</p>
+  <h3>6. Guarda e segurança</h3><p>Os dados ficam em ambiente de acesso restrito ao RH e à gestão do posto, durante o contrato e pelos prazos exigidos pela legislação trabalhista e previdenciária após o desligamento.</p>
+  <h3>7. Seus direitos</h3><p>Você pode confirmar quais dados temos, acessá-los, pedir correção e tirar dúvidas pelo contato: ${esc(CONFIG.CONTATO_RH)}.</p>
+  <h3>8. Contato de emergência</h3><p>Ao informar um contato de emergência, você declara que essa pessoa está ciente e concorda em ser procurada nessa situação.</p>`;
+}
+
+/* envio de arquivos */
+function mimeDe(file) {
+  if (file.type) return file.type;
+  const e = (file.name.split('.').pop() || '').toLowerCase();
+  return { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', heic: 'image/heic', heif: 'image/heif', webp: 'image/webp' }[e] || '';
+}
+function carregarImg(file) {
+  return new Promise((ok, no) => { const u = URL.createObjectURL(file), i = new Image();
+    i.onload = () => { URL.revokeObjectURL(u); ok(i); }; i.onerror = () => { URL.revokeObjectURL(u); no(); }; i.src = u; });
+}
+async function preparar(file) {
+  const mime = mimeDe(file);
+  if (!/^image\/(jpeg|png|webp)$/.test(mime)) return { blob: file, mime, nome: file.name };
+  try {
+    const img = await carregarImg(file);
+    const f = Math.min(1, 2000 / Math.max(img.naturalWidth, img.naturalHeight));
+    if (f === 1 && file.size < 900 * 1024) return { blob: file, mime, nome: file.name };
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.naturalWidth * f); cv.height = Math.round(img.naturalHeight * f);
+    const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(img, 0, 0, cv.width, cv.height);
+    const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', .82));
+    if (!blob) throw 0;
+    return { blob, mime: 'image/jpeg', nome: file.name.replace(/\.[^.]+$/, '') + '.jpg' };
+  } catch (e) { return { blob: file, mime, nome: file.name }; }
+}
+const paraB64 = blob => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = no; r.readAsDataURL(blob); });
+
+async function subir(tipo, files) {
+  for (const file of files) {
+    C.subindo[tipo] = (C.subindo[tipo] || 0) + 1; rColab();
+    try {
+      const { blob, mime, nome } = await preparar(file);
+      if (!/^(image\/(jpeg|png|webp|heic|heif)|application\/pdf)$/.test(mime)) throw new Error('formato não aceito. Envie foto ou PDF.');
+      if (blob.size > 10 * 1024 * 1024) throw new Error('arquivo maior que 10 MB.');
+      const r = await api('enviarDoc', { codigo: C.codigo, tipo, nome, mime, base64: await paraB64(blob) });
+      C.docs.push(r.doc);
+    } catch (e) { toast(`${file.name}: ${e.message}`, 'erro'); }
+    C.subindo[tipo]--; rColab();
+  }
+}
+
+async function salvar() {
+  const r = await api('salvarFicha', { codigo: C.codigo, dados: dadosLimpos() });
+  C.adm.status = r.status || C.adm.status;
+}
+
+const ACOES_COLAB = {
+  ir: b => irPara(+b.dataset.p),
+  voltar: () => irPara(C.passo - 1),
+  async avancar(b) {
+    if (C.ocupado) return;
+    if (C.passo <= N) {
+      const s = SECOES[C.passo - 1], e = errosSecao(s, C.ficha);
+      document.querySelectorAll('.fld').forEach(el => { el.classList.remove('inv'); el.querySelector('.err').textContent = ''; });
+      const ks = Object.keys(e);
+      if (ks.length) {
+        ks.forEach(k => { const w = document.querySelector(`[data-wrap="${k}"]`); if (w) { w.classList.add('inv'); w.querySelector('.err').textContent = e[k]; } });
+        const prim = document.getElementById('f_' + ks[0]); prim && prim.focus();
+        prim && prim.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        toast('Confira os campos destacados', 'erro'); return;
+      }
+    }
+    if (Object.values(C.subindo).some(Boolean)) { toast('Aguarde terminar o envio dos arquivos'); return; }
+    C.ocupado = true; b.disabled = true; b.textContent = 'Salvando…';
+    try { if (C.passo <= N) await salvar(); irPara(C.passo + 1); }
+    catch (e) { toast(e.message, 'erro'); b.disabled = false; b.textContent = 'Tentar de novo'; }
+    C.ocupado = false;
+  },
+  async rmdoc(b) {
+    const id = b.dataset.id;
+    if (!confirm('Remover este arquivo?')) return;
+    b.disabled = true;
+    try { await api('removerDoc', { codigo: C.codigo, file_id: id }); C.docs = C.docs.filter(x => x.file_id !== id); rColab(); }
+    catch (e) { toast(e.message, 'erro'); b.disabled = false; }
+  },
+  async enviar(b) {
+    if (C.ocupado || pendencias().length || !C.aceite) return;
+    C.ocupado = true; b.disabled = true; b.textContent = 'Enviando…';
+    try { await api('finalizar', { codigo: C.codigo, dados: dadosLimpos(), aceite: true }); C.adm.status = 'enviado'; rColab(); window.scrollTo(0, 0); }
+    catch (e) { toast(e.message, 'erro'); b.disabled = false; b.textContent = 'Enviar ficha ao RH'; }
+    C.ocupado = false;
+  }
+};
+
+async function buscarCEP(cep, obj) {
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`); const j = await r.json();
+    if (j.erro) { toast('CEP não encontrado – preencha o endereço manualmente'); return; }
+    const m = { logradouro: j.logradouro, bairro: j.bairro, cidade: j.localidade, uf: j.uf };
+    Object.entries(m).forEach(([k, v]) => { if (!v) return; obj[k] = v; const el = document.getElementById('f_' + k); if (el) el.value = v; });
+    document.getElementById('f_numero')?.focus();
+  } catch (e) {}
+}
+function aoDigitar(el, obj, mapa) {
+  const k = el.dataset.k, f = mapa[k]; if (!f) return;
+  if (f.mask) { const v = mascara(f.mask, el.value); if (v !== el.value) el.value = v; }
+  obj[k] = el.value;
+  const w = el.closest('.fld'); if (w && w.classList.contains('inv')) { w.classList.remove('inv'); w.querySelector('.err').textContent = ''; }
+  Object.values(mapa).forEach(c => { if (!c.show) return; const ww = document.querySelector(`[data-wrap="${c.k}"]`); if (ww) ww.hidden = !c.show(obj); });
+  if (k === 'cep' && dig(el.value).length === 8 && el.dataset.ult !== dig(el.value)) { el.dataset.ult = dig(el.value); buscarCEP(dig(el.value), obj); }
+}
+const aoDigitarColab = el => aoDigitar(el, C.ficha, CAMPO);
+
+/* ═══════════ PAINEL DO RH ═══════════ */
+const R = { senha: '', itens: [], eventos: [], al: [], aba: 'func', filtro: 'ativos', filtroAdm: 'andamento', busca: '', det: null, sub: 'dados', form: null };
+const EM_ADMISSAO = ['novo', 'preenchendo', 'correcao', 'enviado'];
+const FILTROS_FUNC = {
+  ativos: { l: 'Ativos', f: a => a.status === 'aprovado' },
+  desligados: { l: 'Desligados', f: a => a.status === 'desligado' },
+  todos: { l: 'Todos', f: a => ['aprovado', 'desligado'].includes(a.status) }
+};
+const FILTROS_ADM = {
+  andamento: { l: 'Em andamento', f: a => EM_ADMISSAO.includes(a.status) },
+  conferir: { l: 'Para conferir', f: a => a.status === 'enviado' },
+  cancelado: { l: 'Canceladas', f: a => a.status === 'cancelado' }
+};
+const EXP = { '45 + 45 dias': [45, 90], '30 + 60 dias': [30, 90], '90 dias': [90] };
+const CONTRATO = [
+  { k: 'cargo', l: 'Cargo', req: 1, w: 'h', list: CARGOS, max: 60 },
+  { k: 'data_admissao', l: 'Data de admissão', t: 'date', req: 1, w: 'h', v: V.data },
+  { k: 'salario', l: 'Salário (R$)', w: 'h', ph: 'Ex.: 2.150,00', max: 20 },
+  { k: 'exp_tipo', l: 'Contrato de experiência', t: 'select', op: ['45 + 45 dias', '30 + 60 dias', '90 dias', 'Sem experiência'], w: 'h' },
+  { k: 'aso_validade', l: 'Validade do ASO (exame periódico)', t: 'date', w: 'h', v: V.data, hint: 'Normalmente 1 ano depois do último exame.' }
+];
+const DESLIG = [
+  { k: 'deslig_data', l: 'Data do desligamento', t: 'date', req: 1, w: 'h', v: V.data },
+  { k: 'deslig_tipo', l: 'Tipo', t: 'select', req: 1, w: 'h', op: ['Sem justa causa (pela empresa)', 'Pedido de demissão', 'Justa causa', 'Acordo (art. 484-A)', 'Fim do contrato de experiência', 'Término de contrato', 'Falecimento'] },
+  { k: 'deslig_aviso', l: 'Aviso prévio', t: 'select', w: 'h', op: ['Trabalhado', 'Indenizado', 'Dispensado', 'Não se aplica'] },
+  { k: 'deslig_recontratar', l: 'Pode ser recontratado?', t: 'select', w: 'h', op: ['Sim', 'Não', 'Avaliar'] },
+  { k: 'deslig_motivo', l: 'Motivo / observações', t: 'textarea' }
+];
+const OCORRENCIAS = ['Advertência', 'Suspensão', 'Atestado médico', 'Falta', 'Atraso', 'Elogio', 'Outro'];
+const CATEG_RH = ['Ficha de registro', 'Contrato de trabalho', 'Contrato de experiência', 'ASO / exame', 'Holerite', 'Recibo de férias',
+  'Advertência / suspensão', 'Atestado', 'TRCT / rescisão', 'Exame demissional', 'Outros'];
+const mapaDe = defs => Object.fromEntries(defs.filter(f => f.k).map(f => [f.k, f]));
+const sairBtn = '<button class="lnk no-print" data-act="sair">Sair</button>';
+const nomeSort = (a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR');
+
+/* datas */
+const hoje0 = () => { const h = new Date(); return new Date(h.getFullYear(), h.getMonth(), h.getDate()); };
+const addDias = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const addAnos = (d, n) => new Date(d.getFullYear() + n, d.getMonth(), d.getDate());
+const diasAte = d => Math.round((d - hoje0()) / 86400000);
+const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const fmt = d => d ? dataBR(iso(d)) : '';
+function tempoCasa(v, ate) {
+  const d = data(v); if (!d) return '';
+  const h = ate || new Date();
+  let m = (h.getFullYear() - d.getFullYear()) * 12 + h.getMonth() - d.getMonth();
+  if (h.getDate() < d.getDate()) m--;
+  if (m < 0) return '';
+  const a = Math.floor(m / 12), r = m % 12;
+  if (!a) return m ? `${m} ${m > 1 ? 'meses' : 'mês'}` : 'menos de 1 mês';
+  return `${a} ano${a > 1 ? 's' : ''}${r ? ` e ${r} ${r > 1 ? 'meses' : 'mês'}` : ''}`;
+}
+
+/* férias: períodos aquisitivos a partir da admissão */
+function periodosFerias(p, evs) {
+  const ad = data(p.data_admissao); if (!ad) return [];
+  const ate = (p.status === 'desligado' && data(p.deslig_data)) || hoje0();
+  const gozos = (evs || []).filter(e => e.codigo === p.codigo && e.tipo === 'ferias');
+  const l = [];
+  for (let k = 0; k < 60; k++) {
+    const ini = addAnos(ad, k); if (ini > ate) break;
+    const fimAq = addDias(addAnos(ad, k + 1), -1), limite = addDias(addAnos(ad, k + 2), -1);
+    const g = gozos.filter(e => String(e.periodo) === String(k));
+    const diasG = g.reduce((s, e) => s + (+e.dias || 0), 0);
+    const sit = diasG >= 30 ? 'gozada' : fimAq >= hoje0() ? 'aquisicao' : limite < hoje0() ? 'vencida' : 'pendente';
+    l.push({ k, ini, fimAq, limite, gozos: g, diasG, sit });
+  }
+  return l;
+}
+const fmtP = p => `${p.ini.getFullYear()}/${p.fimAq.getFullYear()}`;
+const SIT_FER = { gozada: ['Gozadas', 's-ok'], aquisicao: ['Em aquisição', 's-novo'], pendente: ['A conceder', 's-env'], vencida: ['Vencidas', 's-cor'] };
+
+/* alertas de um funcionário ativo (nivel 2 = urgente, 1 = atenção, 0 = informativo) */
+function alertasFunc(p, evs) {
+  const out = []; if (p.status !== 'aprovado') return out;
+  const add = (quando, txt, nivel) => out.push({ codigo: p.codigo, nome: p.nome, quando, txt, nivel, d: diasAte(quando) });
+  const ad = data(p.data_admissao);
+  if (ad && EXP[p.exp_tipo]) EXP[p.exp_tipo].forEach((n, i, arr) => {
+    const f = addDias(ad, n - 1), d = diasAte(f);
+    if (d >= -3 && d <= 15) add(f, i < arr.length - 1 ? `Fim do 1º período de experiência (${n} dias): prorrogar ou desligar` : `Fim do contrato de experiência (${n} dias): depois disso passa a ser prazo indeterminado`, d <= 5 ? 2 : 1);
+  });
+  const aso = data(p.aso_validade);
+  if (aso && diasAte(aso) <= 30) add(aso, diasAte(aso) < 0 ? 'ASO vencido: agendar exame periódico' : 'ASO vencendo: agendar exame periódico', diasAte(aso) <= 7 ? 2 : 1);
+  const cnh = data(p.cnh_validade);
+  if (cnh && diasAte(cnh) <= 30) add(cnh, diasAte(cnh) < 0 ? 'CNH vencida' : 'CNH vencendo', diasAte(cnh) <= 7 ? 2 : 1);
+  periodosFerias(p, evs).forEach(f => {
+    if (f.sit === 'vencida') add(f.limite, `Férias vencidas (período ${fmtP(f)}): devem ser pagas em dobro`, 2);
+    else if (f.sit === 'pendente' && diasAte(f.limite) <= 90) add(f.limite, `Férias do período ${fmtP(f)}: conceder até ${fmt(f.limite)}`, diasAte(f.limite) <= 45 ? 2 : 1);
+  });
+  const nasc = data(p.nascimento);
+  if (nasc) {
+    const h = hoje0(); let an = new Date(h.getFullYear(), nasc.getMonth(), nasc.getDate());
+    if (an < h) an = new Date(h.getFullYear() + 1, nasc.getMonth(), nasc.getDate());
+    if (diasAte(an) <= 7) add(an, diasAte(an) === 0 ? 'Aniversário hoje!' : 'Aniversário', 0);
+  }
+  return out;
+}
+const alertas = () => R.itens.flatMap(a => alertasFunc(a, R.eventos)).sort((x, y) => x.quando - y.quando);
+const quandoTxt = x => x.d === 0 ? 'Hoje' : x.d === 1 ? 'Amanhã' : x.d < 0 ? `Há ${-x.d} dia(s)` : `Em ${x.d} dias · ${fmt(x.quando)}`;
+const nivelChip = n => n === 2 ? 's-cor' : n === 1 ? 's-env' : 's-prog';
+
+function iniciarRH() {
+  try { R.senha = sessionStorage.getItem('rh_s') || ''; } catch (e) {}
+  if (R.senha) carregarLista(true); else telaLogin();
+}
+function telaLogin(msg) {
+  app.innerHTML = topo('Painel do RH') + `<main class="wrap estreito"><form class="card" id="flogin" style="margin-top:24px">
+    <p class="eyebrow">Acesso restrito</p><h1>Painel do RH</h1>
+    <p class="muted">Funcionários, admissões, documentos e comunicados do Posto Trevo.</p>
+    ${DEMO ? '<div class="aviso">Modo demonstração. Senha: <b>trevo2026</b></div>' : ''}
+    <div class="fld" style="margin:16px 0"><label for="senha">Senha</label><input type="password" id="senha" autocomplete="current-password" required></div>
+    ${msg ? `<div class="aviso erro">${esc(msg)}</div>` : ''}
+    <button class="btn pri big">Entrar</button></form></main>`;
+  $('#senha').focus();
+}
+function erroRH(e) {
+  if (/senha|tentativas/i.test(e.message)) { R.senha = ''; try { sessionStorage.removeItem('rh_s'); } catch (x) {} telaLogin(e.message); }
+  else toast(e.message, 'erro');
+}
+async function carregarLista(mostrar) {
+  if (mostrar) carregando('Carregando…', 'Painel do RH');
+  try {
+    const r = await api('listar', { senha: R.senha });
+    R.itens = r.itens || []; R.eventos = r.eventos || []; R.al = alertas();
+    try { sessionStorage.setItem('rh_s', R.senha); } catch (e) {}
+    R.det = null; R.form = null; rLista();
+  } catch (e) { erroRH(e); }
+}
+
+/* ── lista principal ── */
+const filtroAtual = () => R.aba === 'func' ? R.filtro : R.filtroAdm;
+function rLista() {
+  const it = R.itens, n = s => it.filter(a => s.includes(a.status)).length, al = R.al;
+  const avisos = al.filter(x => x.nivel > 0).length, mes = new Date().getMonth();
+  const aniv = it.filter(a => a.status === 'aprovado' && data(a.nascimento) && data(a.nascimento).getMonth() === mes).length;
+  const abas = [['func', 'Funcionários', n(['aprovado'])], ['adm', 'Admissões', n(['enviado'])], ['alertas', 'Alertas', avisos]];
+  app.innerHTML = topo('Painel do RH', sairBtn) + `<main class="wrap largo">
+    <div class="kpis">
+      <div class="kpi"><b>${n(['aprovado'])}</b><span>Funcionários ativos</span></div>
+      <div class="kpi claro"><b>${n(['enviado'])}</b><span>Admissões para conferir</span></div>
+      <div class="kpi claro${al.some(x => x.nivel === 2) ? ' alerta' : ''}"><b>${avisos}</b><span>Alertas e vencimentos</span></div>
+      <div class="kpi claro"><b>${aniv}</b><span>Aniversariantes do mês</span></div>
+    </div>
+    <div class="abas">${abas.map(([k, l, c]) => `<button data-act="aba" data-a="${k}" class="${R.aba === k ? 'on' : ''}">${l}${c ? ` <span class="cnt">${c}</span>` : ''}</button>`).join('')}
+      <span class="sp"></span><button class="btn sec sm" data-act="comunicados">Comunicados</button><button class="btn sec sm" data-act="relatorios">Relatórios</button></div>
+    ${R.aba === 'alertas' ? alertasHTML(al) : `<div class="barra">
+      <div class="filtros">${Object.entries(R.aba === 'func' ? FILTROS_FUNC : FILTROS_ADM).map(([k, v]) => `<button data-act="filtro" data-f="${k}" class="${filtroAtual() === k ? 'on' : ''}">${v.l}</button>`).join('')}</div>
+      <input class="busca" id="busca" type="search" placeholder="Buscar por nome ou cargo" value="${esc(R.busca)}">
+      ${R.aba === 'func' ? '<button class="btn ouro" data-act="cadastrar">+ Cadastrar funcionário</button>' : '<button class="btn ouro" data-act="nova">+ Nova admissão</button>'}
+    </div>
+    <div class="itens" id="itens">${itensHTML()}</div>`}
+  </main>`;
+}
+function itensHTML() {
+  const b = R.busca.toLowerCase(), F = R.aba === 'func' ? FILTROS_FUNC : FILTROS_ADM;
+  const l = R.itens.filter(F[filtroAtual()].f).filter(a => !b || (a.nome + ' ' + (a.cargo || '')).toLowerCase().includes(b));
+  if (R.aba === 'func') l.sort(nomeSort);
+  if (!l.length) {
+    const txt = R.aba === 'func'
+      ? (R.itens.some(FILTROS_FUNC.todos.f) ? 'Nenhum funcionário neste filtro.' : 'Cadastre quem já trabalha no posto em <b>+ Cadastrar funcionário</b>. Quem entrar pelo portal de admissão aparece aqui depois de aprovado.')
+      : (R.itens.length ? 'Nenhuma admissão neste filtro.' : 'Clique em <b>+ Nova admissão</b> para gerar o link da ficha de um novo colaborador.');
+    return `<div class="vazio card"><h2>Nada por aqui</h2><p>${txt}</p></div>`;
+  }
+  return l.map(a => {
+    const meta = R.aba === 'func'
+      ? [a.cargo, a.data_admissao && 'Admissão ' + dataBR(a.data_admissao), a.status === 'aprovado' && tempoCasa(a.data_admissao),
+         a.status === 'desligado' && a.deslig_data && 'Desligado em ' + dataBR(a.deslig_data)]
+      : [a.cargo, a.data_prevista && 'Início ' + dataBR(a.data_prevista), a.ndocs + ' anexo(s)', 'Atualizado ' + (a.atualizado_em || '')];
+    const nal = R.aba === 'func' ? R.al.filter(x => x.codigo === a.codigo && x.nivel > 0).length : 0;
+    return `<div class="item" data-act="abrir" data-c="${esc(a.codigo)}"><div><div class="nome">${esc(a.nome)}</div>
+      <div class="meta">${meta.filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('')}</div></div>
+      <div class="acoes">${nal ? `<span class="chip s-cor">${nal} alerta(s)</span>` : ''}${chip(a.status)}${EDITAVEL.includes(a.status) ? `<button class="btn sec sm" data-act="link" data-c="${esc(a.codigo)}">Link</button>` : ''}</div>
+      <div>${a.status === 'correcao' && a.obs_rh ? `<small class="muted">Correção: ${esc(a.obs_rh)}</small>` : ''}</div></div>`;
+  }).join('');
+}
+function alertasHTML(al) {
+  if (!al.length) return '<div class="vazio card"><h2>Tudo em dia</h2><p>Nenhum vencimento nos próximos dias. Os alertas olham experiência, ASO, CNH, férias e aniversários dos funcionários ativos.</p></div>';
+  return `<p class="muted">Experiência (15 dias antes), ASO e CNH (30 dias antes), férias a conceder (90 dias antes do limite) e aniversários da semana.</p>
+    <div class="itens">${al.map(x => `<div class="item" data-act="abrir" data-c="${esc(x.codigo)}">
+    <div><div class="nome">${esc(x.txt)}</div><div class="meta"><span>${esc(x.nome)}</span></div></div>
+    <div class="acoes"><span class="chip ${nivelChip(x.nivel)}">${esc(quandoTxt(x))}</span></div><div></div></div>`).join('')}</div>`;
+}
+
+/* ── modais ── */
+function abrirModal(html, largo) {
+  fecharModal();
+  const m = document.createElement('div'); m.className = 'modal no-print'; m.id = 'modal';
+  m.innerHTML = `<div class="modal-c card${largo ? ' largo' : ''}" role="dialog" aria-modal="true">${html}</div>`;
+  m.addEventListener('mousedown', e => { if (e.target === m) fecharModal(); });
+  document.body.appendChild(m);
+  const f = m.querySelector('input:not([readonly]):not([type=file]),select,textarea'); f && f.focus();
+  return m;
+}
+const fecharModal = () => $('#modal')?.remove();
+const formHTML = (defs, d) => `<div class="grid">${defs.map(f => campoHTML(f, d)).join('')}</div>`;
+function errosCampos(defs, d, obrig) {
+  const e = {};
+  defs.forEach(f => {
+    if (!f.k || (f.show && !f.show(d))) return;
+    const v = String(d[f.k] || '').trim();
+    if (!v) { if (obrig ? obrig.has(f.k) : f.req) e[f.k] = 'Campo obrigatório'; return; }
+    if (f.v) { const m = f.v(v, d); if (m) e[f.k] = m; }
+  });
+  return e;
+}
+function marcarErros(e) {
+  document.querySelectorAll('.fld.inv').forEach(el => { el.classList.remove('inv'); const x = el.querySelector('.err'); if (x) x.textContent = ''; });
+  const ks = Object.keys(e); if (!ks.length) return false;
+  ks.forEach(k => { const w = document.querySelector(`[data-wrap="${k}"]`); if (w) { w.classList.add('inv'); w.querySelector('.err').textContent = e[k]; } });
+  const p = document.getElementById('f_' + ks[0]); if (p) { p.focus(); p.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  toast('Confira os campos destacados', 'erro');
+  return true;
+}
+/* formulário em modal: valida, chama onOk(dados, arquivos) */
+function modalForm({ titulo, texto = '', defs, d, ok = 'Salvar', arquivo, extra = '', validar, onOk, aoMudar }) {
+  R.form = { d: { ...d }, mapa: mapaDe(defs), aoMudar };
+  const m = abrirModal(`<h2>${esc(titulo)}</h2>${texto ? `<p class="muted">${texto}</p>` : ''}${extra}
+    ${formHTML(defs, R.form.d)}
+    ${arquivo ? `<div class="fld" style="margin-top:14px"><label for="m_arq">${esc(arquivo)}</label><input type="file" id="m_arq" accept="image/*,application/pdf" multiple><small>Foto ou PDF, até 10 MB cada.</small></div>` : ''}
+    <div class="modal-acoes"><button class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri" id="m_ok">${esc(ok)}</button></div>`, true);
+  m.querySelector('#m_ok').onclick = async ev => {
+    const dd = R.form.d, b = ev.target;
+    if (marcarErros(errosCampos(defs, dd))) return;
+    const msg = validar && validar(dd); if (msg) { toast(msg, 'erro'); return; }
+    const fs = arquivo ? [...(m.querySelector('#m_arq').files || [])] : [];
+    b.disabled = true; b.textContent = 'Salvando…';
+    try { await onOk(dd, fs); fecharModal(); R.form = null; }
+    catch (e) { b.disabled = false; b.textContent = ok; erroRH(e); }
+  };
+  return m;
+}
+async function subirRH(codigo, files, meta) {
+  let ok = 0;
+  for (const file of files) {
+    try {
+      const { blob, mime, nome } = await preparar(file);
+      if (!/^(image\/(jpeg|png|webp|heic|heif)|application\/pdf)$/.test(mime)) throw new Error('formato não aceito. Envie foto ou PDF.');
+      if (blob.size > 10 * 1024 * 1024) throw new Error('arquivo maior que 10 MB.');
+      await api('enviarDocRH', { senha: R.senha, codigo, nome, mime, base64: await paraB64(blob), ...meta });
+      ok++;
+    } catch (e) { toast(`${file.name}: ${e.message}`, 'erro'); }
+  }
+  return ok;
+}
+
+/* ── admissão: novo link ── */
+function modalNova() {
+  const m = abrirModal(`<h2>Nova admissão</h2><p class="muted">Gera um link exclusivo para o colaborador preencher a ficha e mandar os documentos.</p>
+    <form id="fnova" class="grid">
+      <div class="fld"><label for="n_nome">Nome do colaborador <span class="req">*</span></label><input id="n_nome" required maxlength="100"></div>
+      <div class="fld h"><label for="n_cargo">Cargo</label><input id="n_cargo" list="l_cargos" maxlength="60"><datalist id="l_cargos">${CARGOS.map(c => `<option value="${esc(c)}">`).join('')}</datalist></div>
+      <div class="fld h"><label for="n_data">Início previsto</label><input id="n_data" type="date"></div>
+      <div class="modal-acoes fld"><button type="button" class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri">Gerar link</button></div>
+    </form>`);
+  m.querySelector('#fnova').addEventListener('submit', async e => {
+    e.preventDefault();
+    const b = e.submitter || m.querySelector('.btn.pri'); b.disabled = true; b.textContent = 'Gerando…';
+    try {
+      const dados = { nome: $('#n_nome').value.trim(), cargo: $('#n_cargo').value.trim(), data_prevista: $('#n_data').value };
+      const r = await api('criar', { senha: R.senha, ...dados });
+      R.aba = 'adm'; R.filtroAdm = 'andamento';
+      await carregarLista(false);
+      modalLink({ codigo: r.codigo, ...dados });
+    } catch (x) { b.disabled = false; b.textContent = 'Gerar link'; erroRH(x); }
+  });
+}
+function msgWhats(a, obs) {
+  const link = linkDe(a.codigo), nome = primeiro(a.nome);
+  return obs
+    ? `Olá, ${nome}! Precisamos de um ajuste na sua ficha de admissão do Posto Trevo: ${obs}\n\nÉ só abrir o mesmo link e corrigir: ${link}`
+    : `Olá, ${nome}! Seja bem-vindo(a) à equipe do Posto Trevo. Para agilizar sua admissão, preencha sua ficha cadastral e envie as fotos dos seus documentos por este link:\n${link}\n\nQualquer dúvida, fale com o RH.`;
+}
+function modalLink(a, obs) {
+  const link = linkDe(a.codigo);
+  abrirModal(`<h2>${obs ? 'Avisar o colaborador' : 'Link criado'}</h2>
+    <p>Envie este link <b>só para ${esc(primeiro(a.nome))}</b>. Quem tiver o link consegue abrir e preencher a ficha.</p>
+    <div class="linkbox"><input readonly value="${esc(link)}" onfocus="this.select()"><button class="btn sec sm" data-act="copiar" data-v="${esc(link)}">Copiar</button></div>
+    <a class="btn wa big" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(msgWhats(a, obs))}">Enviar pelo WhatsApp</a>
+    <div class="modal-acoes"><button class="btn sec" data-act="fechar">Fechar</button></div>`);
+}
+
+/* ── detalhe ── */
+async function abrirDet(codigo, sub) {
+  carregando('Abrindo…', 'Painel do RH');
+  try {
+    R.det = await api('detalhe', { senha: R.senha, codigo });
+    R.sub = sub || 'dados';
+    rDet(); window.scrollTo(0, 0);
+  } catch (e) { rLista(); erroRH(e); }
+}
+async function recarregarDet(sub) {
+  R.det = await api('detalhe', { senha: R.senha, codigo: R.det.adm.codigo });
+  if (sub) R.sub = sub;
+  rDet();
+}
+const pessoa = () => ({ ...R.det.ficha, ...R.det.adm, nome: R.det.ficha.nome || R.det.adm.nome, codigo: R.det.adm.codigo });
+const rDet = () => ['aprovado', 'desligado'].includes(R.det.adm.status) ? rFunc() : rAdm();
+
+function listaDocsAdm(d, docs) {
+  return docsVisiveis(d).map(x => {
+    const fs = docs.filter(f => f.tipo === x.k);
+    return `<li><span class="m ${fs.length ? 'ok' : x.req ? 'no' : 'op'}">${fs.length ? '✓' : x.req ? '!' : '–'}</span>
+      <div>${esc(x.l)}${fs.map(f => linkArq(f)).join('')}</div></li>`;
+  }).join('');
+}
+const linkArq = f => f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.arquivo)} · ${kb(f.tamanho)}</a>` : `<small class="muted" style="display:block">${esc(f.arquivo)} · ${kb(f.tamanho)}</small>`;
+const printTopo = t => `<div class="only-print"><h2>${esc(t)}</h2><p>${esc(CONFIG.EMPRESA)} · CNPJ ${esc(CONFIG.CNPJ)}</p></div>`;
+
+function rAdm() {
+  const { adm: a, ficha: d, docs } = R.det, st = a.status;
+  const datas = [['Link criado', a.criado_em], ['Enviada', a.enviado_em], ['Termo LGPD aceito', a.lgpd_aceite_em]]
+    .filter(x => x[1]).map(x => `<span>${x[0]}: <b>${esc(x[1])}</b></span>`).join('');
+  const ac = [];
+  if (st === 'enviado') ac.push('<button class="btn pri" data-act="aprovar">Aprovar e efetivar</button>');
+  if (['enviado', 'preenchendo'].includes(st)) ac.push('<button class="btn sec" data-act="correcao">Pedir correção</button>');
+  if (EDITAVEL.includes(st)) ac.push('<button class="btn sec" data-act="link" data-c="' + esc(a.codigo) + '">Link do colaborador</button>');
+  ac.push('<button class="btn sec" data-act="imprimir">Imprimir ficha</button>');
+  if (a.pasta_url) ac.push(`<a class="btn sec" target="_blank" rel="noopener" href="${esc(a.pasta_url)}">Pasta no Drive</a>`);
+  if (st === 'cancelado') ac.push('<button class="btn sec" data-act="reativar">Reativar</button>');
+  else ac.push('<button class="btn perigo" data-act="cancelar">Cancelar admissão</button>');
+  const temFicha = Object.values(d).some(Boolean);
+  app.innerHTML = topo('Painel do RH', sairBtn) + `<main class="wrap largo">
+    <p class="no-print"><button class="btn sec sm" data-act="lista">← Voltar</button></p>
+    ${printTopo('Ficha de registro de empregado')}
+    <section class="card">
+      <div class="det-top"><div><p class="eyebrow">Admissão · ${esc(a.cargo || 'Cargo não informado')}${a.data_prevista ? ' · início ' + esc(dataBR(a.data_prevista)) : ''}</p>
+        <h1>${esc(d.nome || a.nome)}</h1></div>${chip(st)}</div>
+      <div class="datas">${datas}</div>
+      ${st === 'correcao' && a.obs_rh ? `<div class="aviso no-print"><b>Correção pedida:</b> ${esc(a.obs_rh)}</div>` : ''}
+      ${!temFicha ? '<div class="aviso no-print">O colaborador ainda não preencheu a ficha.</div>' : ''}
+      <div class="det-acoes no-print">${ac.join('')}</div>
+    </section>
+    <div class="cols">
+      ${SECOES.map(s => `<section class="card"><h3>${esc(s.t)}</h3>${resumoSecao(s, d)}</section>`).join('')}
+      <section class="card"><h3>Documentos anexados (${docs.length})</h3><ul class="chk">${listaDocsAdm(d, docs)}</ul></section>
+    </div>
+    <div class="only-print"><p style="margin-top:24px">Declaro que as informações acima são verdadeiras.</p>
+      <div class="assin"><div>${esc(d.nome || a.nome)}</div><div>Responsável RH</div></div></div>
+  </main>`;
+}
+async function mudarStatus(status, obs) {
+  await api('definirStatus', { senha: R.senha, codigo: R.det.adm.codigo, status, obs });
+  await recarregarDet();
+}
+
+/* ── ficha do funcionário ── */
+function rFunc() {
+  const { adm: a, ficha: d, docs, eventos } = R.det, p = pessoa(), st = a.status;
+  const al = alertasFunc(p, eventos);
+  const nOc = eventos.filter(e => e.tipo === 'ocorrencia').length;
+  const subs = [['dados', 'Dados'], ['docs', `Documentos (${docs.length})`], ['ferias', 'Férias'], ['ocorr', `Ocorrências${nOc ? ` (${nOc})` : ''}`], ['cargo', 'Cargo e salário'], ['hist', 'Histórico']];
+  const ac = ['<button class="btn sec" data-act="editficha">Editar ficha</button>', '<button class="btn sec" data-act="contrato">Contrato</button>',
+    '<button class="btn sec" data-act="imprimir">Imprimir ficha</button>'];
+  if (a.pasta_url) ac.push(`<a class="btn sec" target="_blank" rel="noopener" href="${esc(a.pasta_url)}">Pasta no Drive</a>`);
+  ac.push(st === 'aprovado' ? '<button class="btn perigo" data-act="desligar">Registrar desligamento</button>' : '<button class="btn sec" data-act="reintegrar">Reintegrar</button>');
+  let corpo = '';
+  if (R.sub === 'docs') corpo = subDocs();
+  else if (R.sub === 'ferias') corpo = subFerias();
+  else if (R.sub === 'ocorr') corpo = subOcorr();
+  else if (R.sub === 'cargo') corpo = subCargo();
+  else if (R.sub === 'hist') corpo = subHist();
+  else corpo = subDados();
+  app.innerHTML = topo('Painel do RH', sairBtn) + `<main class="wrap largo">
+    <p class="no-print"><button class="btn sec sm" data-act="lista">← Voltar</button></p>
+    ${printTopo('Ficha de registro de empregado')}
+    <section class="card">
+      <div class="det-top"><div><p class="eyebrow">${esc(a.cargo || 'Cargo não informado')}${a.data_admissao ? ' · admitido em ' + esc(dataBR(a.data_admissao)) : ''}${a.data_admissao ? ' · ' + esc(tempoCasa(a.data_admissao, st === 'desligado' ? data(a.deslig_data) : null)) + ' de casa' : ''}</p>
+        <h1>${esc(p.nome)}</h1></div>${chip(st)}</div>
+      ${st === 'desligado' ? `<div class="aviso"><b>Desligado em ${esc(dataBR(a.deslig_data))}</b> · ${esc(a.deslig_tipo)}${a.deslig_aviso ? ' · aviso ' + esc(a.deslig_aviso.toLowerCase()) : ''}${a.deslig_recontratar ? ' · recontratar: ' + esc(a.deslig_recontratar) : ''}${a.deslig_motivo ? `<br>${esc(a.deslig_motivo)}` : ''}</div>` : ''}
+      ${!a.data_admissao ? '<div class="aviso no-print">Falta a data de admissão. Preencha em <b>Contrato</b> para liberar o controle de férias e de experiência.</div>' : ''}
+      ${al.filter(x => x.nivel > 0).map(x => `<div class="aviso no-print${x.nivel === 2 ? ' erro' : ''}"><b>${esc(quandoTxt(x))}:</b> ${esc(x.txt)}</div>`).join('')}
+      <div class="det-acoes no-print">${ac.join('')}</div>
+    </section>
+    <div class="abas no-print">${subs.map(([k, l]) => `<button data-act="sub" data-s="${k}" class="${R.sub === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    ${corpo}
+    ${R.sub === 'dados' ? `<div class="only-print"><p style="margin-top:24px">Declaro que as informações acima são verdadeiras.</p>
+      <div class="assin"><div>${esc(p.nome)}</div><div>Responsável RH</div></div></div>` : ''}
+  </main>`;
+}
+function kv(pares) {
+  return `<dl class="kv">${pares.map(([l, v]) => `<dt>${esc(l)}</dt><dd>${esc(v) || '—'}</dd>`).join('')}</dl>`;
+}
+function subDados() {
+  const { adm: a, ficha: d } = R.det;
+  const ad = data(a.data_admissao), exp = EXP[a.exp_tipo];
+  const fimExp = ad && exp ? exp.map(n => fmt(addDias(ad, n - 1))).join(' e ') : '';
+  return `<div class="cols">
+    <section class="card"><h3>Contrato</h3>${kv([['Cargo', a.cargo], ['Data de admissão', dataBR(a.data_admissao)], ['Salário', a.salario ? 'R$ ' + a.salario : ''],
+      ['Experiência', a.exp_tipo], ['Fim da experiência', fimExp], ['Validade do ASO', dataBR(a.aso_validade)], ['Cadastrado', a.origem === 'rh' ? 'Pelo RH' : 'Pelo portal de admissão']])}</section>
+    ${SECOES.map(s => `<section class="card"><h3>${esc(s.t)}</h3>${resumoSecao(s, d)}</section>`).join('')}
+  </div>`;
+}
+function subDocs() {
+  const { ficha: d, docs, eventos } = R.det;
+  const rh = docs.filter(f => f.origem === 'rh').sort((x, y) => String(y.enviado_em).localeCompare(String(x.enviado_em)));
+  const adm = docs.filter(f => f.origem !== 'rh');
+  return `<section class="card"><div class="card-h"><h3>Documentos do RH (${rh.length})</h3><button class="btn ouro sm no-print" data-act="docrh">+ Anexar documento</button></div>
+      ${rh.length ? `<ul class="lista-ev">${rh.map(f => `<li><span class="dt">${esc(String(f.enviado_em || '').slice(0, 10))}</span>
+        <div><b>${esc(f.categoria || 'Documento')}</b>${f.descricao ? `<small>${esc(f.descricao)}</small>` : ''}${linkArq(f)}</div>
+        <button class="x no-print" data-act="rmdocrh" data-id="${esc(f.file_id)}" aria-label="Remover">×</button></li>`).join('')}</ul>`
+        : '<p class="muted">Nenhum documento ainda. Anexe aqui ficha de registro, contrato, holerites, ASO, recibos de férias, TRCT e o que mais precisar guardar.</p>'}
+    </section>
+    <section class="card"><h3>Enviados na admissão (${adm.length})</h3><ul class="chk">${listaDocsAdm(d, adm)}</ul></section>`;
+}
+function subFerias() {
+  const p = pessoa(), per = periodosFerias(p, R.det.eventos);
+  if (!data(p.data_admissao)) return '<section class="card"><p class="muted">Preencha a data de admissão em <b>Contrato</b> para calcular os períodos de férias.</p></section>';
+  return `<section class="card"><div class="card-h"><h3>Períodos de férias</h3>${p.status === 'aprovado' ? '<button class="btn ouro sm no-print" data-act="ferias">+ Registrar férias</button>' : ''}</div>
+    <p class="muted">A cada 12 meses de trabalho o funcionário ganha 30 dias de férias, que precisam começar nos 12 meses seguintes. Depois disso, vencem e são pagas em dobro.</p>
+    <div class="tab-wrap"><table class="tab"><thead><tr><th>Período aquisitivo</th><th>Situação</th><th>Conceder até</th><th>Férias registradas</th></tr></thead><tbody>
+    ${per.slice().reverse().map(f => `<tr><td>${fmtP(f)}<small class="muted" style="display:block">${fmt(f.ini)} a ${fmt(f.fimAq)}</small></td>
+      <td><span class="chip ${SIT_FER[f.sit][1]}">${SIT_FER[f.sit][0]}</span>${f.diasG && f.diasG < 30 ? `<small class="muted" style="display:block">${f.diasG} de 30 dias</small>` : ''}</td>
+      <td>${f.sit === 'gozada' ? '—' : fmt(f.limite)}</td>
+      <td>${f.gozos.length ? f.gozos.map(g => `<div>${dataBR(g.data)} a ${dataBR(g.data_fim)} (${g.dias} dias)${g.descricao ? ` <small class="muted">· ${esc(g.descricao)}</small>` : ''} <button class="lnk2 no-print" data-act="rmev" data-id="${esc(g.id)}">excluir</button>${docsDoEvento(g.id)}</div>`).join('') : '<span class="muted">—</span>'}</td></tr>`).join('')}
+    </tbody></table></div></section>`;
+}
+const docsDoEvento = id => R.det.docs.filter(f => f.evento === id).map(linkArq).join('');
+function subOcorr() {
+  const l = R.det.eventos.filter(e => e.tipo === 'ocorrencia').sort((x, y) => y.data.localeCompare(x.data));
+  return `<section class="card"><div class="card-h"><h3>Ocorrências</h3>${R.det.adm.status === 'aprovado' ? '<button class="btn ouro sm no-print" data-act="ocorrencia">+ Registrar ocorrência</button>' : ''}</div>
+    ${l.length ? `<ul class="lista-ev">${l.map(e => `<li><span class="dt">${dataBR(e.data)}</span>
+      <div><span class="chip ${['Advertência', 'Suspensão', 'Falta'].includes(e.subtipo) ? 's-cor' : e.subtipo === 'Elogio' ? 's-ok' : 's-prog'}">${esc(e.subtipo)}</span>${e.dias ? ` <b>${esc(e.dias)} dia(s)</b>` : ''}
+        ${e.descricao ? `<small>${esc(e.descricao)}</small>` : ''}${docsDoEvento(e.id)}</div>
+      <button class="x no-print" data-act="rmev" data-id="${esc(e.id)}" aria-label="Excluir">×</button></li>`).join('')}</ul>`
+      : '<p class="muted">Nenhuma ocorrência registrada. Use para advertências, suspensões, atestados, faltas e também elogios.</p>'}
+  </section>`;
+}
+function subCargo() {
+  const a = R.det.adm, l = R.det.eventos.filter(e => e.tipo === 'cargo').sort((x, y) => y.data.localeCompare(x.data));
+  return `<section class="card"><div class="card-h"><h3>Cargo e salário</h3>${a.status === 'aprovado' ? '<button class="btn ouro sm no-print" data-act="cargo">+ Registrar alteração</button>' : ''}</div>
+    ${kv([['Cargo atual', a.cargo], ['Salário atual', a.salario ? 'R$ ' + a.salario : '']])}
+    <ul class="lista-ev" style="margin-top:16px">${l.map(e => `<li><span class="dt">${dataBR(e.data)}</span>
+      <div><b>${esc(e.subtipo || 'Alteração')}</b><small>${[e.cargo && 'Cargo: ' + e.cargo, e.salario && 'Salário: R$ ' + e.salario, e.descricao].filter(Boolean).map(esc).join(' · ')}</small></div>
+      <button class="x no-print" data-act="rmev" data-id="${esc(e.id)}" aria-label="Excluir">×</button></li>`).join('')}
+      <li><span class="dt">${dataBR(a.data_admissao) || '—'}</span><div><b>Admissão</b><small>Cargo inicial e salário estão em Contrato.</small></div><span></span></li></ul>
+  </section>`;
+}
+const NOME_EV = { ferias: 'Férias', ocorrencia: 'Ocorrência', cargo: 'Cargo e salário', desligamento: 'Desligamento', reintegracao: 'Reintegração' };
+function subHist() {
+  const a = R.det.adm;
+  const l = R.det.eventos.map(e => ({ d: e.data, t: NOME_EV[e.tipo] + (e.subtipo ? ': ' + e.subtipo : ''),
+    x: [e.data_fim && 'até ' + dataBR(e.data_fim), e.dias && e.dias + ' dia(s)', e.cargo, e.salario && 'R$ ' + e.salario, e.descricao].filter(Boolean).join(' · ') }));
+  if (a.data_admissao) l.push({ d: a.data_admissao, t: 'Admissão', x: a.origem === 'rh' ? 'Cadastrado pelo RH' : 'Pelo portal de admissão' });
+  l.sort((x, y) => String(y.d).localeCompare(String(x.d)));
+  return `<section class="card"><h3>Histórico</h3>${l.length ? `<ul class="lista-ev">${l.map(e => `<li><span class="dt">${dataBR(e.d)}</span><div><b>${esc(e.t)}</b>${e.x ? `<small>${esc(e.x)}</small>` : ''}</div><span></span></li>`).join('')}</ul>` : '<p class="muted">Nada registrado ainda.</p>'}</section>`;
+}
+
+/* ── formulário completo (cadastrar / editar ficha) ── */
+function abrirFormFicha(modo) {
+  const d = modo === 'novo' ? { nacionalidade: 'Brasileira', exp_tipo: '45 + 45 dias' } : { ...R.det.ficha };
+  R.form = { d, mapa: { ...CAMPO, ...(modo === 'novo' ? mapaDe(CONTRATO) : {}) }, modo };
+  rFormFicha(); window.scrollTo(0, 0);
+}
+function rFormFicha() {
+  const { d, modo } = R.form, novo = modo === 'novo';
+  app.innerHTML = topo('Painel do RH', sairBtn) + `<main class="wrap">
+    <p><button class="btn sec sm" data-act="${novo ? 'lista' : 'voltadet'}">← Voltar</button></p>
+    <section class="card"><p class="eyebrow">${novo ? 'Funcionário que já trabalha no posto' : 'Edição pelo RH'}</p><h1>${novo ? 'Cadastrar funcionário' : esc(d.nome || '')}</h1>
+      <p class="muted">Obrigatórios: nome e CPF${novo ? ', cargo e data de admissão' : ''}. O resto pode ser completado depois.${novo ? ' Os documentos você anexa logo em seguida, na aba Documentos.' : ''}</p></section>
+    ${novo ? `<section class="card"><h2>Contrato</h2>${formHTML(CONTRATO, d)}</section>` : ''}
+    ${SECOES.map(s => `<section class="card"><h2>${esc(s.t)}</h2>${formHTML(s.campos, d)}</section>`).join('')}
+    <div class="nav"><button class="btn sec" data-act="${novo ? 'lista' : 'voltadet'}">Cancelar</button><button class="btn pri" data-act="salvarficha">${novo ? 'Cadastrar funcionário' : 'Salvar alterações'}</button></div>
+  </main>`;
+}
+const pega = (defs, d) => Object.fromEntries(defs.filter(f => f.k).map(f => [f.k, f.show && !f.show(d) ? '' : String(d[f.k] || '').trim()]));
+
+/* ═══════════ RELATÓRIOS ═══════════ */
+const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+const RS = {
+  ativos: { l: 'Funcionários ativos', f: a => a.status === 'aprovado' },
+  desligados: { l: 'Desligados', f: a => a.status === 'desligado' },
+  admissao: { l: 'Em admissão', f: a => EM_ADMISSAO.includes(a.status) },
+  todos: { l: 'Todos (menos cancelados)', f: a => a.status !== 'cancelado' }
+};
+const col = (k, l) => ({ k, l });
+const REL = {
+  quadro: { l: 'Quadro de funcionários', cols: [col('nome', 'Nome'), col('cargo', 'Cargo'), col('data_admissao', 'Admissão'), col('tempo', 'Tempo de casa'), col('salario', 'Salário (R$)'), col('celular', 'Celular')] },
+  aniver: { l: 'Aniversariantes', cols: [col('aniv', 'Dia'), col('nome', 'Nome'), col('cargo', 'Cargo'), col('idade', 'Completa'), col('celular', 'Celular')] },
+  contatos: { l: 'Telefones e e-mails', cols: [col('nome', 'Nome'), col('cargo', 'Cargo'), col('celular', 'Celular'), col('celular_whats', 'WhatsApp'), col('tel_recado', 'Recado'), col('email', 'E-mail')] },
+  emergencia: { l: 'Contatos de emergência', cols: [col('nome', 'Nome'), col('celular', 'Celular'), col('emerg_nome', 'Contato'), col('emerg_parentesco', 'Parentesco'), col('emerg_tel', 'Telefone do contato')] },
+  ferias: { l: 'Férias', cols: [col('nome', 'Nome'), col('cargo', 'Cargo'), col('data_admissao', 'Admissão'), col('fer_sit', 'Situação'), col('fer_per', 'Período'), col('fer_lim', 'Conceder até')] },
+  vencimentos: { l: 'Vencimentos (experiência, ASO, CNH)', cols: [col('nome', 'Nome'), col('cargo', 'Cargo'), col('exp_fim', 'Fim da experiência'), col('aso_validade', 'ASO até'), col('cnh_validade', 'CNH até')] },
+  enderecos: { l: 'Endereços', cols: [col('nome', 'Nome'), col('endereco', 'Endereço'), col('bairro', 'Bairro'), col('cidade', 'Cidade'), col('uf', 'UF'), col('cep', 'CEP')] },
+  documentos: { l: 'Documentos (CPF, PIS, RG, CNH)', cols: [col('nome', 'Nome'), col('cpf', 'CPF'), col('pis', 'PIS'), col('rg', 'RG'), col('rg_orgao', 'Órgão'), col('rg_uf', 'UF'), col('cnh', 'CNH'), col('cnh_categoria', 'Cat.'), col('cnh_validade', 'Validade CNH')] },
+  bancarios: { l: 'Dados bancários', cols: [col('nome', 'Nome'), col('cpf', 'CPF'), col('banco', 'Banco'), col('conta_tipo', 'Tipo'), col('agencia', 'Agência'), col('conta', 'Conta'), col('pix', 'PIX')] },
+  uniformes: { l: 'Uniformes', cols: [col('nome', 'Nome'), col('cargo', 'Cargo'), col('camisa', 'Camisa'), col('calca', 'Calça'), col('calcado', 'Calçado')] },
+  desligamentos: { l: 'Desligamentos', st: 'desligados', cols: [col('nome', 'Nome'), col('cargo', 'Cargo'), col('data_admissao', 'Admissão'), col('deslig_data', 'Desligamento'), col('deslig_tipo', 'Tipo'), col('deslig_aviso', 'Aviso prévio'), col('deslig_recontratar', 'Recontratar?'), col('deslig_motivo', 'Motivo')] },
+  geral: { l: 'Ficha completa (todos os campos)', cols: [col('nome', 'Nome'), col('status', 'Situação'), col('cargo', 'Cargo'), col('data_admissao', 'Admissão'), col('salario', 'Salário (R$)')]
+    .concat(CAMPOS.filter(f => f.k !== 'nome').map(f => col(f.k, f.l))) }
+};
+
+async function carregarRel() {
+  R.rel = R.rel || { tipo: 'quadro', st: 'ativos', mes: new Date().getMonth() + 1, busca: '' };
+  carregando('Montando relatório…', 'Painel do RH');
+  try { const r = await api('relatorio', { senha: R.senha }); R.relDados = r.itens || []; R.eventos = r.eventos || R.eventos; rRel(); window.scrollTo(0, 0); }
+  catch (e) { rLista(); erroRH(e); }
+}
+function feriasProx(r) {
+  const per = periodosFerias(r, R.eventos);
+  return per.find(f => f.sit === 'vencida') || per.find(f => f.sit === 'pendente') || per.find(f => f.sit === 'aquisicao');
+}
+function valor(r, k) {
+  const v = r[k] || '', d = data(r.nascimento);
+  if (k === 'aniv') return d ? String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') : '';
+  if (k === 'idade') return d ? (new Date().getFullYear() - d.getFullYear()) + ' anos' : '';
+  if (k === 'endereco') return [r.logradouro, r.numero, r.complemento].filter(Boolean).join(', ');
+  if (k === 'status') return (STATUS[r.status] || { l: r.status }).l;
+  if (k === 'tempo') return tempoCasa(r.data_admissao, r.status === 'desligado' ? data(r.deslig_data) : null);
+  if (k === 'exp_fim') { const ad = data(r.data_admissao), e = EXP[r.exp_tipo]; return ad && e ? fmt(addDias(ad, e[e.length - 1] - 1)) : ''; }
+  if (k.startsWith('fer_')) {
+    const f = feriasProx(r); if (!f) return '';
+    return k === 'fer_sit' ? (f.sit === 'aquisicao' ? 'Em dia' : SIT_FER[f.sit][0]) : k === 'fer_per' ? fmtP(f) : f.sit === 'aquisicao' ? '' : fmt(f.limite);
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return dataBR(v);
+  return v;
+}
+const ehHoje = r => { const d = data(r.nascimento), h = new Date(); return R.rel.tipo === 'aniver' && d && d.getDate() === h.getDate() && d.getMonth() === h.getMonth(); };
+function relLinhas() {
+  const s = R.rel, b = s.busca.trim().toLowerCase();
+  let l = (R.relDados || []).filter(RS[s.st].f).filter(r => !b || Object.values(r).join(' ').toLowerCase().includes(b));
+  if (s.tipo === 'aniver') {
+    l = l.filter(r => data(r.nascimento) && (!s.mes || data(r.nascimento).getMonth() + 1 === s.mes));
+    const ord = r => { const d = data(r.nascimento); return d.getMonth() * 100 + d.getDate(); };
+    return l.sort((a, b) => ord(a) - ord(b));
+  }
+  return l.sort(nomeSort);
+}
+function celula(r, x) {
+  const v = valor(r, x.k);
+  if (!v) return '<span class="muted">—</span>';
+  if (x.k === 'celular' && dig(v).length >= 10) return `<a href="https://wa.me/55${dig(v)}" target="_blank" rel="noopener">${esc(v)}</a>`;
+  if (x.k === 'email') return `<a href="mailto:${esc(v)}">${esc(v)}</a>`;
+  if (x.k === 'aniv' && ehHoje(r)) return esc(v) + '<span class="tag-hoje">HOJE</span>';
+  if (x.k === 'fer_sit') return `<span class="chip ${v === 'Vencidas' ? 's-cor' : v === 'A conceder' ? 's-env' : 's-ok'}">${esc(v)}</span>`;
+  return esc(v);
+}
+function tabelaHTML(def, l) {
+  if (!l.length) return '<div class="vazio">Ninguém encontrado com esses filtros.</div>';
+  return `<table class="tab"><thead><tr>${def.cols.map(x => `<th>${esc(x.l)}</th>`).join('')}</tr></thead>
+    <tbody>${l.map(r => `<tr${ehHoje(r) ? ' class="hoje"' : ''}>${def.cols.map(x => `<td>${celula(r, x)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+function resumoUniformes(l) {
+  const conta = k => { const m = {}; l.forEach(r => { if (r[k]) m[r[k]] = (m[r[k]] || 0) + 1; });
+    return Object.entries(m).sort((a, b) => CAMPO[k].op.indexOf(a[0]) - CAMPO[k].op.indexOf(b[0])); };
+  return `<section class="card"><h3>Total por tamanho</h3><div class="cols3">${['camisa', 'calca', 'calcado'].map(k =>
+    `<div><b>${esc(CAMPO[k].l)}</b><ul class="tam">${conta(k).map(([t, n]) => `<li><span>${esc(t)}</span><b>${n}</b></li>`).join('') || '<li class="muted">—</li>'}</ul></div>`).join('')}</div></section>`;
+}
+const titRel = () => REL[R.rel.tipo].l + (R.rel.tipo === 'aniver' ? ' – ' + (R.rel.mes ? MESES[R.rel.mes - 1] : 'todos os meses') : '');
+function rRel() {
+  const s = R.rel, def = REL[s.tipo], l = relLinhas();
+  app.innerHTML = topo('Painel do RH', sairBtn) + `<main class="wrap largo">
+    <p class="no-print"><button class="btn sec sm" data-act="lista">← Voltar</button></p>
+    <section class="card no-print"><h2>Relatórios</h2>
+      <div class="grid">
+        <div class="fld h"><label for="rel_tipo">Relatório</label><select id="rel_tipo">${Object.entries(REL).map(([k, v]) => `<option value="${k}"${k === s.tipo ? ' selected' : ''}>${esc(v.l)}</option>`).join('')}</select></div>
+        <div class="fld q"><label for="rel_st">Quem entra</label><select id="rel_st">${Object.entries(RS).map(([k, v]) => `<option value="${k}"${k === s.st ? ' selected' : ''}>${esc(v.l)}</option>`).join('')}</select></div>
+        <div class="fld q"${s.tipo !== 'aniver' ? ' hidden' : ''}><label for="rel_mes">Mês</label><select id="rel_mes"><option value="0">Todos os meses</option>${MESES.map((m, i) => `<option value="${i + 1}"${i + 1 === s.mes ? ' selected' : ''}>${m}</option>`).join('')}</select></div>
+        <div class="fld"><label for="rel_busca">Buscar</label><input id="rel_busca" type="search" placeholder="Nome, cargo, cidade…" value="${esc(s.busca)}"></div>
+      </div>
+      <div class="det-acoes"><button class="btn pri" data-act="relcsv">Baixar para Excel</button><button class="btn sec" data-act="imprimir">Imprimir / salvar PDF</button><button class="btn sec" data-act="relatualizar">Atualizar dados</button></div>
+    </section>
+    <div class="only-print"><h2>${esc(titRel())}</h2><p>${esc(CONFIG.EMPRESA)} · gerado em ${new Date().toLocaleDateString('pt-BR')}</p></div>
+    ${s.tipo === 'uniformes' ? resumoUniformes(l) : ''}
+    <section class="card"><h3 class="no-print">${esc(titRel())}</h3><p class="muted" id="rel_n">${l.length} pessoa(s)</p>
+      <div class="tab-wrap" id="rel_tab">${tabelaHTML(def, l)}</div></section>
+  </main>`;
+}
+function relCSV() {
+  const def = REL[R.rel.tipo], l = relLinhas();
+  if (!l.length) { toast('Nada para exportar com esses filtros', 'erro'); return; }
+  const q = v => { v = String(v ?? ''); if (/^0\d+$/.test(v)) v = '="' + v + '"'; return '"' + v.replace(/"/g, '""') + '"'; };
+  const txt = '﻿' + [def.cols.map(x => q(x.l)).join(';'), ...l.map(r => def.cols.map(x => q(valor(r, x.k))).join(';'))].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([txt], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'Relatorio - ' + titRel().replace(/[\\/:*?"<>|]/g, '') + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+/* ═══════════ COMUNICADOS ═══════════ */
+const ASSIN = '\n\nRH – Posto Trevo';
+const mesAnterior = () => MESES[(new Date().getMonth() + 11) % 12].toLowerCase();
+const MODELOS = {
+  holerite: () => ({ t: 'Assinatura de holerites', m: `Olá, {nome}! Os holerites de ${mesAnterior()} já estão disponíveis para assinatura.\nPasse no escritório do posto até o dia __/__, no horário de __h às __h.\nObrigado!` + ASSIN }),
+  reuniao: () => ({ t: 'Reunião com a equipe', m: 'Olá, {nome}! Teremos uma reunião com toda a equipe no dia __/__, às __h, no posto.\nSua presença é muito importante.' + ASSIN }),
+  ferias: () => ({ t: 'Aviso de férias', m: 'Olá, {nome}! Passe no escritório do RH até o dia __/__ para conferir e assinar o aviso de férias.' + ASSIN }),
+  livre: () => ({ t: '', m: 'Olá, {nome}! ' + ASSIN })
+};
+const telWhats = r => r.celular_whats !== 'Não' && [10, 11].includes(dig(r.celular).length);
+const personaliza = (m, nome) => String(m).replace(/\{nome\}/g, primeiro(nome) || 'pessoal');
+const linkWa = (r, m) => `https://wa.me/55${dig(r.celular)}?text=${encodeURIComponent(personaliza(m, r.nome))}`;
+
+async function carregarCom(abrirId) {
+  R.com = R.com || { form: { ...MODELOS.holerite(), cargos: [], email: true }, atual: null };
+  if (abrirId !== undefined) R.com.atual = abrirId;
+  carregando('Carregando comunicados…', 'Painel do RH');
+  try {
+    const [a, b] = await Promise.all([api('relatorio', { senha: R.senha }), api('comunicados', { senha: R.senha })]);
+    R.com.dados = a.itens || []; R.com.lista = b.itens || [];
+    rCom(); window.scrollTo(0, 0);
+  } catch (e) { rLista(); erroRH(e); }
+}
+const aprovados = () => (R.com.dados || []).filter(a => a.status === 'aprovado').sort(nomeSort);
+const selecionados = () => aprovados().filter(a => !R.com.form.cargos.length || R.com.form.cargos.includes(a.cargo || 'Sem cargo'));
+function resumoCom() {
+  const l = selecionados();
+  const w = l.filter(telWhats).length, e = l.filter(a => /@/.test(a.email || '')).length;
+  return `${l.length} funcionário(s) · ${w} com WhatsApp · ${e} com e-mail`;
+}
+function rCom() {
+  if (R.com.atual) return rEnvio();
+  const f = R.com.form, ap = aprovados();
+  const cargos = [...new Set(ap.map(a => a.cargo || 'Sem cargo'))].sort();
+  const prev = selecionados()[0];
+  app.innerHTML = topo('Painel do RH', sairBtn) + `<main class="wrap largo">
+    <p><button class="btn sec sm" data-act="lista">← Voltar</button></p>
+    <section class="card"><h2>Novo comunicado</h2>
+      <p class="muted">Vai para os funcionários <b>ativos</b>. No WhatsApp, cada conversa abre com a mensagem pronta e personalizada, e você só aperta enviar. O e-mail sai automático.</p>
+      ${!ap.length ? '<div class="aviso">Ainda não há funcionários ativos. Cadastre ou aprove funcionários para poder enviar comunicados.</div>' : ''}
+      <div class="modelos"><span class="muted" style="align-self:center">Modelos:</span>
+        <button class="btn sec sm" data-act="commodelo" data-m="holerite">Holerites</button>
+        <button class="btn sec sm" data-act="commodelo" data-m="reuniao">Reunião</button>
+        <button class="btn sec sm" data-act="commodelo" data-m="ferias">Férias</button>
+        <button class="btn sec sm" data-act="commodelo" data-m="livre">Em branco</button></div>
+      <div class="grid">
+        <div class="fld"><label for="com_tit">Título <span class="req">*</span></label><input id="com_tit" maxlength="100" value="${esc(f.t)}" placeholder="Ex.: Assinatura de holerites"></div>
+        <div class="fld"><label for="com_msg">Mensagem <span class="req">*</span></label><textarea id="com_msg" maxlength="1500" style="min-height:160px">${esc(f.m)}</textarea>
+          <small>Troque os "__" pelas datas e horários. <b>{nome}</b> vira o primeiro nome de cada funcionário.</small></div>
+        <div class="fld"><label>Para quem</label>
+          <div class="chips"><label><input type="checkbox" data-cargo=""${!f.cargos.length ? ' checked' : ''}>Todos os ativos</label>
+          ${cargos.map(c => `<label><input type="checkbox" data-cargo="${esc(c)}"${f.cargos.includes(c) ? ' checked' : ''}>${esc(c)}</label>`).join('')}</div>
+          <p class="resumo-env" id="com_res">${resumoCom()}</p></div>
+        <div class="fld"><label class="aceite" style="margin:0"><input type="checkbox" id="com_email"${f.email ? ' checked' : ''}><span>Enviar também por e-mail para quem cadastrou e-mail</span></label></div>
+        <div class="fld"><label>Prévia${prev ? ' – como ' + esc(primeiro(prev.nome)) + ' vai receber' : ''}</label><div class="bolha" id="com_prev">${esc(personaliza(f.m, prev ? prev.nome : ''))}</div></div>
+      </div>
+      <div class="det-acoes"><button class="btn pri" data-act="comcriar"${!ap.length ? ' disabled' : ''}>Criar comunicado e começar o envio</button></div>
+    </section>
+    <section class="card"><h2>Comunicados anteriores</h2>
+      ${R.com.lista.length ? `<div class="itens" style="margin-top:12px">${R.com.lista.map(c => {
+        const t = c.destinatarios ? c.destinatarios.split(',').length : 0, w = c.whats_enviados ? c.whats_enviados.split(',').length : 0, e = c.email_enviados ? c.email_enviados.split(',').length : 0;
+        return `<div class="item" data-act="comabrir" data-id="${esc(c.codigo)}"><div><div class="nome">${esc(c.titulo)}</div>
+          <div class="meta"><span>${esc(c.quando)}</span><span>${esc(c.publico)}</span></div></div>
+          <div class="acoes"><span class="chip ${w >= t ? 's-ok' : 's-env'}">WhatsApp ${w}/${t}</span>${e ? `<span class="chip s-prog">E-mail ${e}</span>` : ''}</div><div></div></div>`; }).join('')}</div>`
+        : '<p class="muted">Nenhum comunicado enviado ainda.</p>'}
+    </section></main>`;
+}
+function atualizarPrevia() {
+  const f = R.com.form, prev = selecionados()[0];
+  $('#com_res').textContent = resumoCom();
+  $('#com_prev').textContent = personaliza(f.m, prev ? prev.nome : '');
+}
+function comAtual() { return R.com.lista.find(c => c.codigo === R.com.atual); }
+function rEnvio() {
+  const c = comAtual(); if (!c) { R.com.atual = null; return rCom(); }
+  const por = Object.fromEntries((R.com.dados || []).map(a => [a.codigo, a]));
+  const dest = (c.destinatarios ? c.destinatarios.split(',') : []).map(k => por[k] || { codigo: k, nome: '(removido)' });
+  const env = new Set(c.whats_enviados ? c.whats_enviados.split(',') : []), em = new Set(c.email_enviados ? c.email_enviados.split(',') : []);
+  const comW = dest.filter(telWhats), feitos = comW.filter(r => env.has(r.codigo)).length, prox = comW.find(r => !env.has(r.codigo));
+  app.innerHTML = topo('Painel do RH', sairBtn) + `<main class="wrap">
+    <p><button class="btn sec sm" data-act="comvoltar">← Voltar para comunicados</button></p>
+    <section class="card"><p class="eyebrow">${esc(c.quando)} · ${esc(c.publico)}</p><h1>${esc(c.titulo)}</h1>
+      <div class="bolha" style="margin-top:14px">${esc(personaliza(c.mensagem, ''))}</div>
+      <div class="barra-prog"><i style="width:${comW.length ? Math.round(feitos / comW.length * 100) : 100}%"></i></div>
+      <p><b>${feitos} de ${comW.length}</b> enviados no WhatsApp${em.size ? ` · e-mail enviado para <b>${em.size}</b>` : ''}</p>
+      <div class="det-acoes">${prox ? `<button class="btn wa" data-act="waproximo">Enviar para ${esc(primeiro(prox.nome))} no WhatsApp</button>` : '<span class="chip s-ok">WhatsApp concluído</span>'}
+        <button class="btn sec" data-act="comcopiar">Copiar mensagem (para grupo)</button></div>
+    </section>
+    <section class="card"><h3>Destinatários (${dest.length})</h3><div style="margin-top:6px">${dest.map(r => {
+      const ok = env.has(r.codigo);
+      return `<div class="dest${ok ? ' ok' : ''}"><div><span class="nome"><b>${esc(r.nome)}</b></span><small>${esc(r.cargo || '')}${r.celular ? ' · ' + esc(r.celular) : ''}${em.has(r.codigo) ? ' · e-mail enviado' : ''}</small></div>
+        <div class="lado">${!telWhats(r) ? `<span class="chip s-can">Sem WhatsApp</span>${r.celular ? `<a class="btn sec sm" href="tel:${dig(r.celular)}">Ligar</a>` : ''}`
+          : ok ? `<span class="chip s-ok">Enviado</span><button class="lnk2" data-act="wa" data-c="${esc(r.codigo)}">reenviar</button><button class="lnk2" data-act="wadesfaz" data-c="${esc(r.codigo)}">desmarcar</button>`
+          : `<button class="btn wa sm" data-act="wa" data-c="${esc(r.codigo)}">Enviar no WhatsApp</button>`}</div></div>`; }).join('')}</div></section></main>`;
+}
+async function marcar(codigo, enviado) {
+  const c = comAtual();
+  try { const r = await api('marcarWhats', { senha: R.senha, id: c.codigo, codigo, enviado }); c.whats_enviados = r.whats_enviados; rEnvio(); }
+  catch (e) { erroRH(e); }
+}
+function abrirWa(codigo) {
+  const c = comAtual(), r = (R.com.dados || []).find(a => a.codigo === codigo);
+  if (!c || !r) return;
+  window.open(linkWa(r, c.mensagem), '_blank', 'noopener');
+  marcar(codigo, true);
+}
+
+/* ═══════════ AÇÕES DO RH ═══════════ */
+const hojeISO = () => iso(hoje0());
+const ACOES_RH = {
+  sair() { R.senha = ''; try { sessionStorage.removeItem('rh_s'); } catch (e) {} telaLogin(); },
+  aba(b) { R.aba = b.dataset.a; R.busca = ''; rLista(); },
+  filtro(b) { if (R.aba === 'func') R.filtro = b.dataset.f; else R.filtroAdm = b.dataset.f; rLista(); },
+  nova: modalNova,
+  cadastrar: () => abrirFormFicha('novo'),
+  fechar() { fecharModal(); },
+  copiar: b => copiar(b.dataset.v),
+  link(b, e) { e.stopPropagation(); const a = R.itens.find(x => x.codigo === b.dataset.c) || R.det?.adm; a && modalLink(a); },
+  abrir: b => abrirDet(b.dataset.c, 'dados'),
+  lista() { R.det = null; carregarLista(true); },
+  voltadet: () => abrirDet(R.det.adm.codigo, R.sub),
+  sub(b) { R.sub = b.dataset.s; rFunc(); },
+  imprimir() {
+    if (R.det && ['aprovado', 'desligado'].includes(R.det.adm.status) && R.sub !== 'dados') { R.sub = 'dados'; rFunc(); }
+    setTimeout(() => window.print(), 50);
+  },
+
+  /* admissão */
+  aprovar() {
+    const { adm: a, ficha: d, docs } = R.det;
+    const fal = docsVisiveis(d).filter(x => x.req && !docs.some(f => f.tipo === x.k));
+    modalForm({ titulo: 'Aprovar e efetivar', defs: CONTRATO,
+      texto: 'O colaborador passa para a lista de <b>funcionários ativos</b>. Confirme os dados do contrato:',
+      extra: fal.length ? `<div class="aviso">Faltam documentos obrigatórios: ${esc(fal.map(x => x.l).join(', '))}.</div>` : '',
+      d: { cargo: a.cargo, data_admissao: a.data_prevista || hojeISO(), exp_tipo: '45 + 45 dias' }, ok: 'Aprovar',
+      async onOk(dd) {
+        await api('definirStatus', { senha: R.senha, codigo: a.codigo, status: 'aprovado' });
+        await api('atualizarContrato', { senha: R.senha, codigo: a.codigo, contrato: pega(CONTRATO, dd) });
+        toast('Cadastro aprovado. Agora é funcionário ativo.'); await recarregarDet('dados');
+      } });
+  },
+  correcao() {
+    const m = abrirModal(`<h2>Pedir correção</h2><p class="muted">O colaborador verá esta mensagem ao abrir o link e poderá editar a ficha de novo.</p>
+      <div class="fld"><label for="obs">O que precisa ajustar?</label><textarea id="obs" maxlength="500" placeholder="Ex.: a foto do RG ficou cortada, envie de novo o verso."></textarea></div>
+      <div class="modal-acoes"><button class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri" id="okobs">Enviar pedido</button></div>`);
+    m.querySelector('#okobs').onclick = async ev => {
+      const obs = $('#obs').value.trim(); if (!obs) { toast('Escreva o que precisa ajustar', 'erro'); return; }
+      ev.target.disabled = true;
+      try { await mudarStatus('correcao', obs); modalLink(R.det.adm, obs); } catch (e) { ev.target.disabled = false; erroRH(e); }
+    };
+  },
+  async cancelar(b) {
+    if (!confirm('Cancelar esta admissão? O link do colaborador deixa de funcionar. Os dados continuam na planilha.')) return;
+    b.disabled = true; try { await mudarStatus('cancelado'); } catch (e) { b.disabled = false; erroRH(e); }
+  },
+  async reativar(b) { b.disabled = true; try { await mudarStatus('preenchendo'); toast('Link reativado'); } catch (e) { b.disabled = false; erroRH(e); } },
+
+  /* funcionário */
+  editficha: () => abrirFormFicha('editar'),
+  async salvarficha(b) {
+    const { d, modo } = R.form, novo = modo === 'novo';
+    const defs = [...(novo ? CONTRATO : []), ...CAMPOS];
+    const obrig = new Set(['nome', 'cpf', ...(novo ? ['cargo', 'data_admissao'] : [])]);
+    if (marcarErros(errosCampos(defs, d, obrig))) return;
+    b.disabled = true; b.textContent = 'Salvando…';
+    try {
+      const dados = pega(CAMPOS, d);
+      if (novo) {
+        const r = await api('cadastrarFuncionario', { senha: R.senha, dados, contrato: pega(CONTRATO, d) });
+        R.form = null; toast('Funcionário cadastrado. Agora anexe os documentos.');
+        await abrirDet(r.codigo, 'docs');
+      } else {
+        await api('salvarFichaRH', { senha: R.senha, codigo: R.det.adm.codigo, dados });
+        R.form = null; toast('Ficha atualizada'); await abrirDet(R.det.adm.codigo, 'dados');
+      }
+    } catch (e) { b.disabled = false; b.textContent = novo ? 'Cadastrar funcionário' : 'Salvar alterações'; erroRH(e); }
+  },
+  contrato() {
+    const a = R.det.adm;
+    modalForm({ titulo: 'Contrato', defs: CONTRATO, d: pega(CONTRATO, a),
+      texto: 'Para promoções e reajustes, prefira <b>Cargo e salário → Registrar alteração</b>, que guarda o histórico.',
+      async onOk(dd) { await api('atualizarContrato', { senha: R.senha, codigo: a.codigo, contrato: pega(CONTRATO, dd) }); toast('Contrato atualizado'); await recarregarDet(); } });
+  },
+  desligar() {
+    const a = R.det.adm;
+    modalForm({ titulo: 'Registrar desligamento', defs: DESLIG, d: { deslig_data: hojeISO() }, ok: 'Confirmar desligamento',
+      texto: `<b>${esc(pessoa().nome)}</b> sai da lista de ativos e dos comunicados. A ficha, os documentos e o histórico continuam guardados.`,
+      arquivo: 'Anexar TRCT, aviso prévio ou exame demissional (opcional)',
+      async onOk(dd, fs) {
+        await api('desligar', { senha: R.senha, codigo: a.codigo, dados: pega(DESLIG, dd) });
+        if (fs.length) await subirRH(a.codigo, fs, { categoria: 'TRCT / rescisão', descricao: 'Desligamento em ' + dataBR(dd.deslig_data) });
+        toast('Desligamento registrado'); await recarregarDet('dados');
+      } });
+  },
+  async reintegrar(b) {
+    if (!confirm('Reintegrar este funcionário? Ele volta para a lista de ativos. O desligamento anterior fica no histórico.')) return;
+    b.disabled = true;
+    try { await api('reintegrar', { senha: R.senha, codigo: R.det.adm.codigo }); toast('Funcionário reintegrado'); await recarregarDet('dados'); }
+    catch (e) { b.disabled = false; erroRH(e); }
+  },
+  docrh() {
+    const a = R.det.adm;
+    modalForm({ titulo: 'Anexar documento', ok: 'Anexar', arquivo: 'Arquivo(s) *',
+      defs: [{ k: 'doc_cat', l: 'Tipo de documento', t: 'select', op: CATEG_RH, req: 1 }, { k: 'doc_desc', l: 'Descrição', ph: 'Ex.: Holerite de setembro/2026', max: 200 }],
+      d: {}, async onOk(dd, fs) {
+        if (!fs.length) throw new Error('Escolha pelo menos um arquivo.');
+        const n = await subirRH(a.codigo, fs, { categoria: dd.doc_cat, descricao: dd.doc_desc || '' });
+        if (n) toast(`${n} arquivo(s) anexado(s)`);
+        await recarregarDet('docs');
+      } });
+  },
+  async rmdocrh(b) {
+    if (!confirm('Remover este documento? O arquivo vai para a lixeira do Google Drive.')) return;
+    b.disabled = true;
+    try { await api('removerDocRH', { senha: R.senha, codigo: R.det.adm.codigo, file_id: b.dataset.id }); await recarregarDet('docs'); }
+    catch (e) { b.disabled = false; erroRH(e); }
+  },
+  ferias() {
+    const p = pessoa(), per = periodosFerias(p, R.det.eventos).filter(f => f.sit !== 'gozada');
+    if (!per.length) { toast('Preencha a data de admissão em Contrato primeiro', 'erro'); return; }
+    const rot = f => `${fmtP(f)} – ${SIT_FER[f.sit][0].toLowerCase()}${f.diasG ? ` (${30 - f.diasG} dias restantes)` : ''}`;
+    const pad = per.find(f => f.sit === 'vencida') || per.find(f => f.sit === 'pendente') || per[0];
+    modalForm({ titulo: 'Registrar férias', arquivo: 'Anexar aviso ou recibo de férias (opcional)',
+      defs: [{ k: 'ev_per', l: 'Período aquisitivo', t: 'select', op: per.map(rot), req: 1 },
+             { k: 'ev_data', l: 'Início das férias', t: 'date', req: 1, w: 'h', v: V.data }, { k: 'ev_fim', l: 'Último dia', t: 'date', req: 1, w: 'h', v: V.data, hint: 'Calculado sozinho ao informar o início. Pode alterar se as férias forem divididas.' },
+             { k: 'ev_desc', l: 'Observação', ph: 'Ex.: vendeu 10 dias (abono)', max: 200 }],
+      d: { ev_per: rot(pad) },
+      aoMudar(k, dd) {
+        const f = per.find(x => rot(x) === dd.ev_per), ini = data(dd.ev_data);
+        if ((k === 'ev_data' || k === 'ev_per') && ini && f) {
+          dd.ev_fim = iso(addDias(ini, Math.max(1, 30 - f.diasG) - 1));
+          const el = $('#f_ev_fim'); if (el) el.value = dd.ev_fim;
+        }
+        const fim = data(dd.ev_fim), dica = document.querySelector('[data-wrap="ev_fim"] small');
+        if (dica && ini && fim && fim >= ini) dica.textContent = `${diasAte(fim) - diasAte(ini) + 1} dias de férias. Pode alterar se forem divididas.`;
+      },
+      validar: dd => data(dd.ev_fim) < data(dd.ev_data) ? 'O último dia precisa ser depois do início.' : '',
+      async onOk(dd, fs) {
+        const f = per.find(x => rot(x) === dd.ev_per), dias = diasAte(data(dd.ev_fim)) - diasAte(data(dd.ev_data)) + 1;
+        const r = await api('addEvento', { senha: R.senha, codigo: p.codigo, tipo: 'ferias', evento: { periodo: String(f.k), data: dd.ev_data, data_fim: dd.ev_fim, dias: String(dias), descricao: dd.ev_desc } });
+        if (fs.length) await subirRH(p.codigo, fs, { categoria: 'Recibo de férias', descricao: `Férias ${dataBR(dd.ev_data)} a ${dataBR(dd.ev_fim)}`, evento: r.id });
+        toast(`Férias registradas (${dias} dias)`); await recarregarDet('ferias');
+      } });
+  },
+  ocorrencia() {
+    const p = pessoa(), comDias = d => ['Suspensão', 'Atestado médico', 'Falta'].includes(d.ev_sub);
+    modalForm({ titulo: 'Registrar ocorrência', arquivo: 'Anexar documento (advertência assinada, atestado…)',
+      defs: [{ k: 'ev_sub', l: 'Tipo', t: 'select', op: OCORRENCIAS, req: 1, w: 'h' }, { k: 'ev_data', l: 'Data', t: 'date', req: 1, w: 'h', v: V.data },
+             { k: 'ev_dias', l: 'Quantos dias?', w: 'h', mask: '000', show: comDias }, { k: 'ev_desc', l: 'Descrição', t: 'textarea' }],
+      d: { ev_data: hojeISO() },
+      async onOk(dd, fs) {
+        const r = await api('addEvento', { senha: R.senha, codigo: p.codigo, tipo: 'ocorrencia', evento: { subtipo: dd.ev_sub, data: dd.ev_data, dias: comDias(dd) ? dd.ev_dias : '', descricao: dd.ev_desc } });
+        const cat = ['Advertência', 'Suspensão'].includes(dd.ev_sub) ? 'Advertência / suspensão' : dd.ev_sub === 'Atestado médico' ? 'Atestado' : 'Outros';
+        if (fs.length) await subirRH(p.codigo, fs, { categoria: cat, descricao: `${dd.ev_sub} em ${dataBR(dd.ev_data)}`, evento: r.id });
+        toast('Ocorrência registrada'); await recarregarDet('ocorr');
+      } });
+  },
+  cargo() {
+    const a = R.det.adm;
+    modalForm({ titulo: 'Registrar alteração de cargo ou salário',
+      defs: [{ k: 'ev_data', l: 'A partir de', t: 'date', req: 1, w: 'h', v: V.data }, { k: 'ev_sub', l: 'Motivo', t: 'select', req: 1, w: 'h', op: ['Promoção', 'Reajuste salarial', 'Dissídio', 'Mudança de função', 'Outro'] },
+             { k: 'ev_cargo', l: 'Novo cargo', w: 'h', list: CARGOS, ph: a.cargo || '', max: 60 }, { k: 'ev_sal', l: 'Novo salário (R$)', w: 'h', ph: a.salario || 'Ex.: 2.300,00', max: 20 },
+             { k: 'ev_desc', l: 'Observação', max: 200 }],
+      d: { ev_data: hojeISO() }, validar: dd => !dd.ev_cargo && !dd.ev_sal ? 'Informe o novo cargo ou o novo salário.' : '',
+      async onOk(dd) {
+        await api('addEvento', { senha: R.senha, codigo: a.codigo, tipo: 'cargo', evento: { subtipo: dd.ev_sub, data: dd.ev_data, cargo: dd.ev_cargo, salario: dd.ev_sal, descricao: dd.ev_desc } });
+        toast('Alteração registrada'); await recarregarDet('cargo');
+      } });
+  },
+  async rmev(b) {
+    if (!confirm('Excluir este registro? Os arquivos anexados continuam na aba Documentos.')) return;
+    b.disabled = true;
+    try { await api('removerEvento', { senha: R.senha, codigo: R.det.adm.codigo, id: b.dataset.id }); await recarregarDet(); }
+    catch (e) { b.disabled = false; erroRH(e); }
+  },
+
+  /* relatórios */
+  relatorios: carregarRel,
+  relatualizar: carregarRel,
+  relcsv: relCSV,
+
+  /* comunicados */
+  comunicados: () => carregarCom(null),
+  comabrir: b => { R.com.atual = b.dataset.id; rCom(); window.scrollTo(0, 0); },
+  comvoltar: () => carregarCom(null),
+  commodelo(b) {
+    const f = R.com.form, m = MODELOS[b.dataset.m]();
+    if (f.m.trim() && !Object.values(MODELOS).some(x => x().m === f.m) && !confirm('Trocar a mensagem atual pelo modelo?')) return;
+    f.t = m.t; f.m = m.m; rCom();
+  },
+  async comcriar(b) {
+    const f = R.com.form, l = selecionados();
+    if (!f.t.trim() || !f.m.trim()) { toast('Preencha o título e a mensagem', 'erro'); return; }
+    if (/__/.test(f.m) && !confirm('A mensagem ainda tem "__" para preencher. Criar mesmo assim?')) return;
+    if (!l.length) { toast('Nenhum funcionário selecionado', 'erro'); return; }
+    if (!confirm(`Criar o comunicado para ${l.length} funcionário(s)?${f.email ? ' Os e-mails saem na hora.' : ''}`)) return;
+    b.disabled = true; b.textContent = 'Criando…';
+    try {
+      const r = await api('criarComunicado', { senha: R.senha, titulo: f.t.trim(), mensagem: f.m.trim(), codigos: l.map(a => a.codigo),
+        email: f.email, publico: f.cargos.length ? f.cargos.join(', ') : 'Todos os ativos' });
+      R.com.form = { ...MODELOS.livre(), t: '', cargos: [], email: true };
+      if (r.emails) toast(`E-mail enviado para ${r.emails} funcionário(s)`);
+      await carregarCom(r.id);
+    } catch (e) { b.disabled = false; b.textContent = 'Criar comunicado e começar o envio'; erroRH(e); }
+  },
+  wa: b => abrirWa(b.dataset.c),
+  waproximo() {
+    const c = comAtual(), env = new Set(c.whats_enviados ? c.whats_enviados.split(',') : []);
+    const dest = (c.destinatarios || '').split(',').map(k => (R.com.dados || []).find(a => a.codigo === k)).filter(Boolean);
+    const p = dest.find(r => telWhats(r) && !env.has(r.codigo)); if (p) abrirWa(p.codigo);
+  },
+  wadesfaz: b => marcar(b.dataset.c, false),
+  comcopiar: () => { copiar(personaliza(comAtual().mensagem, '')); }
+};
+
+/* ═══════════ EVENTOS ═══════════ */
+const CODIGO = new URLSearchParams(location.search).get('c');
+const ACOES = CODIGO ? ACOES_COLAB : ACOES_RH;
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const fn = ACOES[b.dataset.act] || (b.dataset.act === 'fechar' && fecharModal) || (b.dataset.act === 'copiar' && (() => copiar(b.dataset.v)));
+  if (fn) { e.preventDefault(); fn(b, e); }
+});
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (CODIGO && el.dataset.k) aoDigitarColab(el);
+  if (!CODIGO && R.form && el.dataset.k) { aoDigitar(el, R.form.d, R.form.mapa); R.form.aoMudar && R.form.aoMudar(el.dataset.k, R.form.d); }
+  if (el.id === 'busca') { R.busca = el.value; $('#itens').innerHTML = itensHTML(); }
+  if (el.id === 'com_tit') R.com.form.t = el.value;
+  if (el.id === 'com_msg') { R.com.form.m = el.value; atualizarPrevia(); }
+  if (el.id === 'rel_busca') { R.rel.busca = el.value; const l = relLinhas(); $('#rel_tab').innerHTML = tabelaHTML(REL[R.rel.tipo], l); $('#rel_n').textContent = l.length + ' pessoa(s)'; }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset.up) { const fs = [...el.files]; el.value = ''; if (fs.length) subir(el.dataset.up, fs); }
+  if (el.id === 'com_email') R.com.form.email = el.checked;
+  if (el.dataset.cargo !== undefined) {
+    const f = R.com.form, c = el.dataset.cargo;
+    if (!c) f.cargos = []; else f.cargos = el.checked ? [...f.cargos, c] : f.cargos.filter(x => x !== c);
+    document.querySelectorAll('[data-cargo]').forEach(i => { i.checked = i.dataset.cargo ? f.cargos.includes(i.dataset.cargo) : !f.cargos.length; });
+    atualizarPrevia();
+  }
+  if (el.id === 'rel_tipo') { R.rel.tipo = el.value; if (REL[el.value].st) R.rel.st = REL[el.value].st; else if (R.rel.st === 'desligados') R.rel.st = 'ativos'; rRel(); }
+  if (el.id === 'rel_st') { R.rel.st = el.value; rRel(); }
+  if (el.id === 'rel_mes') { R.rel.mes = +el.value; rRel(); }
+  if (el.id === 'aceite') { C.aceite = el.checked; const b = $('#btnEnviar'); if (b) b.disabled = !C.aceite || pendencias().length > 0; }
+  if (CODIGO && el.dataset.k && el.tagName === 'SELECT') aoDigitarColab(el);
+  if (!CODIGO && R.form && el.dataset.k && el.tagName === 'SELECT') { aoDigitar(el, R.form.d, R.form.mapa); R.form.aoMudar && R.form.aoMudar(el.dataset.k, R.form.d); }
+});
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'flogin') return;
+  e.preventDefault(); R.senha = $('#senha').value; carregarLista(true);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+
+if (CODIGO) iniciarColab(CODIGO); else iniciarRH();
+</script>
+</body>
+</html>
