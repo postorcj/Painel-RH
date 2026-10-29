@@ -599,6 +599,10 @@ async function mock(acao, q) {
     case 'pedirReenvio': { rh(); const a = adm(q.codigo); if (!(q.tipos || []).length) throw new Error('Marque pelo menos um documento.');
       Object.assign(a, { reenvio: q.tipos.join(','), reenvio_obs: q.obs || '', reenvio_em: agora }); break; }
     case 'cancelarReenvio': { rh(); Object.assign(adm(q.codigo), { reenvio: '', reenvio_obs: '' }); break; }
+    case 'lancarFeriasAntigas': { rh(); const alvo = q.todos ? db.adms.filter(a => a.status === 'aprovado') : [adm(q.codigo)]; let total = 0, pessoas = 0;
+      alvo.forEach(a => { const n = feriasAntigasLista(a, db.eventos); n.forEach(f => ev(a, { tipo: 'ferias', subtipo: '', data: f.data, data_fim: f.data_fim, dias: '30', periodo: f.periodo, descricao: 'Lançamento automático (férias anteriores ao sistema)', cargo: '', salario: '' }));
+        total += n.length; if (n.length) pessoas++; });
+      r = { total, pessoas }; break; }
     case 'finalizar': { const a = ed(q.codigo); if (q.aceite !== true) throw new Error('É preciso aceitar o termo.');
       db.fichas[a.codigo] = q.dados; Object.assign(a, { nome: q.dados.nome, status: 'enviado', enviado_em: agora, atualizado_em: agora, lgpd_aceite_em: agora, obs_rh: '' }); break; }
     case 'listar': rh(); r = { itens: juntar().reverse(), eventos: db.eventos }; break;
@@ -1005,6 +1009,16 @@ function periodosFerias(p, evs) {
   }
   return l;
 }
+function feriasAntigasLista(a, evs) {
+  const ad = data(a.data_admissao); if (!ad) return [];
+  const ano = new Date().getFullYear(), out = [];
+  for (let k = 0; k < 60; k++) {
+    const ini = addAnos(ad, k + 1); if (ini.getFullYear() >= ano) break;
+    if ((evs || []).some(e => e.codigo === a.codigo && e.tipo === 'ferias' && String(e.periodo) === String(k))) continue;
+    out.push({ periodo: String(k), data: iso(ini), data_fim: iso(addDias(ini, 29)) });
+  }
+  return out;
+}
 const fmtP = p => `${p.ini.getFullYear()}/${p.fimAq.getFullYear()}`;
 const SIT_FER = { gozada: ['Gozadas', 's-ok'], aquisicao: ['Em aquisição', 's-novo'], pendente: ['A conceder', 's-env'], vencida: ['Vencidas', 's-cor'] };
 
@@ -1120,9 +1134,11 @@ function rLista() {
   if (R.aba === 'alertas') return rAlertas();
   const func = R.aba === 'func', F = func ? FILTROS_FUNC : FILTROS_ADM;
   const cont = k => R.itens.filter(F[k].f).length;
+  const nAnt = func ? R.itens.filter(a => a.status === 'aprovado' && feriasAntigasLista(a, R.eventos).length).length : 0;
   app.innerHTML = shell(R.aba, `
     <div class="pg-h"><div><h1>${func ? 'Funcionários' : 'Admissões'}</h1><p>${func ? 'A equipe do posto: ativos e desligados.' : 'Novos colaboradores preenchendo a ficha pelo link.'}</p></div>
-      ${func ? `<button class="btn ouro" data-act="cadastrar">${ic('userplus')}Cadastrar funcionário</button>` : `<button class="btn ouro" data-act="nova">${ic('send')}Nova admissão</button>`}</div>
+      <div class="det-acoes" style="margin:0">${func && nAnt ? `<button class="btn sec" data-act="ferantodos">Lançar férias anteriores (${nAnt})</button>` : ''}
+      ${func ? `<button class="btn ouro" data-act="cadastrar">${ic('userplus')}Cadastrar funcionário</button>` : `<button class="btn ouro" data-act="nova">${ic('send')}Nova admissão</button>`}</div></div>
     <div class="barra">
       <div class="filtros">${Object.entries(F).map(([k, v]) => `<button data-act="filtro" data-f="${k}" class="${filtroAtual() === k ? 'on' : ''}">${v.l} <span class="n">${cont(k)}</span></button>`).join('')}</div>
       <input class="busca" id="busca" type="search" placeholder="Buscar por nome ou cargo" value="${esc(R.busca)}">
@@ -1494,7 +1510,8 @@ function subDocs() {
 function subFerias() {
   const p = pessoa(), per = periodosFerias(p, R.det.eventos);
   if (!data(p.data_admissao)) return '<section class="card"><p class="muted">Preencha a data de admissão em <b>Contrato</b> para calcular os períodos de férias.</p></section>';
-  return `<section class="card"><div class="card-h"><h3>Períodos de férias</h3>${p.status === 'aprovado' ? '<button class="btn ouro sm no-print" data-act="ferias">+ Registrar férias</button>' : ''}</div>
+  const ant = p.status === 'aprovado' ? feriasAntigasLista(p, R.det.eventos).length : 0;
+  return `<section class="card"><div class="card-h"><h3>Períodos de férias</h3><div class="det-acoes no-print" style="margin:0">${ant ? `<button class="btn sec sm" data-act="ferant">Lançar férias anteriores (${ant})</button>` : ''}${p.status === 'aprovado' ? '<button class="btn ouro sm" data-act="ferias">+ Registrar férias</button>' : ''}</div></div>
     <p class="muted">A cada 12 meses de trabalho o funcionário ganha 30 dias de férias, que precisam começar nos 12 meses seguintes. Depois disso, vencem e são pagas em dobro.</p>
     <div class="tab-wrap"><table class="tab"><thead><tr><th>Período aquisitivo</th><th>Situação</th><th>Conceder até</th><th>Férias registradas</th></tr></thead><tbody>
     ${per.slice().reverse().map(f => `<tr><td>${fmtP(f)}<small class="muted" style="display:block">${fmt(f.ini)} a ${fmt(f.fimAq)}</small></td>
@@ -1546,7 +1563,9 @@ function rFormFicha() {
     <p><button class="btn sec sm" data-act="${novo ? 'lista' : 'voltadet'}">← Voltar</button></p>
     <section class="card"><p class="eyebrow">${novo ? 'Funcionário que já trabalha no posto' : 'Edição pelo RH'}</p><h1>${novo ? 'Cadastrar funcionário' : esc(d.nome || '')}</h1>
       <p class="muted">Obrigatórios: nome e CPF${novo ? ', cargo e data de admissão' : ''}. O resto pode ser completado depois.${novo ? ' Os documentos você anexa logo em seguida, na aba Documentos.' : ''}</p></section>
-    ${novo ? `<section class="card"><h2>Contrato</h2>${formHTML(CONTRATO, d)}</section>` : ''}
+    ${novo ? `<section class="card"><h2>Contrato</h2>${formHTML(CONTRATO, d)}
+      <label class="aceite" style="margin:18px 0 0"><input type="checkbox" id="f_ferant" checked><span>Lançar as férias dos anos anteriores como já tiradas
+        <small class="muted" style="display:block;font-weight:400">Para quem já trabalha no posto: cada período conta como gozado logo depois de completar 12 meses, até ${new Date().getFullYear() - 1}. As férias deste ano ficam a lançar. Dá para corrigir depois na aba Férias.</small></span></label></section>` : ''}
     ${SECOES.map(s => `<section class="card"><h2>${esc(s.t)}</h2>${formHTML(s.campos, d)}</section>`).join('')}
     <div class="nav"><button class="btn sec" data-act="${novo ? 'lista' : 'voltadet'}">Cancelar</button><button class="btn pri" data-act="salvarficha">${novo ? 'Cadastrar funcionário' : 'Salvar alterações'}</button></div>
   </div>`);
@@ -1847,8 +1866,11 @@ const ACOES_RH = {
     try {
       const dados = pega(CAMPOS, d);
       if (novo) {
+        const ferAnt = $('#f_ferant')?.checked;
         const r = await api('cadastrarFuncionario', { senha: R.senha, dados, contrato: pega(CONTRATO, d) });
-        R.form = null; toast('Funcionário cadastrado. Agora anexe os documentos.');
+        let extra = '';
+        if (ferAnt) { const f = await api('lancarFeriasAntigas', { senha: R.senha, codigo: r.codigo }); if (f.total) extra = ` ${f.total} período(s) de férias anteriores lançados.`; }
+        R.form = null; toast('Funcionário cadastrado.' + extra + ' Agora anexe os documentos.');
         await abrirDet(r.codigo, 'docs');
       } else {
         await api('salvarFichaRH', { senha: R.senha, codigo: R.det.adm.codigo, dados });
@@ -1889,6 +1911,20 @@ const ACOES_RH = {
         if (n) toast(`${n} arquivo(s) anexado(s)`);
         await recarregarDet('docs');
       } });
+  },
+  async ferant(b) {
+    const n = feriasAntigasLista(pessoa(), R.det.eventos).length;
+    if (!confirm(`Lançar ${n} período(s) de férias anteriores como já tirados? Cada período conta como gozado logo depois de completar 12 meses, até ${new Date().getFullYear() - 1}. Dá para excluir depois.`)) return;
+    b.disabled = true;
+    try { const r = await api('lancarFeriasAntigas', { senha: R.senha, codigo: R.det.adm.codigo }); toast(`${r.total} período(s) lançado(s)`); await recarregarDet('ferias'); }
+    catch (e) { b.disabled = false; erroRH(e); }
+  },
+  async ferantodos(b) {
+    const l = R.itens.filter(a => a.status === 'aprovado' && feriasAntigasLista(a, R.eventos).length);
+    if (!confirm(`Lançar as férias anteriores de ${l.length} funcionário(s) ativo(s)?\n\nCada período sem férias registradas, até ${new Date().getFullYear() - 1}, passa a contar como gozado logo depois de completar 12 meses. As férias deste ano continuam a lançar. Dá para corrigir depois na ficha de cada um.`)) return;
+    b.disabled = true; b.textContent = 'Lançando…';
+    try { const r = await api('lancarFeriasAntigas', { senha: R.senha, todos: true }); toast(`${r.total} período(s) lançado(s) para ${r.pessoas} funcionário(s)`); await carregarLista(true); }
+    catch (e) { b.disabled = false; erroRH(e); }
   },
   pedirreenvio(b) { abrirPedidoReenvio(b.dataset.t ? [b.dataset.t] : []); },
   linkreenvio() { modalReenvio(); },
