@@ -444,8 +444,8 @@ const V = {
 
 const SECOES = [
   { id: 'pessoais', t: 'Dados pessoais', curto: 'Pessoais', d: 'Preencha exatamente como está nos seus documentos.', campos: [
-    { k: 'nome', l: 'Nome completo', req: 1, auto: 'name' },
-    { k: 'nome_social', l: 'Nome social', hint: 'Só se você usa um nome diferente do registro.' },
+    { k: 'nome', l: 'Nome completo', req: 1, auto: 'name', up: 1 },
+    { k: 'nome_social', l: 'Nome social', up: 1, hint: 'Só se você usa um nome diferente do registro.' },
     { k: 'nascimento', l: 'Data de nascimento', t: 'date', req: 1, w: 'h', v: V.nasc },
     { k: 'sexo', l: 'Sexo', t: 'select', op: ['Masculino', 'Feminino'], req: 1, w: 'h' },
     { k: 'raca_cor', l: 'Raça/cor', t: 'select', op: ['Branca', 'Preta', 'Parda', 'Amarela', 'Indígena', 'Prefiro não informar'], req: 1, w: 'h', hint: 'Autodeclaração exigida pelo eSocial.' },
@@ -456,8 +456,8 @@ const SECOES = [
     { k: 'nacionalidade', l: 'Nacionalidade', req: 1, def: 'Brasileira', w: 't' },
     { k: 'nat_cidade', l: 'Cidade onde nasceu', req: 1, w: 't' },
     { k: 'nat_uf', l: 'UF onde nasceu', t: 'select', op: UFS, req: 1, w: 't' },
-    { k: 'mae', l: 'Nome da mãe', req: 1 },
-    { k: 'pai', l: 'Nome do pai' },
+    { k: 'mae', l: 'Nome da mãe', req: 1, up: 1 },
+    { k: 'pai', l: 'Nome do pai', up: 1 },
     { k: 'pcd', l: 'Pessoa com deficiência?', t: 'select', op: SN, req: 1, w: 'h' },
     { k: 'pcd_tipo', l: 'Tipo de deficiência', t: 'select', op: ['Física', 'Auditiva', 'Visual', 'Intelectual', 'Mental', 'Reabilitado(a)'], req: 1, w: 'h', show: d => d.pcd === 'Sim' }
   ]},
@@ -489,7 +489,7 @@ const SECOES = [
   ]},
   { id: 'extras', t: 'Emergência e uniforme', curto: 'Emergência', d: 'Um contato para emergências e os tamanhos do uniforme. A conta para o salário é aberta pelo posto.', campos: [
     { sub: 'Contato de emergência' },
-    { k: 'emerg_nome', l: 'Nome', req: 1, w: 'h' },
+    { k: 'emerg_nome', l: 'Nome', req: 1, w: 'h', up: 1 },
     { k: 'emerg_parentesco', l: 'Parentesco', req: 1, w: 'q', ph: 'Ex.: mãe' },
     { k: 'emerg_tel', l: 'Telefone', req: 1, w: 'q', mask: 'tel', v: V.tel },
     { sub: 'Uniforme' },
@@ -550,7 +550,7 @@ const topo = (sub, extra = '') => `${DEMO ? '<div class="demo-strip">Modo demons
 const carregando = (msg, sub) => { app.innerHTML = topo(sub || 'Admissão') + `<div class="carregando"><span class="spin"></span>${esc(msg)}</div>`; };
 const chip = s => `<span class="chip ${(STATUS[s] || {}).c || ''}">${esc((STATUS[s] || { l: s }).l)}</span>`;
 const linkDe = c => location.href.split(/[?#]/)[0] + '?c=' + c;
-const primeiro = n => String(n || '').trim().split(/\s+/)[0] || '';
+const primeiro = n => { const w = String(n || '').trim().split(/\s+/)[0] || ''; return w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ''; };
 
 /* ═══════════ API ═══════════ */
 async function api(acao, dados = {}) {
@@ -933,6 +933,7 @@ async function buscarCEP(cep, obj) {
 function aoDigitar(el, obj, mapa) {
   const k = el.dataset.k, f = mapa[k]; if (!f) return;
   if (f.mask) { const v = mascara(f.mask, el.value); if (v !== el.value) el.value = v; }
+  if (f.up && el.value !== el.value.toUpperCase()) { const pos = el.selectionStart; el.value = el.value.toUpperCase(); try { el.setSelectionRange(pos, pos); } catch (e) {} }
   obj[k] = el.value;
   const w = el.closest('.fld'); if (w && w.classList.contains('inv')) { w.classList.remove('inv'); w.querySelector('.err').textContent = ''; }
   Object.values(mapa).forEach(c => { if (!c.show) return; const ww = document.querySelector(`[data-wrap="${c.k}"]`); if (ww) ww.hidden = !c.show(obj); });
@@ -1306,7 +1307,7 @@ async function subirRH(codigo, files, meta) {
 function modalNova() {
   const m = abrirModal(`<h2>Nova admissão</h2><p class="muted">Gera um link exclusivo para o colaborador preencher a ficha e mandar os documentos.</p>
     <form id="fnova" class="grid">
-      <div class="fld"><label for="n_nome">Nome do colaborador <span class="req">*</span></label><input id="n_nome" required maxlength="100"></div>
+      <div class="fld"><label for="n_nome">Nome do colaborador <span class="req">*</span></label><input id="n_nome" required maxlength="100" style="text-transform:uppercase"></div>
       <div class="fld h"><label for="n_cargo">Cargo</label><input id="n_cargo" list="l_cargos" maxlength="60"><datalist id="l_cargos">${CARGOS.map(c => `<option value="${esc(c)}">`).join('')}</datalist></div>
       <div class="fld h"><label for="n_data">Início previsto</label><input id="n_data" type="date"></div>
       <div class="modal-acoes fld"><button type="button" class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri">Gerar link</button></div>
@@ -1315,7 +1316,7 @@ function modalNova() {
     e.preventDefault();
     const b = e.submitter || m.querySelector('.btn.pri'); b.disabled = true; b.textContent = 'Gerando…';
     try {
-      const dados = { nome: $('#n_nome').value.trim(), cargo: $('#n_cargo').value.trim(), data_prevista: $('#n_data').value };
+      const dados = { nome: $('#n_nome').value.trim().replace(/\s+/g, ' ').toUpperCase(), cargo: $('#n_cargo').value.trim(), data_prevista: $('#n_data').value };
       const r = await api('criar', { senha: R.senha, ...dados });
       R.aba = 'adm'; R.filtroAdm = 'andamento';
       await carregarLista(false);
