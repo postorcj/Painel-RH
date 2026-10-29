@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#13331F">
+<meta name="description" content="Ficha de admissão do Posto Trevo: preencha seus dados e envie seus documentos.">
+<meta property="og:title" content="Posto Trevo – Ficha de admissão">
+<meta property="og:description" content="Preencha sua ficha cadastral e envie as fotos dos seus documentos.">
+<meta property="og:site_name" content="Posto Trevo">
+<meta property="og:type" content="website">
 <title>Admissão · Posto Trevo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -528,10 +533,10 @@ function toast(msg, tipo) {
   const t = document.createElement('div'); t.className = 'tst ' + (tipo || ''); t.textContent = msg;
   $('#toast').appendChild(t); setTimeout(() => t.remove(), tipo === 'erro' ? 6000 : 3200);
 }
-async function copiar(txt) {
+async function copiar(txt, aviso) {
   try { await navigator.clipboard.writeText(txt); }
   catch (e) { const i = document.createElement('textarea'); i.value = txt; document.body.appendChild(i); i.select(); document.execCommand('copy'); i.remove(); }
-  toast('Link copiado');
+  toast(aviso || 'Link copiado');
 }
 const LOGO = `<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="15" rx="10" ry="14" fill="#1E7A3D" stroke="#F7F5EC" stroke-width="2"/><ellipse cx="49" cy="32" rx="14" ry="10" fill="#F6C945" stroke="#F7F5EC" stroke-width="2"/><ellipse cx="32" cy="49" rx="10" ry="14" fill="#2a6fdb" stroke="#F7F5EC" stroke-width="2"/><ellipse cx="15" cy="32" rx="14" ry="10" fill="#d6452f" stroke="#F7F5EC" stroke-width="2"/><circle cx="32" cy="32" r="8" fill="#F7F5EC" stroke="#13331F" stroke-width="3"/></svg>`;
 const topo = (sub, extra = '') => `${DEMO ? '<div class="demo-strip">Modo demonstração – os dados ficam só neste navegador</div>' : ''}
@@ -1275,8 +1280,9 @@ function modalLink(a, obs) {
   const link = linkDe(a.codigo);
   abrirModal(`<h2>${obs ? 'Avisar o colaborador' : 'Link criado'}</h2>
     <p>Envie este link <b>só para ${esc(primeiro(a.nome))}</b>. Quem tiver o link consegue abrir e preencher a ficha.</p>
-    <div class="linkbox"><input readonly value="${esc(link)}" onfocus="this.select()"><button class="btn sec sm" data-act="copiar" data-v="${esc(link)}">Copiar</button></div>
+    <div class="bolha" style="margin:12px 0;max-width:none;font-size:14px">${esc(msgWhats(a, obs))}</div>
     <a class="btn wa big" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(msgWhats(a, obs))}">Enviar pelo WhatsApp</a>
+    <div class="det-acoes"><button class="btn sec" data-act="copiarmsg" data-v="${esc(msgWhats(a, obs))}">Copiar mensagem</button><button class="btn sec" data-act="copiar" data-v="${esc(link)}">Copiar só o link</button></div>
     <div class="modal-acoes"><button class="btn sec" data-act="fechar">Fechar</button></div>`);
 }
 
@@ -1716,6 +1722,7 @@ const ACOES_RH = {
   cadastrar: () => abrirFormFicha('novo'),
   fechar() { fecharModal(); },
   copiar: b => copiar(b.dataset.v),
+  copiarmsg: b => copiar(b.dataset.v, 'Mensagem copiada. É só colar no WhatsApp.'),
   link(b, e) { e.stopPropagation(); const a = R.itens.find(x => x.codigo === b.dataset.c) || R.det?.adm; a && modalLink(a); },
   abrir: b => abrirDet(b.dataset.c, 'dados'),
   lista() { R.det = null; carregarLista(true); },
