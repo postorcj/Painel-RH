@@ -371,6 +371,12 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
   .det-acoes .btn{flex:1 1 auto;min-height:42px;padding:9px 12px;font-size:14px}
 }
 
+.chk .arq{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.chk .lnk2{font-size:12.5px;padding:2px 0}
+.chk .chip{font-size:11.5px;padding:1px 8px;margin-left:4px}
+.aviso.faixa2{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.aviso.faixa2 span{flex:1;min-width:200px}
+
 /* impressão (ficha do RH) */
 .only-print{display:none}
 @media print{
@@ -567,6 +573,8 @@ async function mock(acao, q) {
   const novoId = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, '0')).join('');
   const adm = c => { const a = db.adms.find(x => x.codigo === c); if (!a) throw new Error('Link inválido ou expirado.'); return a; };
   const ed = c => { const a = adm(c); if (!EDITAVEL.includes(a.status)) throw new Error('Esta ficha já foi enviada e não pode mais ser alterada.'); return a; };
+  const tiposRe = a => String(a.reenvio || '').split(',').filter(Boolean);
+  const pode = (c, tipo) => { const a = adm(c); if (EDITAVEL.includes(a.status) || (a.status === 'aprovado' && tiposRe(a).includes(tipo))) return a; throw new Error('Esta ficha já foi enviada e não pode mais ser alterada.'); };
   const rh = () => { if (q.senha !== 'trevo2026') throw new Error('Senha incorreta.'); };
   const docsDe = c => db.docs.filter(d => d.codigo === c);
   const juntar = () => db.adms.map(a => { const f = db.fichas[a.codigo] || {}; return { ...f, ...a, nome: f.nome || a.nome, ndocs: docsDe(a.codigo).length }; });
@@ -576,12 +584,21 @@ async function mock(acao, q) {
   const ev = (a, e) => { const o = { codigo: a.codigo, id: novoId().slice(0, 12), criado_em: agora, ...e }; db.eventos.push(o); return o; };
   let r = {};
   switch (acao) {
-    case 'abrir': { const a = adm(q.codigo), e = EDITAVEL.includes(a.status);
+    case 'abrir': { const a = adm(q.codigo), e = EDITAVEL.includes(a.status), tr = tiposRe(a);
+      if (a.status === 'aprovado' && tr.length) { r = { adm: { nome: a.nome, status: a.status, reenvio: tr, reenvio_obs: a.reenvio_obs || '' },
+        ficha: { nome: (db.fichas[a.codigo] || {}).nome || a.nome }, docs: docsDe(a.codigo).filter(d => tr.includes(d.tipo)) }; break; }
       r = { adm: { nome: a.nome, cargo: a.cargo, data_prevista: a.data_prevista, status: a.status, obs_rh: a.status === 'correcao' ? a.obs_rh : '' },
             ficha: e ? { ...(db.fichas[a.codigo] || {}) } : {}, docs: e ? docsDe(a.codigo) : [] }; break; }
     case 'salvarFicha': { const a = ed(q.codigo); db.fichas[a.codigo] = q.dados; if (a.status === 'novo') a.status = 'preenchendo'; a.atualizado_em = agora; r = { status: a.status }; break; }
-    case 'enviarDoc': { const a = ed(q.codigo); r = { doc: arquivo(a) }; if (a.status === 'novo') a.status = 'preenchendo'; a.atualizado_em = agora; break; }
-    case 'removerDoc': { const a = ed(q.codigo); db.docs = db.docs.filter(d => !(d.codigo === a.codigo && d.file_id === q.file_id)); break; }
+    case 'enviarDoc': { const a = pode(q.codigo, q.tipo); r = { doc: arquivo(a) }; if (a.status === 'novo') a.status = 'preenchendo'; a.atualizado_em = agora; break; }
+    case 'removerDoc': { const d0 = db.docs.find(d => d.codigo === q.codigo && d.file_id === q.file_id); if (!d0) throw new Error('Arquivo não encontrado.');
+      pode(q.codigo, d0.tipo); db.docs = db.docs.filter(d => d !== d0); break; }
+    case 'concluirReenvio': { const a = adm(q.codigo), tr = tiposRe(a); if (a.status !== 'aprovado' || !tr.length) throw new Error('Não há documentos pendentes.');
+      if (tr.some(k => !docsDe(a.codigo).some(d => d.tipo === k))) throw new Error('Ainda falta enviar algum documento.');
+      Object.assign(a, { reenvio: '', reenvio_obs: '', reenvio_concluido_em: agora }); break; }
+    case 'pedirReenvio': { rh(); const a = adm(q.codigo); if (!(q.tipos || []).length) throw new Error('Marque pelo menos um documento.');
+      Object.assign(a, { reenvio: q.tipos.join(','), reenvio_obs: q.obs || '', reenvio_em: agora }); break; }
+    case 'cancelarReenvio': { rh(); Object.assign(adm(q.codigo), { reenvio: '', reenvio_obs: '' }); break; }
     case 'finalizar': { const a = ed(q.codigo); if (q.aceite !== true) throw new Error('É preciso aceitar o termo.');
       db.fichas[a.codigo] = q.dados; Object.assign(a, { nome: q.dados.nome, status: 'enviado', enviado_em: agora, atualizado_em: agora, lgpd_aceite_em: agora, obs_rh: '' }); break; }
     case 'listar': rh(); r = { itens: juntar().reverse(), eventos: db.eventos }; break;
@@ -702,6 +719,7 @@ function irPara(p) { C.passo = p; rColab(); window.scrollTo({ top: 0, behavior: 
 function rColab() {
   const st = C.adm.status, nome = primeiro(C.ficha.nome || C.adm.nome);
   if (st === 'enviado') return telaFim('ok', 'Ficha recebida!', `Obrigado, ${nome}. O RH vai conferir seus dados e documentos e entra em contato se precisar de algo.`);
+  if (st === 'aprovado' && (C.adm.reenvio || []).length) return rReenvio();
   if (st === 'aprovado') return telaFim('ok', 'Cadastro aprovado', `Tudo certo, ${nome}! Seu cadastro foi conferido pelo RH.`);
   if (st === 'cancelado' || st === 'desligado') return telaFim('neutro', 'Link desativado', 'Este link não está mais ativo. Em caso de dúvida, fale com o RH do posto.');
   const p = C.passo;
@@ -842,7 +860,26 @@ async function salvar() {
   C.adm.status = r.status || C.adm.status;
 }
 
+function rReenvio() {
+  const a = C.adm, defs = DOCS.filter(d => a.reenvio.includes(d.k)).map(d => ({ ...d, req: 1 }));
+  const falta = defs.filter(d => !C.docs.some(f => f.tipo === d.k));
+  app.innerHTML = topo('Envio de documentos') + `<main class="wrap"><section class="card hero">
+    <p class="eyebrow">Pedido do RH</p><h1>Olá, ${esc(primeiro(C.ficha.nome || a.nome))}!</h1>
+    <p>O RH do Posto Trevo pediu para você enviar novamente ${defs.length > 1 ? 'os documentos abaixo' : 'o documento abaixo'}.</p>
+    ${a.reenvio_obs ? `<div class="aviso"><b>Recado do RH:</b><br>${esc(a.reenvio_obs)}</div>` : ''}
+    <p class="muted">Tire as fotos com boa luz, o documento inteiro aparecendo e sem reflexo. Também vale PDF.</p>
+    <div class="docs">${defs.map(docCard).join('')}</div></section>
+    <div class="nav"><button class="btn pri" data-act="concluirreenvio"${falta.length ? ' disabled' : ''}>${falta.length ? 'Envie os documentos acima' : 'Concluir envio'}</button></div></main>`;
+}
+
 const ACOES_COLAB = {
+  async concluirreenvio(b) {
+    if (Object.values(C.subindo).some(Boolean)) { toast('Aguarde terminar o envio dos arquivos'); return; }
+    b.disabled = true; b.textContent = 'Enviando…';
+    try { await api('concluirReenvio', { codigo: C.codigo }); C.adm.reenvio = [];
+      telaFim('ok', 'Documentos enviados!', `Obrigado, ${primeiro(C.ficha.nome || C.adm.nome)}. O RH já recebeu os documentos.`); }
+    catch (e) { toast(e.message, 'erro'); b.disabled = false; b.textContent = 'Concluir envio'; }
+  },
   ir: b => irPara(+b.dataset.p),
   voltar: () => irPara(C.passo - 1),
   async avancar(b) {
@@ -1111,7 +1148,7 @@ function itensHTML() {
     return `<div class="item pessoa" data-act="abrir" data-c="${esc(a.codigo)}">${avatar(a.nome, 44)}
       <div class="pi"><div class="nome">${esc(a.nome)}</div><div class="meta">${meta.filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('')}</div>
         ${a.status === 'correcao' && a.obs_rh ? `<small class="muted">Correção: ${esc(a.obs_rh)}</small>` : ''}</div>
-      <div class="acoes">${nal ? `<span class="chip s-cor">${nal} alerta(s)</span>` : ''}${chip(a.status)}${EDITAVEL.includes(a.status) ? `<button class="btn sec sm" data-act="link" data-c="${esc(a.codigo)}">Link</button>` : ''}${ic('chev', 'chev')}</div></div>`;
+      <div class="acoes">${a.reenvio && a.status === 'aprovado' ? '<span class="chip s-env">Reenvio pendente</span>' : ''}${nal ? `<span class="chip s-cor">${nal} alerta(s)</span>` : ''}${chip(a.status)}${EDITAVEL.includes(a.status) ? `<button class="btn sec sm" data-act="link" data-c="${esc(a.codigo)}">Link</button>` : ''}${ic('chev', 'chev')}</div></div>`;
   }).join('');
 }
 function alertaItem(x) {
@@ -1303,12 +1340,45 @@ async function recarregarDet(sub) {
 const pessoa = () => ({ ...R.det.ficha, ...R.det.adm, nome: R.det.ficha.nome || R.det.adm.nome, codigo: R.det.adm.codigo });
 const rDet = () => ['aprovado', 'desligado'].includes(R.det.adm.status) ? rFunc() : rAdm();
 
-function listaDocsAdm(d, docs) {
+function listaDocsAdm(d, docs, gerir) {
+  const pend = gerir ? tiposReenvio(R.det.adm) : [];
   return docsVisiveis(d).map(x => {
     const fs = docs.filter(f => f.tipo === x.k);
     return `<li><span class="m ${fs.length ? 'ok' : x.req ? 'no' : 'op'}">${fs.length ? '✓' : x.req ? '!' : '–'}</span>
-      <div>${esc(x.l)}${fs.map(f => linkArq(f)).join('')}</div></li>`;
+      <div>${esc(x.l)}${pend.includes(x.k) ? ' <span class="chip s-env">Aguardando reenvio</span>' : ''}
+        ${fs.map(f => gerir ? `<div class="arq">${linkArq(f)}<button class="lnk2 no-print" data-act="rmdocadm" data-id="${esc(f.file_id)}" data-t="${x.k}">excluir</button></div>` : linkArq(f)).join('')}
+        ${gerir && !pend.includes(x.k) ? `<button class="lnk2 no-print" data-act="pedirreenvio" data-t="${x.k}">${fs.length ? 'pedir de novo' : 'pedir'}</button>` : ''}</div></li>`;
   }).join('');
+}
+const tiposReenvio = a => String(a.reenvio || '').split(',').filter(Boolean);
+const DOC_L = Object.fromEntries(DOCS.map(d => [d.k, d.l]));
+function msgReenvio() {
+  const a = R.det.adm, p = pessoa(), l = tiposReenvio(a).map(k => DOC_L[k] || k);
+  return `Olá, ${primeiro(p.nome)}! O RH do Posto Trevo precisa que você envie novamente: ${l.join(', ')}.${a.reenvio_obs ? '\n' + a.reenvio_obs : ''}\n\nÉ só abrir este link e mandar as fotos:\n${linkDe(a.codigo)}\n\nObrigado!`;
+}
+function modalReenvio() {
+  const p = pessoa(), msg = msgReenvio(), cel = dig(p.celular);
+  const wa = [10, 11].includes(cel.length) ? `https://wa.me/55${cel}?text=` : 'https://wa.me/?text=';
+  abrirModal(`<h2>Avisar o funcionário</h2><p class="muted">O link aceita só os documentos pedidos. O resto da ficha continua travado.</p>
+    <div class="bolha" style="margin:12px 0;max-width:none;font-size:14px">${esc(msg)}</div>
+    <a class="btn wa big" target="_blank" rel="noopener" href="${wa}${encodeURIComponent(msg)}">Enviar pelo WhatsApp${[10, 11].includes(cel.length) ? ' para ' + esc(primeiro(p.nome)) : ''}</a>
+    <div class="det-acoes"><button class="btn sec" data-act="copiarmsg" data-v="${esc(msg)}">Copiar mensagem</button></div>
+    <div class="modal-acoes"><button class="btn sec" data-act="fechar">Fechar</button></div>`);
+}
+function abrirPedidoReenvio(pre) {
+  const a = R.det.adm, sel = new Set([...tiposReenvio(a), ...pre]);
+  const m = abrirModal(`<h2>Pedir reenvio de documentos</h2>
+    <p class="muted">${esc(primeiro(pessoa().nome))} recebe um link para mandar só os documentos marcados.</p>
+    <div class="chips" style="margin:12px 0">${docsVisiveis(R.det.ficha).map(d => `<label><input type="checkbox" class="re-t" value="${d.k}"${sel.has(d.k) ? ' checked' : ''}>${esc(d.l)}</label>`).join('')}</div>
+    <div class="fld"><label for="re_obs">Recado para o funcionário (opcional)</label><textarea id="re_obs" maxlength="300" placeholder="Ex.: a foto do RG ficou borrada, mande de novo frente e verso.">${esc(a.reenvio_obs || '')}</textarea></div>
+    <div class="modal-acoes"><button class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri" id="re_ok">Gerar pedido</button></div>`, true);
+  m.querySelector('#re_ok').onclick = async ev => {
+    const tipos = [...m.querySelectorAll('.re-t:checked')].map(i => i.value);
+    if (!tipos.length) { toast('Marque pelo menos um documento', 'erro'); return; }
+    ev.target.disabled = true;
+    try { await api('pedirReenvio', { senha: R.senha, codigo: a.codigo, tipos, obs: $('#re_obs').value.trim() }); await recarregarDet('docs'); modalReenvio(); }
+    catch (e) { ev.target.disabled = false; erroRH(e); }
+  };
 }
 const linkArq = f => f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.arquivo)} · ${kb(f.tamanho)}</a>` : `<small class="muted" style="display:block">${esc(f.arquivo)} · ${kb(f.tamanho)}</small>`;
 const printTopo = t => `<div class="only-print"><h2>${esc(t)}</h2><p>${esc(CONFIG.EMPRESA)} · CNPJ ${esc(CONFIG.CNPJ)}</p></div>`;
@@ -1384,6 +1454,8 @@ function rFunc() {
         <div><span>Documentos</span><b>${docs.length}</b></div>
       </div>
       ${st === 'desligado' ? `<div class="aviso"><b>Desligado em ${esc(dataBR(a.deslig_data))}</b> · ${esc(a.deslig_tipo)}${a.deslig_aviso ? ' · aviso ' + esc(a.deslig_aviso.toLowerCase()) : ''}${a.deslig_recontratar ? ' · recontratar: ' + esc(a.deslig_recontratar) : ''}${a.deslig_motivo ? `<br>${esc(a.deslig_motivo)}` : ''}</div>` : ''}
+      ${tiposReenvio(a).length ? `<div class="aviso no-print faixa2"><span><b>Aguardando reenvio:</b> ${esc(tiposReenvio(a).map(k => DOC_L[k] || k).join(', '))}</span>
+        <button class="btn sec sm" data-act="linkreenvio">Avisar de novo</button><button class="btn sec sm" data-act="cancelreenvio">Cancelar pedido</button></div>` : ''}
       ${!a.data_admissao ? '<div class="aviso no-print">Falta a data de admissão. Preencha em <b>Contrato</b> para liberar o controle de férias e de experiência.</div>' : ''}
       ${al.filter(x => x.nivel > 0).map(x => `<div class="aviso no-print${x.nivel === 2 ? ' erro' : ''}"><b>${esc(quandoTxt(x))}:</b> ${esc(x.txt)}</div>`).join('')}
       <div class="det-acoes no-print">${ac.join('')}</div>
@@ -1416,7 +1488,8 @@ function subDocs() {
         <button class="x no-print" data-act="rmdocrh" data-id="${esc(f.file_id)}" aria-label="Remover">×</button></li>`).join('')}</ul>`
         : '<p class="muted">Nenhum documento ainda. Anexe aqui ficha de registro, contrato, holerites, ASO, recibos de férias, TRCT e o que mais precisar guardar.</p>'}
     </section>
-    <section class="card"><h3>Enviados na admissão (${adm.length})</h3><ul class="chk">${listaDocsAdm(d, adm)}</ul></section>`;
+    <section class="card"><div class="card-h"><h3>Enviados pelo funcionário (${adm.length})</h3>${R.det.adm.status === 'aprovado' ? '<button class="btn sec sm no-print" data-act="pedirreenvio">Pedir reenvio</button>' : ''}</div>
+      <ul class="chk">${listaDocsAdm(d, adm, R.det.adm.status === 'aprovado')}</ul></section>`;
 }
 function subFerias() {
   const p = pessoa(), per = periodosFerias(p, R.det.eventos);
@@ -1816,6 +1889,22 @@ const ACOES_RH = {
         if (n) toast(`${n} arquivo(s) anexado(s)`);
         await recarregarDet('docs');
       } });
+  },
+  pedirreenvio(b) { abrirPedidoReenvio(b.dataset.t ? [b.dataset.t] : []); },
+  linkreenvio() { modalReenvio(); },
+  async cancelreenvio(b) {
+    if (!confirm('Cancelar o pedido de reenvio? O link deixa de aceitar arquivos.')) return;
+    b.disabled = true;
+    try { await api('cancelarReenvio', { senha: R.senha, codigo: R.det.adm.codigo }); toast('Pedido cancelado'); await recarregarDet(); }
+    catch (e) { b.disabled = false; erroRH(e); }
+  },
+  async rmdocadm(b) {
+    if (!confirm('Excluir este arquivo? Ele vai para a lixeira do Google Drive.')) return;
+    const tipo = b.dataset.t; b.disabled = true;
+    try {
+      await api('removerDocRH', { senha: R.senha, codigo: R.det.adm.codigo, file_id: b.dataset.id }); await recarregarDet('docs');
+      if (confirm('Arquivo excluído. Pedir para o funcionário enviar este documento de novo?')) abrirPedidoReenvio([tipo]);
+    } catch (e) { b.disabled = false; erroRH(e); }
   },
   async rmdocrh(b) {
     if (!confirm('Remover este documento? O arquivo vai para a lixeira do Google Drive.')) return;
