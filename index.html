@@ -476,13 +476,7 @@ const SECOES = [
     { k: 'email', l: 'E-mail', t: 'email', w: 'h', v: V.email, auto: 'email' },
     { k: 'tel_recado', l: 'Telefone para recado', w: 'h', mask: 'tel', v: V.tel }
   ]},
-  { id: 'extras', t: 'Banco, emergência e uniforme', curto: 'Banco e mais', d: 'Conta para receber o salário, um contato de emergência e os tamanhos do uniforme.', campos: [
-    { sub: 'Conta para o salário' },
-    { k: 'banco', l: 'Banco', req: 1, w: 'h', ph: 'Ex.: Sicoob, Caixa, Nubank' },
-    { k: 'conta_tipo', l: 'Tipo de conta', t: 'select', op: ['Corrente', 'Poupança', 'Salário'], req: 1, w: 'h' },
-    { k: 'agencia', l: 'Agência', req: 1, w: 'h', max: 10 },
-    { k: 'conta', l: 'Conta com dígito', req: 1, w: 'h', max: 20 },
-    { k: 'pix', l: 'Chave PIX', hint: 'Opcional.' },
+  { id: 'extras', t: 'Emergência e uniforme', curto: 'Emergência', d: 'Um contato para emergências e os tamanhos do uniforme. A conta para o salário é aberta pelo posto.', campos: [
     { sub: 'Contato de emergência' },
     { k: 'emerg_nome', l: 'Nome', req: 1, w: 'h' },
     { k: 'emerg_parentesco', l: 'Parentesco', req: 1, w: 'q', ph: 'Ex.: mãe' },
@@ -505,7 +499,6 @@ const DOCS = [
   { k: 'reservista', l: 'Certificado de reservista', hint: 'Homens de 18 a 45 anos.', show: d => d.sexo === 'Masculino' },
   { k: 'escolaridade', l: 'Comprovante de escolaridade', hint: 'Certificado, diploma ou declaração da escola.' },
   { k: 'certidao', l: 'Certidão de nascimento ou casamento' },
-  { k: 'banco', l: 'Comprovante da conta bancária', hint: 'Foto do cartão ou print do app com agência e conta.' },
   { k: 'vacina', l: 'Cartão de vacinação' },
   { k: 'outros', l: 'Outros documentos', hint: 'Cursos, CNH, laudo PcD ou o que o RH pedir.' }
 ];
@@ -721,7 +714,7 @@ function navHTML(proximo = 'Salvar e continuar') {
 function passoInicio() {
   const a = C.adm;
   const ped = ['RG ou CNH', 'CPF', 'Comprovante de residência', 'Carteira de Trabalho Digital (app)',
-    'Certidão de nascimento ou casamento', 'Comprovante de escolaridade', 'Dados da sua conta bancária'];
+    'Certidão de nascimento ou casamento', 'Comprovante de escolaridade'];
   return `<section class="card hero">
     <p class="eyebrow">Bem-vindo(a) à equipe</p>
     <h1>Olá, ${esc(primeiro(a.nome))}!</h1>
@@ -789,10 +782,10 @@ function termoLGPD() {
   return `<h3>Termo de ciência – tratamento de dados pessoais</h3>
   <p>Em cumprimento à Lei Geral de Proteção de Dados (Lei 13.709/2018), informamos como seus dados serão usados.</p>
   <h3>1. Quem trata seus dados</h3><p>${esc(CONFIG.EMPRESA)}, CNPJ ${esc(CONFIG.CNPJ)}, como empregadora e controladora dos dados.</p>
-  <h3>2. Quais dados</h3><p>Identificação, números e cópias de documentos, endereço, contatos, escolaridade, dados bancários, contato de emergência, tamanhos de uniforme e os arquivos enviados neste portal. Incluem informações que a lei exige do empregador, como raça/cor e deficiência, conforme a sua autodeclaração.</p>
+  <h3>2. Quais dados</h3><p>Identificação, números e cópias de documentos, endereço, contatos, escolaridade, contato de emergência, tamanhos de uniforme e os arquivos enviados neste portal. Incluem informações que a lei exige do empregador, como raça/cor e deficiência, conforme a sua autodeclaração.</p>
   <h3>3. Para quê</h3><p>Admissão e registro do contrato de trabalho; envio de informações ao eSocial, FGTS, INSS e demais órgãos; folha e pagamento de salário; benefícios; exames ocupacionais, segurança do trabalho, uniforme e contato em caso de emergência.</p>
   <h3>4. Base legal</h3><p>Execução do contrato de trabalho e cumprimento de obrigações legais e regulatórias (art. 7º, incisos II e V, e art. 11, inciso II, alínea "a", da LGPD).</p>
-  <h3>5. Com quem compartilhamos</h3><p>Somente quando necessário: escritório de contabilidade responsável pela folha, órgãos públicos, banco para pagamento do salário, clínica de medicina do trabalho e fornecedores de benefícios.</p>
+  <h3>5. Com quem compartilhamos</h3><p>Somente quando necessário: escritório de contabilidade responsável pela folha, órgãos públicos, banco responsável pela conta salário, clínica de medicina do trabalho e fornecedores de benefícios.</p>
   <h3>6. Guarda e segurança</h3><p>Os dados ficam em ambiente de acesso restrito ao RH e à gestão do posto, durante o contrato e pelos prazos exigidos pela legislação trabalhista e previdenciária após o desligamento.</p>
   <h3>7. Seus direitos</h3><p>Você pode confirmar quais dados temos, acessá-los, pedir correção e tirar dúvidas pelo contato: ${esc(CONFIG.CONTATO_RH)}.</p>
   <h3>8. Contato de emergência</h3><p>Ao informar um contato de emergência, você declara que essa pessoa está ciente e concorda em ser procurada nessa situação.</p>`;
@@ -1499,7 +1492,6 @@ const REL = {
   vencimentos: { l: 'Vencimentos (experiência, ASO, CNH)', cols: [col('nome', 'Nome'), col('cargo', 'Cargo'), col('exp_fim', 'Fim da experiência'), col('aso_validade', 'ASO até'), col('cnh_validade', 'CNH até')] },
   enderecos: { l: 'Endereços', cols: [col('nome', 'Nome'), col('endereco', 'Endereço'), col('bairro', 'Bairro'), col('cidade', 'Cidade'), col('uf', 'UF'), col('cep', 'CEP')] },
   documentos: { l: 'Documentos (CPF, PIS, RG, CNH)', cols: [col('nome', 'Nome'), col('cpf', 'CPF'), col('pis', 'PIS'), col('rg', 'RG'), col('rg_orgao', 'Órgão'), col('rg_uf', 'UF'), col('cnh', 'CNH'), col('cnh_categoria', 'Cat.'), col('cnh_validade', 'Validade CNH')] },
-  bancarios: { l: 'Dados bancários', cols: [col('nome', 'Nome'), col('cpf', 'CPF'), col('banco', 'Banco'), col('conta_tipo', 'Tipo'), col('agencia', 'Agência'), col('conta', 'Conta'), col('pix', 'PIX')] },
   uniformes: { l: 'Uniformes', cols: [col('nome', 'Nome'), col('cargo', 'Cargo'), col('camisa', 'Camisa'), col('calca', 'Calça'), col('calcado', 'Calçado')] },
   desligamentos: { l: 'Desligamentos', st: 'desligados', cols: [col('nome', 'Nome'), col('cargo', 'Cargo'), col('data_admissao', 'Admissão'), col('deslig_data', 'Desligamento'), col('deslig_tipo', 'Tipo'), col('deslig_aviso', 'Aviso prévio'), col('deslig_recontratar', 'Recontratar?'), col('deslig_motivo', 'Motivo')] },
   geral: { l: 'Ficha completa (todos os campos)', cols: [col('nome', 'Nome'), col('status', 'Situação'), col('cargo', 'Cargo'), col('data_admissao', 'Admissão'), col('salario', 'Salário (R$)')]
@@ -1598,7 +1590,7 @@ function relCSV() {
 const ASSIN = '\n\nRH – Posto Trevo';
 const mesAnterior = () => MESES[(new Date().getMonth() + 11) % 12].toLowerCase();
 const MODELOS = {
-  holerite: () => ({ t: 'Assinatura de holerites', m: `Olá, {nome}! Os holerites de ${mesAnterior()} já estão disponíveis para assinatura.\nPasse no escritório do posto até o dia __/__, no horário de __h às __h.\nObrigado!` + ASSIN }),
+  holerite: () => ({ t: 'Assinatura de holerites', m: 'Olá, Pessoal! Os holerites já estão disponíveis para assinatura.\nPor gentileza, venha assinar os holerites!\nObrigado!' + ASSIN }),
   reuniao: () => ({ t: 'Reunião com a equipe', m: 'Olá, {nome}! Teremos uma reunião com toda a equipe no dia __/__, às __h, no posto.\nSua presença é muito importante.' + ASSIN }),
   ferias: () => ({ t: 'Aviso de férias', m: 'Olá, {nome}! Passe no escritório do RH até o dia __/__ para conferir e assinar o aviso de férias.' + ASSIN }),
   livre: () => ({ t: '', m: 'Olá, {nome}! ' + ASSIN })
