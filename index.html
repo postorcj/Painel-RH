@@ -10,7 +10,7 @@
 <meta property="og:description" content="Preencha sua ficha cadastral e envie as fotos dos seus documentos.">
 <meta property="og:site_name" content="Posto Trevo">
 <meta property="og:type" content="website">
-<title>Admissão · Posto Trevo</title>
+<title>Portal do RH · Posto Trevo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -2088,7 +2088,7 @@ document.addEventListener('submit', e => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
 
-if (CODIGO) iniciarColab(CODIGO); else iniciarRH();
+if (CODIGO) { document.title = 'Ficha de admissão · Posto Trevo'; iniciarColab(CODIGO); } else iniciarRH();
 </script>
 </body>
 </html>
