@@ -413,8 +413,24 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
   .chk a{display:none}
   .tab{font-size:10px}
   .tab th,.tab td{padding:4px 6px}
-  .tab td a{color:#000}
+  .tab td a{color:#000;font-weight:400}
+  /* relatórios: a tabela pode quebrar entre páginas, cabeçalho repete em cada folha */
+  .rel-card{break-inside:auto!important;border:0!important;padding:0!important;margin:0!important}
+  .rel-card .tab-wrap{overflow:visible}
+  .tab{width:100%;border-collapse:collapse}
+  .tab thead{display:table-header-group}
+  .tab tr{break-inside:avoid}
+  .tab th{background:#e9e5d6!important;color:#000;font-size:9.5px;border-bottom:1px solid #999}
+  .tab td{border-top:1px solid #ccc}
+  .tab tbody tr:nth-child(even) td{background:#f6f4ec!important}
+  .rel-nome{font-size:10.5px!important}
+  .rel-dia{background:none!important;padding:0!important;color:#000!important}
+  .only-print h2{font-size:16px;margin:0 0 2px}
+  .only-print p{margin:0 0 8px;font-size:10px;color:#444}
+  #rel_n{font-size:9px;margin:0 0 4px}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+.tab td.k-celular,.tab td.k-tel_recado,.tab td.k-emerg_tel,.tab td.k-cpf,.tab td.k-pis,.tab td.k-cep,.tab td.k-aniv,.tab td.k-data_admissao,.tab td.k-deslig_data{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -1852,7 +1868,7 @@ function celula(r, x) {
 function tabelaHTML(def, l) {
   if (!l.length) return '<div class="vazio">Ninguém encontrado com esses filtros.</div>';
   return `<table class="tab"><thead><tr>${def.cols.map(x => `<th>${esc(x.l)}</th>`).join('')}</tr></thead>
-    <tbody>${l.map(r => `<tr${ehHoje(r) ? ' class="hoje"' : ''}>${def.cols.map(x => `<td>${celula(r, x)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    <tbody>${l.map(r => `<tr${ehHoje(r) ? ' class="hoje"' : ''}>${def.cols.map(x => `<td class="k-${x.k}">${celula(r, x)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
 }
 function resumoUniformes(l) {
   const conta = k => { const m = {}; l.forEach(r => { if (r[k]) m[r[k]] = (m[r[k]] || 0) + 1; });
@@ -1876,7 +1892,7 @@ function rRel() {
     </section>
     <div class="only-print"><h2>${esc(titRel())}</h2><p>${esc(CONFIG.EMPRESA)} · gerado em ${new Date().toLocaleDateString('pt-BR')}</p></div>
     ${s.tipo === 'uniformes' ? resumoUniformes(l) : ''}
-    <section class="card"><h3 class="no-print">${esc(titRel())}</h3><p class="muted" id="rel_n">${l.length} pessoa(s)</p>
+    <section class="card rel-card"><h3 class="no-print">${esc(titRel())}</h3><p class="muted" id="rel_n">${l.length} pessoa(s)</p>
       <div class="tab-wrap" id="rel_tab">${tabelaHTML(def, l)}</div></section>
   `);
 }
@@ -2069,7 +2085,11 @@ const ACOES_RH = {
   voltadet: () => abrirDet(R.det.adm.codigo, R.sub),
   sub(b) { R.sub = b.dataset.s; rFunc(); },
   imprimir() {
-    if (R.det && ['aprovado', 'desligado'].includes(R.det.adm.status) && R.sub !== 'dados') { R.sub = 'dados'; rFunc(); }
+    if (R.tela !== 'rel' && R.det && ['aprovado', 'desligado'].includes(R.det.adm.status) && R.sub !== 'dados') { R.sub = 'dados'; rFunc(); }
+    // relatórios com muitas colunas saem na folha deitada
+    let pg = document.getElementById('pg-print'); if (!pg) { pg = document.createElement('style'); pg.id = 'pg-print'; document.head.appendChild(pg); }
+    const deitada = R.tela === 'rel' && R.rel && REL[R.rel.tipo].cols.length > 6;
+    pg.textContent = `@page{size:A4 ${deitada ? 'landscape' : 'portrait'};margin:10mm}`;
     setTimeout(() => window.print(), 50);
   },
 
