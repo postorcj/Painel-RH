@@ -62,8 +62,8 @@ button{font:inherit;cursor:pointer}
 .btn.wa{background:#1f9d55;color:#fff}
 .btn.big{width:100%;min-height:54px;font-size:17px}
 .btn.sm{min-height:38px;padding:8px 14px;font-size:14px;border-radius:10px}
-.nav{display:flex;gap:10px;justify-content:space-between;position:sticky;bottom:0;padding:12px 0 calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--creme) 30%)}
-.nav .btn{flex:1}
+.nav{pointer-events:none;display:flex;gap:10px;justify-content:space-between;position:sticky;bottom:0;padding:12px 0 calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--creme) 30%)}
+.nav .btn{flex:1;pointer-events:auto}
 .nav .btn.pri{flex:2}
 
 /* etapas */
@@ -115,7 +115,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--verde2);box-shadow:0 
 .files li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .files li em{color:var(--cinza);font-style:normal;font-size:12px}
 .x{border:0;background:var(--suave);color:var(--erro);width:32px;height:32px;border-radius:8px;font-size:20px;line-height:1}
-.file{align-self:flex-start;cursor:pointer}
+.file{align-self:flex-start;cursor:pointer;position:relative;overflow:hidden}
+/* no iPhone o seletor de arquivos não abre se o campo estiver escondido com display:none */
+.arq-in{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
 .up{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--verde2);font-weight:600}
 .spin{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--linha);border-top-color:var(--verde2);animation:gira .8s linear infinite;display:inline-block}
 @keyframes gira{to{transform:rotate(360deg)}}
@@ -861,7 +863,7 @@ function docCard(d) {
       <div><b>${esc(d.l)}${d.req ? ' <span class="req">*</span>' : ''}</b>${d.hint ? `<small>${esc(d.hint)}</small>` : ''}</div></div>
     ${fs.length ? `<ul class="files">${fs.map(f => `<li><span>${esc(f.arquivo)}</span><em>${kb(f.tamanho)}</em><button class="x" data-act="rmdoc" data-id="${esc(f.file_id)}" aria-label="Remover ${esc(f.arquivo)}">×</button></li>`).join('')}</ul>` : ''}
     ${n ? `<div class="up"><span class="spin"></span>Enviando…</div>` : ''}
-    <label class="btn sec sm file">${ok ? '+ Adicionar outro' : 'Enviar foto ou PDF'}<input type="file" accept="image/*,application/pdf" multiple data-up="${d.k}" hidden></label>
+    <label class="btn sec sm file">${ok ? '+ Adicionar outro' : 'Enviar foto ou PDF'}<input type="file" class="arq-in" accept="image/*,application/pdf" multiple data-up="${d.k}"></label>
   </div>`;
 }
 function pendencias() {
