@@ -546,7 +546,7 @@ const DOCS = [
   { k: 'identidade', l: 'RG ou CNH – frente e verso', req: 1 },
   { k: 'cpf', l: 'CPF', hint: 'Se o número já aparece no RG ou na CNH, pode pular.' },
   { k: 'residencia', l: 'Comprovante de residência', hint: 'Conta de luz, água ou internet dos últimos 3 meses.', req: 1 },
-  { k: 'foto', l: 'Foto 3x4 ou selfie de rosto', hint: 'Fundo claro, sem boné e sem óculos escuros.', req: 1 },
+  { k: 'foto', l: 'Foto 3x4 ou selfie de rosto', hint: 'Fundo claro, sem boné e sem óculos escuros.' },
   { k: 'ctps', l: 'Carteira de Trabalho Digital', hint: 'Print da tela do app com seus dados.', req: 1 },
   { k: 'reservista', l: 'Certificado de reservista', hint: 'Homens de 18 a 45 anos.', show: d => d.sexo === 'Masculino' },
   { k: 'escolaridade', l: 'Comprovante de escolaridade', hint: 'Certificado, diploma ou declaração da escola.' },
@@ -827,7 +827,7 @@ function passoInicio() {
     <h1>Olá, ${esc(primeiro(C.ficha.nome || a.nome))}!</h1>
     <p>O RH do Posto Trevo está atualizando o cadastro da equipe. Alguns dados já estão preenchidos: confira, corrija o que estiver errado e complete o que falta. Leva cerca de 10 minutos.</p>
     ${a.obs_rh ? `<div class="aviso"><b>O RH pediu um ajuste:</b><br>${esc(a.obs_rh)}</div>` : ''}
-    <p>No final, mande fotos dos seus documentos. Separe: <b>RG ou CNH</b>, <b>comprovante de residência</b>, uma <b>foto 3x4 ou selfie</b> e a <b>Carteira de Trabalho Digital</b> (print do app).</p>
+    <p>No final, mande fotos dos seus documentos. Separe: <b>RG ou CNH</b>, <b>comprovante de residência</b> e <b>Carteira de Trabalho Digital</b> (print do app).</p>
     <p class="muted">Pode parar e continuar depois: é só abrir o link de novo e entrar com seu CPF e data de nascimento.</p>
     <button class="btn pri big" data-act="ir" data-p="1">Começar</button>
   </section>`;
