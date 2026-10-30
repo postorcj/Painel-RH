@@ -553,6 +553,11 @@ const topo = (sub, extra = '') => `${DEMO ? '<div class="demo-strip">Modo demons
 const carregando = (msg, sub) => { app.innerHTML = topo(sub || 'Admissão') + `<div class="carregando"><span class="spin"></span>${esc(msg)}</div>`; };
 const chip = s => `<span class="chip ${(STATUS[s] || {}).c || ''}">${esc((STATUS[s] || { l: s }).l)}</span>`;
 const linkDe = c => location.href.split(/[?#]/)[0] + '?c=' + c;
+const linkGrupo = () => location.href.split(/[?#]/)[0] + '?atualizar';
+const TRAVA = new Set();
+const modoAt = () => !!(C.adm && C.adm.modo === 'atualizacao');
+const tituloColab = () => modoAt() ? 'Atualização cadastral' : 'Ficha de admissão';
+const docsColab = d => docsVisiveis(d).map(x => modoAt() ? { ...x, req: 0 } : x);
 const primeiro = n => { const w = String(n || '').trim().split(/\s+/)[0] || ''; return w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ''; };
 
 /* ═══════════ API ═══════════ */
@@ -676,7 +681,7 @@ function campoHTML(f, d) {
   } else {
     const tipo = f.t === 'date' ? 'date' : f.t === 'email' ? 'email' : 'text';
     const modo = f.mask ? (f.mask === 'tel' ? 'tel' : 'numeric') : f.t === 'email' ? 'email' : '';
-    inp = `<input id="${id}" data-k="${f.k}" type="${tipo}" value="${esc(val)}" autocomplete="${f.auto || 'off'}"${modo ? ` inputmode="${modo}"` : ''}${f.ph ? ` placeholder="${esc(f.ph)}"` : ''}${f.mask && f.mask !== 'tel' ? ` maxlength="${f.mask.length}"` : ` maxlength="${f.max || 120}"`}>`;
+    inp = `<input id="${id}" data-k="${f.k}" type="${tipo}" value="${esc(val)}" autocomplete="${f.auto || 'off'}"${modo ? ` inputmode="${modo}"` : ''}${f.ph ? ` placeholder="${esc(f.ph)}"` : ''}${f.mask && f.mask !== 'tel' ? ` maxlength="${f.mask.length}"` : ` maxlength="${f.max || 120}"`}${TRAVA.has(f.k) ? ' readonly' : ''}>`;
   }
   return `<div class="fld ${f.w || ''}" data-wrap="${f.k}"${f.show && !f.show(d) ? ' hidden' : ''}>
     <label for="${id}">${esc(f.l)}${f.req ? ' <span class="req">*</span>' : ''}</label>${inp}
@@ -704,15 +709,41 @@ async function iniciarColab(codigo) {
   try {
     const r = await api('abrir', { codigo });
     C.adm = r.adm; C.ficha = r.ficha || {}; C.docs = r.docs || [];
+    if (modoAt()) { TRAVA.add('cpf'); document.title = 'Atualização cadastral · Posto Trevo'; }
     CAMPOS.forEach(f => { if (f.def && !C.ficha[f.k]) C.ficha[f.k] = f.def; });
     if (!C.ficha.nome && C.adm.nome) C.ficha.nome = C.adm.nome;
     rColab();
   } catch (e) {
+    if (GRUPO) { try { sessionStorage.removeItem('grp_c'); } catch (x) {} return telaGrupo(e.message); }
     telaFim('erro', 'Link inválido', e.message + ' Fale com o RH do posto para receber um link novo.');
   }
 }
+
+/* link do grupo: o funcionário se identifica com CPF + data de nascimento */
+function telaGrupo(msg) {
+  app.innerHTML = topo('Atualização cadastral') + `<main class="wrap estreito"><form class="card" id="fgrupo" style="margin-top:24px">
+    <p class="eyebrow">Atualização cadastral</p><h1>Olá!</h1>
+    <p class="muted">O RH do Posto Trevo está atualizando o cadastro da equipe. Para abrir a sua ficha, informe:</p>
+    <div class="grid">
+      <div class="fld"><label for="g_cpf">Seu CPF</label><input id="g_cpf" inputmode="numeric" maxlength="14" autocomplete="off" required></div>
+      <div class="fld"><label for="g_nasc">Sua data de nascimento</label><input id="g_nasc" type="date" required></div>
+    </div>
+    ${msg ? `<div class="aviso erro">${esc(msg)}</div>` : ''}
+    <button class="btn pri big" style="margin-top:16px">Abrir minha ficha</button>
+    <p class="muted" style="font-size:13px;margin-top:12px">Cada pessoa só consegue abrir a própria ficha. Seus dados ficam guardados com o RH, conforme a LGPD.</p></form></main>`;
+  $('#g_cpf').focus();
+}
+async function entrarGrupo(e) {
+  e.preventDefault();
+  const b = e.target.querySelector('button'); b.disabled = true; b.textContent = 'Conferindo…';
+  try {
+    const r = await api('identificar', { cpf: $('#g_cpf').value, nascimento: $('#g_nasc').value });
+    try { sessionStorage.setItem('grp_c', r.codigo); } catch (x) {}
+    C.passo = 0; iniciarColab(r.codigo);
+  } catch (x) { telaGrupo(x.message); }
+}
 function telaFim(tipo, titulo, txt) {
-  app.innerHTML = topo('Ficha de admissão') + `<main class="wrap"><section class="card fim">
+  app.innerHTML = topo(GRUPO ? 'Atualização cadastral' : 'Ficha de admissão') + `<main class="wrap"><section class="card fim">
     <div class="selo ${tipo === 'ok' ? '' : tipo}">${tipo === 'ok' ? '✓' : tipo === 'erro' ? '!' : 'i'}</div>
     <h1>${esc(titulo)}</h1><p class="muted">${esc(txt)}</p></section></main>`;
 }
@@ -727,7 +758,7 @@ function rColab() {
   const st = C.adm.status, nome = primeiro(C.ficha.nome || C.adm.nome);
   if (st === 'enviado') return telaFim('ok', 'Ficha recebida!', `Obrigado, ${nome}. O RH vai conferir seus dados e documentos e entra em contato se precisar de algo.`);
   if (st === 'aprovado' && (C.adm.reenvio || []).length) return rReenvio();
-  if (st === 'aprovado') return telaFim('ok', 'Cadastro aprovado', `Tudo certo, ${nome}! Seu cadastro foi conferido pelo RH.`);
+  if (st === 'aprovado' && !modoAt()) return telaFim('ok', 'Cadastro aprovado', `Tudo certo, ${nome}! Seu cadastro foi conferido pelo RH.`);
   if (st === 'cancelado' || st === 'desligado') return telaFim('neutro', 'Link desativado', 'Este link não está mais ativo. Em caso de dúvida, fale com o RH do posto.');
   const p = C.passo;
   let corpo;
@@ -736,13 +767,22 @@ function rColab() {
   else if (p === P_ANEXOS) corpo = passoAnexos();
   else corpo = passoRevisao();
   const passos = p ? `<ol class="steps" aria-label="Etapas">${PASSOS.map((n, i) => `<li class="${i + 1 < p ? 'done' : i + 1 === p ? 'cur' : ''}"><em>${i + 1}. ${esc(n)}</em></li>`).join('')}</ol>` : '';
-  app.innerHTML = topo('Ficha de admissão') + `<main class="wrap">${passos}${corpo}</main>`;
+  app.innerHTML = topo(tituloColab()) + `<main class="wrap">${passos}${corpo}</main>`;
 }
 function navHTML(proximo = 'Salvar e continuar') {
   return `<div class="nav"><button class="btn sec" data-act="voltar">Voltar</button><button class="btn pri" data-act="avancar">${proximo}</button></div>`;
 }
 function passoInicio() {
   const a = C.adm;
+  if (modoAt()) return `<section class="card hero">
+    <p class="eyebrow">Atualização cadastral</p>
+    <h1>Olá, ${esc(primeiro(C.ficha.nome || a.nome))}!</h1>
+    <p>O RH do Posto Trevo está atualizando o cadastro da equipe. Alguns dados já estão preenchidos: confira, corrija o que estiver errado e complete o que falta. Leva cerca de 10 minutos.</p>
+    ${a.obs_rh ? `<div class="aviso"><b>O RH pediu um ajuste:</b><br>${esc(a.obs_rh)}</div>` : ''}
+    <p>No final, se tiver em mãos, mande fotos dos seus documentos (RG ou CNH, comprovante de residência e foto). Os anexos não são obrigatórios.</p>
+    <p class="muted">Pode parar e continuar depois: é só abrir o link de novo e entrar com seu CPF e data de nascimento.</p>
+    <button class="btn pri big" data-act="ir" data-p="1">Começar</button>
+  </section>`;
   const ped = ['RG ou CNH', 'CPF', 'Comprovante de residência', 'Carteira de Trabalho Digital (app)',
     'Certidão de nascimento ou casamento', 'Comprovante de escolaridade'];
   return `<section class="card hero">
@@ -764,7 +804,7 @@ function passoSecao(s) {
 function passoAnexos() {
   return `<section class="card"><h2>Anexos</h2>
     <p class="muted">Tire as fotos com boa luz, o documento inteiro aparecendo e sem reflexo. Também vale PDF. Os itens com <span class="req">*</span> são obrigatórios.</p>
-    <div class="docs">${docsVisiveis(C.ficha).map(docCard).join('')}</div></section>${navHTML('Revisar e enviar')}`;
+    <div class="docs">${docsColab(C.ficha).map(docCard).join('')}</div></section>${navHTML('Revisar e enviar')}`;
 }
 function docCard(d) {
   const fs = C.docs.filter(x => x.tipo === d.k), n = C.subindo[d.k] || 0, ok = fs.length > 0;
@@ -782,7 +822,7 @@ function pendencias() {
     const e = Object.keys(errosSecao(s, d));
     if (e.length) p.push({ passo: i + 1, txt: `<b>${esc(s.t)}:</b> ${e.map(k => esc(CAMPO[k].l)).join(', ')}` });
   });
-  const faltam = docsVisiveis(d).filter(x => x.req && !C.docs.some(f => f.tipo === x.k));
+  const faltam = docsColab(d).filter(x => x.req && !C.docs.some(f => f.tipo === x.k));
   if (faltam.length) p.push({ passo: P_ANEXOS, txt: `<b>Anexos:</b> ${faltam.map(x => esc(x.l)).join(', ')}` });
   return p;
 }
@@ -918,7 +958,14 @@ const ACOES_COLAB = {
   async enviar(b) {
     if (C.ocupado || pendencias().length || !C.aceite) return;
     C.ocupado = true; b.disabled = true; b.textContent = 'Enviando…';
-    try { await api('finalizar', { codigo: C.codigo, dados: dadosLimpos(), aceite: true }); C.adm.status = 'enviado'; rColab(); window.scrollTo(0, 0); }
+    try {
+      await api('finalizar', { codigo: C.codigo, dados: dadosLimpos(), aceite: true });
+      if (modoAt()) {
+        try { sessionStorage.removeItem('grp_c'); } catch (x) {}
+        telaFim('ok', 'Ficha enviada!', `Obrigado, ${primeiro(C.ficha.nome || C.adm.nome)}. O RH vai conferir seus dados e entra em contato se precisar de algo.`);
+      } else { C.adm.status = 'enviado'; rColab(); }
+      window.scrollTo(0, 0);
+    }
     catch (e) { toast(e.message, 'erro'); b.disabled = false; b.textContent = 'Enviar ficha ao RH'; }
     C.ocupado = false;
   }
@@ -949,6 +996,8 @@ const R = { senha: '', itens: [], eventos: [], al: [], aba: 'inicio', tela: 'ini
 const EM_ADMISSAO = ['novo', 'preenchendo', 'correcao', 'enviado'];
 const FILTROS_FUNC = {
   ativos: { l: 'Ativos', f: a => a.status === 'aprovado' },
+  pendente: { l: 'Ficha pendente', f: a => a.status === 'aprovado' && a.atualizacao === 'aberta' },
+  conferir: { l: 'Ficha para conferir', f: a => a.status === 'aprovado' && a.atualizacao === 'enviada' },
   desligados: { l: 'Desligados', f: a => a.status === 'desligado' },
   todos: { l: 'Todos', f: a => ['aprovado', 'desligado'].includes(a.status) }
 };
@@ -1142,6 +1191,7 @@ function rLista() {
   app.innerHTML = shell(R.aba, `
     <div class="pg-h"><div><h1>${func ? 'Funcionários' : 'Admissões'}</h1><p>${func ? 'A equipe do posto: ativos e desligados.' : 'Novos colaboradores preenchendo a ficha pelo link.'}</p></div>
       <div class="det-acoes" style="margin:0">${func && nAnt ? `<button class="btn sec" data-act="ferantodos">Lançar férias anteriores (${nAnt})</button>` : ''}
+      ${func ? `<button class="btn sec" data-act="importar">${ic('file')}Importar lista</button><button class="btn sec" data-act="linkgrupo">${ic('send')}Link do grupo</button>` : ''}
       ${func ? `<button class="btn ouro" data-act="cadastrar">${ic('userplus')}Cadastrar funcionário</button>` : `<button class="btn ouro" data-act="nova">${ic('send')}Nova admissão</button>`}</div></div>
     <div class="barra">
       <div class="filtros">${Object.entries(F).map(([k, v]) => `<button data-act="filtro" data-f="${k}" class="${filtroAtual() === k ? 'on' : ''}">${v.l} <span class="n">${cont(k)}</span></button>`).join('')}</div>
@@ -1168,7 +1218,7 @@ function itensHTML() {
     return `<div class="item pessoa" data-act="abrir" data-c="${esc(a.codigo)}">${avatar(a.nome, 44)}
       <div class="pi"><div class="nome">${esc(a.nome)}</div><div class="meta">${meta.filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('')}</div>
         ${a.status === 'correcao' && a.obs_rh ? `<small class="muted">Correção: ${esc(a.obs_rh)}</small>` : ''}</div>
-      <div class="acoes">${a.reenvio && a.status === 'aprovado' ? '<span class="chip s-env">Reenvio pendente</span>' : ''}${nal ? `<span class="chip s-cor">${nal} alerta(s)</span>` : ''}${chip(a.status)}${EDITAVEL.includes(a.status) ? `<button class="btn sec sm" data-act="link" data-c="${esc(a.codigo)}">Link</button>` : ''}${ic('chev', 'chev')}</div></div>`;
+      <div class="acoes">${a.status === 'aprovado' && a.atualizacao === 'enviada' ? '<span class="chip s-env">Ficha para conferir</span>' : a.status === 'aprovado' && a.atualizacao === 'aberta' ? '<span class="chip s-novo">Ficha pendente</span>' : ''}${a.reenvio && a.status === 'aprovado' ? '<span class="chip s-env">Reenvio pendente</span>' : ''}${nal ? `<span class="chip s-cor">${nal} alerta(s)</span>` : ''}${chip(a.status)}${EDITAVEL.includes(a.status) ? `<button class="btn sec sm" data-act="link" data-c="${esc(a.codigo)}">Link</button>` : ''}${ic('chev', 'chev')}</div></div>`;
   }).join('');
 }
 function alertaItem(x) {
@@ -1226,6 +1276,8 @@ function rInicio() {
       <div class="kpi claro"><span>Tempo médio de casa</span><b class="menor">${media === null ? '—' : mesesTxt(media)}</b><small>dos ativos</small></div>
       <div class="kpi claro${urg ? ' alerta' : ''}" data-act="nav" data-n="alertas"><span>Alertas</span><b>${avisos.length}</b><small>${urg ? urg + ' urgente(s)' : 'nada urgente'}</small></div>
     </div>
+    ${(() => { const ab = at.filter(a => a.atualizacao === 'aberta').length, en = at.filter(a => a.atualizacao === 'enviada').length;
+      return ab || en ? `<div class="aviso faixa" data-act="filtrofunc" data-f="${en ? 'conferir' : 'pendente'}">${ic('users')}<span><b>Atualização cadastral:</b> ${en} ficha(s) para conferir · ${ab} aguardando o funcionário</span>${ic('chev')}</div>` : ''; })()}
     ${conferir || preench ? `<div class="aviso faixa" data-act="nav" data-n="adm">${ic('userplus')}<span><b>${conferir}</b> admissão(ões) aguardando conferência${preench ? ` · ${preench} em preenchimento` : ''}</span>${ic('chev')}</div>` : ''}
     <div class="dash">
       <section class="card c8"><div class="card-h"><h3>Admissões e desligamentos</h3>
@@ -1242,6 +1294,110 @@ function rInicio() {
           return `<li data-act="abrir" data-c="${esc(a.codigo)}">${avatar(a.nome, 34)}<div><b>${esc(a.nome)}</b><small>${dd(d.getDate())}/${dd(d.getMonth() + 1)} · ${ano - d.getFullYear()} anos${hj ? ' <span class="tag-hoje">HOJE</span>' : ''}</small></div></li>`; }).join('')}</ul>`
           : '<p class="muted">Ninguém faz aniversário este mês.</p>'}</section>
     </div>`);
+}
+
+/* ── importar lista de funcionários / link do grupo ── */
+const normH = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+function carregarXLSX() {
+  if (window.XLSX) return Promise.resolve();
+  return new Promise((ok, no) => { const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    sc.onload = ok; sc.onerror = () => no(new Error('Não consegui carregar o leitor de planilhas. Confira a internet.'));
+    document.head.appendChild(sc); });
+}
+function dataPlanilha(v) {
+  if (v === '' || v == null) return '';
+  if (typeof v === 'number' && v > 1000) { const d = new Date(Date.UTC(1899, 11, 30) + Math.round(v) * 86400000);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`; }
+  const t = String(v).trim();
+  let m = t.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = t.match(/^(\d{1,2})\D+(\d{1,2})\D+(\d{2,4})$/);
+  if (!m) { const g = dig(t); if (g.length === 8) m = [0, g.slice(0, 2), g.slice(2, 4), g.slice(4)]; }
+  if (!m) return '';
+  let y = +m[3]; if (y < 100) y += y > 30 ? 1900 : 2000;
+  const r = `${y}-${String(+m[2]).padStart(2, '0')}-${String(+m[1]).padStart(2, '0')}`;
+  return data(r) ? r : '';
+}
+const CIVIL = { c: 'Casado(a)', s: 'Solteiro(a)', d: 'Divorciado(a)', v: 'Viúvo(a)', u: 'União estável' };
+const CARGO_FIX = { auxgeral: 'Auxiliar geral' };
+const tituloCargo = v => { const n = normH(v).replace(/\s+/g, ''); if (CARGO_FIX[n]) return CARGO_FIX[n];
+  return String(v || '').trim().toLowerCase().replace(/(^|\s)\S/g, x => x.toUpperCase()); };
+function lerLinhas(rows) {
+  const hi = rows.findIndex(r => r.some(c => normH(c) === 'nome' || normH(c).startsWith('nome')) && r.some(c => normH(c).includes('cpf')));
+  if (hi < 0) throw new Error('Não achei as colunas "Nome" e "CPF" na planilha.');
+  const h = rows[hi].map(normH), col = t => h.findIndex(t);
+  const ix = { nome: col(x => x.startsWith('nome')), cpf: col(x => x.includes('cpf')), nasc: col(x => x.includes('nasc')),
+    adm: col(x => x.includes('admiss')), sexo: col(x => x.includes('sexo')), civil: col(x => x.includes('civil')),
+    cargo: col(x => x.includes('cargo') || x.includes('funcao')), cel: col(x => x.includes('celular') || x.includes('telefone') || x.includes('fone')) };
+  const v = (r, k) => ix[k] >= 0 ? r[ix[k]] : '';
+  return rows.slice(hi + 1).filter(r => String(v(r, 'nome')).trim()).map(r => {
+    const cpf = dig(v(r, 'cpf')), cel = dig(v(r, 'cel')), sx = normH(v(r, 'sexo'))[0], ec = normH(v(r, 'civil'))[0];
+    const o = { nome: String(v(r, 'nome')).trim().replace(/\s+/g, ' ').toUpperCase(), cpf: cpf.length === 11 ? mascara('000.000.000-00', cpf) : String(v(r, 'cpf')).trim(),
+      nascimento: dataPlanilha(v(r, 'nasc')), data_admissao: dataPlanilha(v(r, 'adm')),
+      sexo: sx === 'm' ? 'Masculino' : sx === 'f' ? 'Feminino' : '', estado_civil: CIVIL[ec] || '',
+      cargo: tituloCargo(v(r, 'cargo')), celular: [10, 11].includes(cel.length) ? mascara('tel', cel) : '' };
+    o.alertas = [!cpfOk(o.cpf) && 'CPF inválido', !o.nascimento && 'sem data de nascimento', !o.data_admissao && 'sem data de admissão'].filter(Boolean);
+    return o;
+  });
+}
+function modalImportar() {
+  const m = abrirModal(`<h2>Importar lista de funcionários</h2>
+    <p class="muted">Para quem já trabalha no posto. A planilha precisa ter as colunas <b>Nome</b> e <b>CPF</b>; se tiver também data de nascimento, data de admissão, sexo, estado civil, cargo e celular, entram junto. Quem já estiver cadastrado (mesmo CPF) não é duplicado.</p>
+    <div class="fld"><label for="imp_arq">Planilha (Excel ou CSV)</label><input type="file" id="imp_arq" accept=".xlsx,.xls,.csv"></div>
+    <div id="imp_prev"></div>
+    <label class="aceite" style="margin:12px 0 0"><input type="checkbox" id="imp_lib" checked><span>Liberar a atualização da ficha pelo link do grupo</span></label>
+    <label class="aceite" style="margin:8px 0 0"><input type="checkbox" id="imp_fer" checked><span>Lançar as férias dos anos anteriores como já tiradas</span></label>
+    <div class="modal-acoes"><button class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri" id="imp_ok" disabled>Importar</button></div>`, true);
+  let lista = [];
+  m.querySelector('#imp_arq').onchange = async ev => {
+    const f = ev.target.files[0]; if (!f) return;
+    const prev = m.querySelector('#imp_prev'); prev.innerHTML = '<p class="muted">Lendo a planilha…</p>';
+    try {
+      await carregarXLSX();
+      const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+      lista = lerLinhas(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: '' }));
+      if (!lista.length) throw new Error('Nenhum funcionário encontrado na planilha.');
+      const prob = lista.filter(x => x.alertas.length);
+      prev.innerHTML = `<div class="aviso"><b>${lista.length} funcionário(s) encontrados.</b>${prob.length ? `<br>Confira antes (quem tem CPF ou nascimento com problema não consegue entrar pelo link do grupo até você corrigir na ficha):
+        <ul style="margin:6px 0 0;padding-left:18px">${prob.map(x => `<li>${esc(x.nome)}: ${esc(x.alertas.join(', '))}</li>`).join('')}</ul>` : ' Tudo certo com CPF e datas.'}</div>
+        <div class="tab-wrap" style="max-height:220px;overflow:auto"><table class="tab"><thead><tr><th>Nome</th><th>CPF</th><th>Nasc.</th><th>Admissão</th><th>Cargo</th></tr></thead>
+        <tbody>${lista.map(x => `<tr><td>${esc(x.nome)}</td><td>${esc(x.cpf)}</td><td>${esc(dataBR(x.nascimento))}</td><td>${esc(dataBR(x.data_admissao))}</td><td>${esc(x.cargo)}</td></tr>`).join('')}</tbody></table></div>`;
+      m.querySelector('#imp_ok').disabled = false;
+    } catch (e) { prev.innerHTML = `<div class="aviso erro">${esc(e.message)}</div>`; lista = []; m.querySelector('#imp_ok').disabled = true; }
+  };
+  m.querySelector('#imp_ok').onclick = async ev => {
+    const b = ev.target, lib = m.querySelector('#imp_lib').checked, fer = m.querySelector('#imp_fer').checked;
+    b.disabled = true; let c = 0, at = 0, fe = 0;
+    try {
+      for (let i = 0; i < lista.length; i += 15) {
+        b.textContent = `Importando ${Math.min(i + 15, lista.length)} de ${lista.length}…`;
+        const r = await api('importarFuncionarios', { senha: R.senha, lista: lista.slice(i, i + 15).map(({ alertas, ...x }) => x), liberar: lib, ferias: fer });
+        c += r.criados; at += r.atualizados; fe += r.ferias;
+      }
+      fecharModal();
+      toast(`${c} funcionário(s) cadastrado(s)${at ? `, ${at} já existia(m)` : ''}${fe ? ` · ${fe} período(s) de férias lançados` : ''}`);
+      R.aba = 'func'; R.filtro = lib ? 'pendente' : 'ativos'; await carregarLista(true);
+      if (lib) modalLinkGrupo();
+    } catch (e) { b.disabled = false; b.textContent = 'Importar'; erroRH(e); }
+  };
+}
+function msgGrupo() {
+  return `Olá, pessoal! O RH do Posto Trevo está atualizando o cadastro da equipe.\nCada um, por favor, abra o link abaixo, entre com o seu CPF e a sua data de nascimento, confira e complete os seus dados:\n${linkGrupo()}\n\nCada pessoa só consegue abrir a própria ficha. Qualquer dúvida, fale com o RH.\n\nRH – Posto Trevo`;
+}
+function modalLinkGrupo() {
+  const at = R.itens.filter(a => a.status === 'aprovado'), ab = at.filter(a => a.atualizacao === 'aberta').length, en = at.filter(a => a.atualizacao === 'enviada').length;
+  const sem = at.filter(a => !a.atualizacao).length, msg = msgGrupo();
+  abrirModal(`<h2>Link do grupo</h2>
+    <p class="muted">Um link só para o grupo do WhatsApp. Cada funcionário entra com o <b>CPF</b> e a <b>data de nascimento</b> e abre só a própria ficha. Quem não está cadastrado não entra.</p>
+    <p><b>${ab}</b> aguardando · <b>${en}</b> para conferir${sem ? ` · ${sem} sem pedido de atualização` : ''}</p>
+    <div class="bolha" style="margin:12px 0;max-width:none;font-size:14px">${esc(msg)}</div>
+    <a class="btn wa big" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(msg)}">Enviar no grupo do WhatsApp</a>
+    <div class="det-acoes"><button class="btn sec" data-act="copiarmsg" data-v="${esc(msg)}">Copiar mensagem</button><button class="btn sec" data-act="copiar" data-v="${esc(linkGrupo())}">Copiar só o link</button>
+      ${sem ? `<button class="btn sec" data-act="atabrirtodos">Liberar para todos os ativos (${sem})</button>` : ''}</div>
+    <div class="modal-acoes"><button class="btn sec" data-act="fechar">Fechar</button></div>`, true);
+}
+async function mudarAtualizacao(acao, extra) {
+  await api('definirAtualizacao', { senha: R.senha, codigo: R.det ? R.det.adm.codigo : '', acao_at: acao, ...(extra || {}) });
 }
 
 /* ── modais ── */
@@ -1452,6 +1608,7 @@ function rFunc() {
   const ac = [`<button class="btn sec" data-act="editficha">${ic('edit')}Editar ficha</button>`, `<button class="btn sec" data-act="contrato">${ic('file')}Contrato</button>`,
     `<button class="btn sec" data-act="imprimir">${ic('print')}Imprimir</button>`];
   if (a.pasta_url) ac.push(`<a class="btn sec" target="_blank" rel="noopener" href="${esc(a.pasta_url)}">${ic('folder')}Pasta no Drive</a>`);
+  if (st === 'aprovado' && !a.atualizacao) ac.push(`<button class="btn sec" data-act="atabrir">${ic('send')}Pedir atualização</button>`);
   ac.push(st === 'aprovado' ? `<button class="btn perigo" data-act="desligar">${ic('exit')}Desligar</button>` : `<button class="btn sec" data-act="reintegrar">${ic('userplus')}Reintegrar</button>`);
   let corpo = '';
   if (R.sub === 'docs') corpo = subDocs();
@@ -1474,6 +1631,10 @@ function rFunc() {
         <div><span>Documentos</span><b>${docs.length}</b></div>
       </div>
       ${st === 'desligado' ? `<div class="aviso"><b>Desligado em ${esc(dataBR(a.deslig_data))}</b> · ${esc(a.deslig_tipo)}${a.deslig_aviso ? ' · aviso ' + esc(a.deslig_aviso.toLowerCase()) : ''}${a.deslig_recontratar ? ' · recontratar: ' + esc(a.deslig_recontratar) : ''}${a.deslig_motivo ? `<br>${esc(a.deslig_motivo)}` : ''}</div>` : ''}
+      ${a.atualizacao === 'enviada' ? `<div class="aviso no-print faixa2"><span><b>Ficha atualizada pelo funcionário</b>${a.atualizacao_em ? ' em ' + esc(a.atualizacao_em) : ''}. Confira os dados abaixo.</span>
+        <button class="btn pri sm" data-act="atconferida">Marcar como conferida</button><button class="btn sec sm" data-act="atcorrigir">Pedir correção</button></div>`
+        : a.atualizacao === 'aberta' ? `<div class="aviso no-print faixa2"><span><b>Aguardando o funcionário atualizar a ficha</b> pelo link do grupo${a.atualizacao_obs ? ` · correção pedida: ${esc(a.atualizacao_obs)}` : ''}</span>
+        <button class="btn sec sm" data-act="linkgrupo">Link do grupo</button><button class="btn sec sm" data-act="atcancelar">Cancelar</button></div>` : ''}
       ${tiposReenvio(a).length ? `<div class="aviso no-print faixa2"><span><b>Aguardando reenvio:</b> ${esc(tiposReenvio(a).map(k => DOC_L[k] || k).join(', '))}</span>
         <button class="btn sec sm" data-act="linkreenvio">Avisar de novo</button><button class="btn sec sm" data-act="cancelreenvio">Cancelar pedido</button></div>` : ''}
       ${!a.data_admissao ? '<div class="aviso no-print">Falta a data de admissão. Preencha em <b>Contrato</b> para liberar o controle de férias e de experiência.</div>' : ''}
@@ -1931,6 +2092,50 @@ const ACOES_RH = {
     try { const r = await api('lancarFeriasAntigas', { senha: R.senha, todos: true }); toast(`${r.total} período(s) lançado(s) para ${r.pessoas} funcionário(s)`); await carregarLista(true); }
     catch (e) { b.disabled = false; erroRH(e); }
   },
+  importar: () => modalImportar(),
+  linkgrupo: () => modalLinkGrupo(),
+  filtrofunc(b) { R.aba = 'func'; R.filtro = b.dataset.f; R.busca = ''; rLista(); },
+  async atabrirtodos(b) {
+    if (!confirm('Liberar a atualização da ficha para todos os funcionários ativos que ainda não têm pedido?')) return;
+    b.disabled = true;
+    try { const r = await api('definirAtualizacao', { senha: R.senha, todos: true, acao_at: 'abrir' }); toast(`${r.total} funcionário(s) liberado(s)`); await carregarLista(true); modalLinkGrupo(); }
+    catch (e) { b.disabled = false; erroRH(e); }
+  },
+  async atabrir(b) {
+    b.disabled = true;
+    try { await mudarAtualizacao('abrir'); toast('Atualização liberada. Mande o link do grupo.'); await recarregarDet(); modalLinkGrupo(); }
+    catch (e) { b.disabled = false; erroRH(e); }
+  },
+  async atconferida(b) {
+    b.disabled = true;
+    try { await mudarAtualizacao('conferida'); toast('Ficha conferida'); await recarregarDet(); }
+    catch (e) { b.disabled = false; erroRH(e); }
+  },
+  async atcancelar(b) {
+    if (!confirm('Cancelar o pedido de atualização? O funcionário não consegue mais entrar pelo link do grupo.')) return;
+    b.disabled = true;
+    try { await mudarAtualizacao('cancelar'); await recarregarDet(); }
+    catch (e) { b.disabled = false; erroRH(e); }
+  },
+  atcorrigir() {
+    const p = pessoa();
+    const m = abrirModal(`<h2>Pedir correção</h2><p class="muted">${esc(primeiro(p.nome))} vai ver este recado ao entrar de novo pelo link do grupo.</p>
+      <div class="fld"><label for="at_obs">O que precisa ajustar?</label><textarea id="at_obs" maxlength="500" placeholder="Ex.: confira o nome da mãe e o endereço."></textarea></div>
+      <div class="modal-acoes"><button class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri" id="at_ok">Enviar pedido</button></div>`);
+    m.querySelector('#at_ok').onclick = async ev => {
+      const obs = $('#at_obs').value.trim(); if (!obs) { toast('Escreva o que precisa ajustar', 'erro'); return; }
+      ev.target.disabled = true;
+      try {
+        await mudarAtualizacao('corrigir', { obs }); await recarregarDet();
+        const msg = `Olá, ${primeiro(p.nome)}! O RH do Posto Trevo precisa de um ajuste na sua ficha: ${obs}\n\nÉ só abrir este link, entrar com seu CPF e data de nascimento e corrigir:\n${linkGrupo()}\n\nObrigado!`;
+        const cel = dig(p.celular), wa = [10, 11].includes(cel.length) ? `https://wa.me/55${cel}?text=` : 'https://wa.me/?text=';
+        abrirModal(`<h2>Avisar o funcionário</h2><div class="bolha" style="margin:12px 0;max-width:none;font-size:14px">${esc(msg)}</div>
+          <a class="btn wa big" target="_blank" rel="noopener" href="${wa}${encodeURIComponent(msg)}">Enviar pelo WhatsApp</a>
+          <div class="det-acoes"><button class="btn sec" data-act="copiarmsg" data-v="${esc(msg)}">Copiar mensagem</button></div>
+          <div class="modal-acoes"><button class="btn sec" data-act="fechar">Fechar</button></div>`);
+      } catch (e) { ev.target.disabled = false; erroRH(e); }
+    };
+  },
   pedirreenvio(b) { abrirPedidoReenvio(b.dataset.t ? [b.dataset.t] : []); },
   linkreenvio() { modalReenvio(); },
   async cancelreenvio(b) {
@@ -2053,7 +2258,9 @@ const ACOES_RH = {
 
 /* ═══════════ EVENTOS ═══════════ */
 const CODIGO = new URLSearchParams(location.search).get('c');
-const ACOES = CODIGO ? ACOES_COLAB : ACOES_RH;
+const GRUPO = !CODIGO && new URLSearchParams(location.search).has('atualizar');
+const MODO_COLAB = !!(CODIGO || GRUPO);
+const ACOES = MODO_COLAB ? ACOES_COLAB : ACOES_RH;
 
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
@@ -2062,8 +2269,9 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('input', e => {
   const el = e.target;
-  if (CODIGO && el.dataset.k) aoDigitarColab(el);
-  if (!CODIGO && R.form && el.dataset.k) { aoDigitar(el, R.form.d, R.form.mapa); R.form.aoMudar && R.form.aoMudar(el.dataset.k, R.form.d); }
+  if (MODO_COLAB && el.dataset.k) aoDigitarColab(el);
+  if (el.id === 'g_cpf') el.value = mascara('000.000.000-00', el.value);
+  if (!MODO_COLAB && R.form && el.dataset.k) { aoDigitar(el, R.form.d, R.form.mapa); R.form.aoMudar && R.form.aoMudar(el.dataset.k, R.form.d); }
   if (el.id === 'busca') { R.busca = el.value; $('#itens').innerHTML = itensHTML(); }
   if (el.id === 'com_tit') R.com.form.t = el.value;
   if (el.id === 'com_msg') { R.com.form.m = el.value; atualizarPrevia(); }
@@ -2083,16 +2291,23 @@ document.addEventListener('change', e => {
   if (el.id === 'rel_st') { R.rel.st = el.value; rRel(); }
   if (el.id === 'rel_mes') { R.rel.mes = +el.value; rRel(); }
   if (el.id === 'aceite') { C.aceite = el.checked; const b = $('#btnEnviar'); if (b) b.disabled = !C.aceite || pendencias().length > 0; }
-  if (CODIGO && el.dataset.k && el.tagName === 'SELECT') aoDigitarColab(el);
-  if (!CODIGO && R.form && el.dataset.k && el.tagName === 'SELECT') { aoDigitar(el, R.form.d, R.form.mapa); R.form.aoMudar && R.form.aoMudar(el.dataset.k, R.form.d); }
+  if (MODO_COLAB && el.dataset.k && el.tagName === 'SELECT') aoDigitarColab(el);
+  if (!MODO_COLAB && R.form && el.dataset.k && el.tagName === 'SELECT') { aoDigitar(el, R.form.d, R.form.mapa); R.form.aoMudar && R.form.aoMudar(el.dataset.k, R.form.d); }
 });
 document.addEventListener('submit', e => {
+  if (e.target.id === 'fgrupo') return entrarGrupo(e);
   if (e.target.id !== 'flogin') return;
   e.preventDefault(); R.senha = $('#senha').value; carregarLista(true);
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
 
-if (CODIGO) { document.title = 'Ficha de admissão · Posto Trevo'; iniciarColab(CODIGO); } else iniciarRH();
+if (CODIGO) { document.title = 'Ficha de admissão · Posto Trevo'; iniciarColab(CODIGO); }
+else if (GRUPO) {
+  document.title = 'Atualização cadastral · Posto Trevo';
+  let c = ''; try { c = sessionStorage.getItem('grp_c') || ''; } catch (e) {}
+  if (c) iniciarColab(c); else telaGrupo();
+}
+else iniciarRH();
 </script>
 </body>
 </html>
