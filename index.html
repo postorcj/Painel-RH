@@ -1641,7 +1641,7 @@ function celula(r, x) {
   if (!v) return '<span class="muted">—</span>';
   if (x.k === 'celular' && dig(v).length >= 10) return `<a href="https://wa.me/55${dig(v)}" target="_blank" rel="noopener">${esc(v)}</a>`;
   if (x.k === 'email') return `<a href="mailto:${esc(v)}">${esc(v)}</a>`;
-  if (R.rel.tipo === 'aniver' && x.k === 'nome') return `<b class="rel-nome">${esc(v)}</b>`;
+  if (x.k === 'nome') return `<b class="rel-nome">${esc(v)}</b>`;
   if (x.k === 'aniv') return `<span class="rel-dia">${esc(v)}</span>${ehHoje(r) ? '<span class="tag-hoje">HOJE</span>' : ''}`;
   if (x.k === 'fer_sit') return `<span class="chip ${v === 'Vencidas' ? 's-cor' : v === 'A conceder' ? 's-env' : 's-ok'}">${esc(v)}</span>`;
   return esc(v);
