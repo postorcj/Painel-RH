@@ -154,8 +154,18 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
 .barra{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
 .barra .busca{flex:1;min-width:200px}
 .filtros{display:flex;gap:6px;flex-wrap:wrap}
-.filtros button{border:1.5px solid var(--linha);background:var(--papel);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;color:var(--cinza)}
-.filtros button.on{background:var(--verde);border-color:var(--verde);color:var(--ouro)}
+.filtros{--c:#1E7A3D;--bg:#e4f3e9}
+.filtros button{--c:#1E7A3D;--bg:#e4f3e9;display:inline-flex;align-items:center;gap:8px;border:1.5px solid color-mix(in srgb,var(--c) 30%,transparent);background:var(--bg);border-radius:999px;padding:7px 8px 7px 14px;font-size:14px;font-weight:700;color:var(--c);transition:transform .1s,box-shadow .15s}
+.filtros button::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c)}
+.filtros button:hover{transform:translateY(-1px);box-shadow:0 4px 12px -6px var(--c)}
+.filtros button .n{min-width:24px;padding:1px 8px;border-radius:999px;background:var(--c);color:#fff;font-size:12.5px;text-align:center;line-height:1.5}
+.filtros button.on{background:var(--c);border-color:var(--c);color:#fff;box-shadow:0 6px 16px -8px var(--c)}
+.filtros button.on::before{background:#fff}
+.filtros button.on .n{background:#fff;color:var(--c)}
+.filtros [data-f=pendente],.filtros [data-f=andamento]{--c:#1f56ad;--bg:#e7effc}
+.filtros [data-f=conferir]{--c:#a86b00;--bg:#fff1c2}
+.filtros [data-f=desligados],.filtros [data-f=cancelado]{--c:#b3261e;--bg:#fbeceb}
+.filtros [data-f=todos]{--c:#475569;--bg:#eef0f3}
 .itens{display:grid;gap:10px}
 .item{background:var(--papel);border-radius:14px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:6px 14px;align-items:center;box-shadow:0 1px 0 var(--linha);cursor:pointer}
 .item:hover{box-shadow:0 0 0 2px var(--ouro)}
@@ -337,7 +347,6 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
 .item.pessoa .nome{font-size:16px}
 .pi{min-width:0}
 .ic.chev{color:var(--cinza)}
-.filtros button .n{opacity:.6;margin-left:2px}
 .al-ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center}
 .al-ic .ic{width:21px;height:21px}
 .al-ic.n2{background:var(--erro-bg);color:var(--erro)}.al-ic.n1{background:#fff1c2;color:#7a5a00}.al-ic.n0{background:#e7effc;color:#1f56ad}
