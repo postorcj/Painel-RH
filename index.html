@@ -422,7 +422,9 @@ const CONFIG = {
   CONTATO_RH: 'RH do Posto Trevo – (64) 3051-4698, (64) 98445-4698 (WhatsApp) ou rcj_ltda@uol.com.br',
   RH_FIXO: '(64) 3051-4698',
   RH_CELULAR: '(64) 98445-4698',
-  RH_EMAIL: 'rcj_ltda@uol.com.br'
+  RH_EMAIL: 'rcj_ltda@uol.com.br',
+  // Link de convite do grupo de avisos no WhatsApp (Grupo → Convidar via link)
+  GRUPO_WHATS: 'https://chat.whatsapp.com/CenfCREcZfHEwALxgLCIIw'
 };
 const DEMO = !CONFIG.API_URL;
 
@@ -1624,6 +1626,7 @@ function rFunc() {
   const ac = [`<button class="btn sec" data-act="editficha">${ic('edit')}Editar ficha</button>`, `<button class="btn sec" data-act="contrato">${ic('file')}Contrato</button>`,
     `<button class="btn sec" data-act="imprimir">${ic('print')}Imprimir</button>`];
   if (a.pasta_url) ac.push(`<a class="btn sec" target="_blank" rel="noopener" href="${esc(a.pasta_url)}">${ic('folder')}Pasta no Drive</a>`);
+  if (st === 'aprovado' && CONFIG.GRUPO_WHATS) ac.push(`<button class="btn sec" data-act="convite">${ic('send')}Convidar para o grupo</button>`);
   if (st === 'aprovado' && !a.atualizacao) ac.push(`<button class="btn sec" data-act="atabrir">${ic('send')}Pedir atualização</button>`);
   ac.push(st === 'aprovado' ? `<button class="btn perigo" data-act="desligar">${ic('exit')}Desligar</button>` : `<button class="btn sec" data-act="reintegrar">${ic('userplus')}Reintegrar</button>`);
   let corpo = '';
@@ -1873,6 +1876,7 @@ const MODELOS = {
   holerite: () => ({ t: 'Assinatura de holerites', m: 'Olá, Pessoal! Os holerites já estão disponíveis para assinatura.\nPor gentileza, venha assinar os holerites!\nObrigado!' + ASSIN }),
   reuniao: () => ({ t: 'Reunião com a equipe', m: 'Olá, {nome}! Teremos uma reunião com toda a equipe no dia __/__, às __h, no posto.\nSua presença é muito importante.' + ASSIN }),
   ferias: () => ({ t: 'Aviso de férias', m: 'Olá, {nome}! Passe no escritório do RH até o dia __/__ para conferir e assinar o aviso de férias.' + ASSIN }),
+  grupo: () => ({ t: 'Grupo de avisos', m: msgConvite() }),
   livre: () => ({ t: '', m: 'Olá, {nome}! ' + ASSIN })
 };
 const telWhats = r => r.celular_whats !== 'Não' && [10, 11].includes(dig(r.celular).length);
@@ -1902,7 +1906,8 @@ function rCom() {
   const cargos = [...new Set(ap.map(a => a.cargo || 'Sem cargo'))].sort();
   const prev = selecionados()[0];
   app.innerHTML = shell('com', `
-    <div class="pg-h"><div><h1>Comunicados</h1><p>Avisos para a equipe por WhatsApp e e-mail.</p></div></div>
+    <div class="pg-h"><div><h1>Comunicados</h1><p>Avisos para a equipe por WhatsApp e e-mail.</p></div>
+      <div class="det-acoes" style="margin:0"><button class="btn sec" data-act="vcf">${ic('users')}Exportar contatos</button></div></div>
     <section class="card"><h2>Novo comunicado</h2>
       <p class="muted">Vai para os funcionários <b>ativos</b>. No WhatsApp, cada conversa abre com a mensagem pronta e personalizada, e você só aperta enviar. O e-mail sai automático.</p>
       ${!ap.length ? '<div class="aviso">Ainda não há funcionários ativos. Cadastre ou aprove funcionários para poder enviar comunicados.</div>' : ''}
@@ -1910,6 +1915,7 @@ function rCom() {
         <button class="btn sec sm" data-act="commodelo" data-m="holerite">Holerites</button>
         <button class="btn sec sm" data-act="commodelo" data-m="reuniao">Reunião</button>
         <button class="btn sec sm" data-act="commodelo" data-m="ferias">Férias</button>
+        <button class="btn sec sm" data-act="commodelo" data-m="grupo">Convite do grupo</button>
         <button class="btn sec sm" data-act="commodelo" data-m="livre">Em branco</button></div>
       <div class="grid">
         <div class="fld"><label for="com_tit">Título <span class="req">*</span></label><input id="com_tit" maxlength="100" value="${esc(f.t)}" placeholder="Ex.: Assinatura de holerites"></div>
@@ -1973,6 +1979,33 @@ function abrirWa(codigo) {
   marcar(codigo, true);
 }
 
+/* ── grupo de avisos no WhatsApp ── */
+const msgConvite = () => `Olá, {nome}! Entre no grupo *Avisos Posto Trevo* no WhatsApp. É por lá que o RH manda os avisos da equipe.\nÉ só tocar no link:\n${CONFIG.GRUPO_WHATS}` + ASSIN;
+function modalConvite(p, aposAprovar) {
+  const msg = personaliza(msgConvite(), p.nome), cel = dig(p.celular), ok = [10, 11].includes(cel.length);
+  abrirModal(`<h2>${aposAprovar ? 'Convidar para o grupo de avisos' : 'Convite do grupo'}</h2>
+    ${aposAprovar ? `<p class="muted">Mande o convite do grupo <b>Avisos Posto Trevo</b> para ${esc(primeiro(p.nome))}.</p>` : ''}
+    <div class="bolha" style="margin:12px 0;max-width:none;font-size:14px">${esc(msg)}</div>
+    ${ok ? '' : '<div class="aviso">Sem celular válido na ficha: escolha a conversa no WhatsApp ou copie a mensagem.</div>'}
+    <a class="btn wa big" target="_blank" rel="noopener" href="https://wa.me/${ok ? '55' + cel : ''}?text=${encodeURIComponent(msg)}">Enviar convite pelo WhatsApp</a>
+    <div class="det-acoes"><button class="btn sec" data-act="copiarmsg" data-v="${esc(msg)}">Copiar mensagem</button></div>
+    <div class="modal-acoes"><button class="btn sec" data-act="fechar">${aposAprovar ? 'Agora não' : 'Fechar'}</button></div>`);
+}
+function exportarVcf() {
+  const l = (R.com && R.com.dados ? R.com.dados : R.itens).filter(a => a.status === 'aprovado' && [10, 11].includes(dig(a.celular).length)).sort(nomeSort);
+  if (!l.length) { toast('Nenhum funcionário ativo com celular cadastrado', 'erro'); return; }
+  const e = v => String(v).replace(/([\\,;])/g, '\\$1');
+  const txt = l.map(a => ['BEGIN:VCARD', 'VERSION:3.0', `N:;TREVO – ${e(a.nome)};;;`, `FN:TREVO – ${e(a.nome)}`, 'ORG:Posto Trevo',
+    `TEL;TYPE=CELL:+55${dig(a.celular)}`, 'END:VCARD'].join('\r\n')).join('\r\n') + '\r\n';
+  const x = document.createElement('a');
+  x.href = URL.createObjectURL(new Blob([txt], { type: 'text/vcard;charset=utf-8' }));
+  x.download = 'Contatos Posto Trevo.vcf';
+  document.body.appendChild(x); x.click(); x.remove();
+  setTimeout(() => URL.revokeObjectURL(x.href), 5000);
+  const sem = (R.com && R.com.dados ? R.com.dados : R.itens).filter(a => a.status === 'aprovado').length - l.length;
+  toast(`${l.length} contato(s) exportado(s)${sem ? ` · ${sem} sem celular válido` : ''}`);
+}
+
 /* ═══════════ AÇÕES DO RH ═══════════ */
 const hojeISO = () => iso(hoje0());
 const ACOES_RH = {
@@ -2019,6 +2052,7 @@ const ACOES_RH = {
         await api('definirStatus', { senha: R.senha, codigo: a.codigo, status: 'aprovado' });
         await api('atualizarContrato', { senha: R.senha, codigo: a.codigo, contrato: pega(CONTRATO, dd) });
         toast('Cadastro aprovado. Agora é funcionário ativo.'); await recarregarDet('dados');
+        if (CONFIG.GRUPO_WHATS) modalConvite(pessoa(), true);
       } });
   },
   correcao() {
@@ -2109,6 +2143,8 @@ const ACOES_RH = {
     catch (e) { b.disabled = false; erroRH(e); }
   },
   importar: () => modalImportar(),
+  vcf: () => exportarVcf(),
+  convite: () => modalConvite(pessoa(), false),
   linkgrupo: () => modalLinkGrupo(),
   filtrofunc(b) { R.aba = 'func'; R.filtro = b.dataset.f; R.busca = ''; rLista(); },
   async atabrirtodos(b) {
