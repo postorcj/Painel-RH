@@ -166,6 +166,8 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
 .filtros [data-f=conferir]{--c:#a86b00;--bg:#fff1c2}
 .filtros [data-f=desligados],.filtros [data-f=cancelado]{--c:#b3261e;--bg:#fbeceb}
 .filtros [data-f=todos]{--c:#475569;--bg:#eef0f3}
+.filtros [data-f=aprendiz]{--c:#6B4FBB;--bg:#efeafb}
+.s-aprendiz{background:#efeafb;color:#5b3fa8}
 .itens{display:grid;gap:10px}
 .item{background:var(--papel);border-radius:14px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:6px 14px;align-items:center;box-shadow:0 1px 0 var(--linha);cursor:pointer}
 .item:hover{box-shadow:0 0 0 2px var(--ouro)}
@@ -1045,7 +1047,7 @@ const FILTROS_FUNC = {
   pendente: { l: 'Ficha pendente', f: a => a.status === 'aprovado' && a.atualizacao === 'aberta' },
   conferir: { l: 'Ficha para conferir', f: a => a.status === 'aprovado' && a.atualizacao === 'enviada' },
   desligados: { l: 'Desligados', f: a => a.status === 'desligado' },
-  todos: { l: 'Todos', f: a => ['aprovado', 'desligado'].includes(a.status) }
+  aprendiz: { l: 'Jovem aprendiz', f: a => a.status === 'aprovado' && a.aprendiz === 'Sim' }
 };
 const FILTROS_ADM = {
   andamento: { l: 'Em andamento', f: a => EM_ADMISSAO.includes(a.status) },
@@ -1058,7 +1060,8 @@ const CONTRATO = [
   { k: 'data_admissao', l: 'Data de admissão', t: 'date', req: 1, w: 'h', v: V.data },
   { k: 'salario', l: 'Salário (R$)', w: 'h', ph: 'Ex.: 2.150,00', max: 20 },
   { k: 'exp_tipo', l: 'Contrato de experiência', t: 'select', op: ['45 + 45 dias', '30 + 60 dias', '90 dias', 'Sem experiência'], w: 'h' },
-  { k: 'aso_validade', l: 'Validade do ASO (exame periódico)', t: 'date', w: 'h', v: V.data, hint: 'Normalmente 1 ano depois do último exame.' }
+  { k: 'aso_validade', l: 'Validade do ASO (exame periódico)', t: 'date', w: 'h', v: V.data, hint: 'Normalmente 1 ano depois do último exame.' },
+  { k: 'aprendiz', l: 'Jovem aprendiz?', t: 'select', op: ['Não', 'Sim'], w: 'h' }
 ];
 const DESLIG = [
   { k: 'deslig_data', l: 'Data do desligamento', t: 'date', req: 1, w: 'h', v: V.data },
@@ -1254,7 +1257,7 @@ function itensHTML() {
   if (R.aba === 'func') l.sort(nomeSort);
   if (!l.length) {
     const txt = R.aba === 'func'
-      ? (R.itens.some(FILTROS_FUNC.todos.f) ? 'Nenhum funcionário neste filtro.' : 'Cadastre quem já trabalha no posto em <b>Cadastrar funcionário</b>. Quem entrar pelo portal de admissão aparece aqui depois de aprovado.')
+      ? (R.itens.some(a => ['aprovado', 'desligado'].includes(a.status)) ? 'Nenhum funcionário neste filtro.' : 'Cadastre quem já trabalha no posto em <b>Cadastrar funcionário</b>. Quem entrar pelo portal de admissão aparece aqui depois de aprovado.')
       : (R.itens.length ? 'Nenhuma admissão neste filtro.' : 'Clique em <b>Nova admissão</b> para gerar o link da ficha de um novo colaborador.');
     return `<div class="vazio card"><h2>Nada por aqui</h2><p>${txt}</p></div>`;
   }
@@ -1267,7 +1270,7 @@ function itensHTML() {
     return `<div class="item pessoa" data-act="abrir" data-c="${esc(a.codigo)}">${avatar(a.nome, 44)}
       <div class="pi"><div class="nome">${esc(a.nome)}</div><div class="meta">${meta.filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('')}</div>
         ${a.status === 'correcao' && a.obs_rh ? `<small class="muted">Correção: ${esc(a.obs_rh)}</small>` : ''}</div>
-      <div class="acoes">${a.status === 'aprovado' && a.atualizacao === 'enviada' ? '<span class="chip s-env">Ficha para conferir</span>' : a.status === 'aprovado' && a.atualizacao === 'aberta' ? '<span class="chip s-novo">Ficha pendente</span>' : ''}${a.reenvio && a.status === 'aprovado' ? '<span class="chip s-env">Reenvio pendente</span>' : ''}${nal ? `<span class="chip s-cor">${nal} alerta(s)</span>` : ''}${chip(a.status)}${EDITAVEL.includes(a.status) ? `<button class="btn sec sm" data-act="link" data-c="${esc(a.codigo)}">Link</button>` : ''}${ic('chev', 'chev')}</div></div>`;
+      <div class="acoes">${a.aprendiz === 'Sim' && a.status === 'aprovado' ? '<span class="chip s-aprendiz">Jovem aprendiz</span>' : ''}${a.status === 'aprovado' && a.atualizacao === 'enviada' ? '<span class="chip s-env">Ficha para conferir</span>' : a.status === 'aprovado' && a.atualizacao === 'aberta' ? '<span class="chip s-novo">Ficha pendente</span>' : ''}${a.reenvio && a.status === 'aprovado' ? '<span class="chip s-env">Reenvio pendente</span>' : ''}${nal ? `<span class="chip s-cor">${nal} alerta(s)</span>` : ''}${chip(a.status)}${EDITAVEL.includes(a.status) ? `<button class="btn sec sm" data-act="link" data-c="${esc(a.codigo)}">Link</button>` : ''}${ic('chev', 'chev')}</div></div>`;
   }).join('');
 }
 function alertaItem(x) {
@@ -1713,7 +1716,7 @@ function subDados() {
   const fimExp = ad && exp ? exp.map(n => fmt(addDias(ad, n - 1))).join(' e ') : '';
   return `<div class="cols">
     <section class="card"><h3>Contrato</h3>${kv([['Cargo', a.cargo], ['Data de admissão', dataBR(a.data_admissao)], ['Salário', a.salario ? 'R$ ' + a.salario : ''],
-      ['Experiência', a.exp_tipo], ['Fim da experiência', fimExp], ['Validade do ASO', dataBR(a.aso_validade)], ['Cadastrado', a.origem === 'rh' ? 'Pelo RH' : 'Pelo portal de admissão']])}</section>
+      ['Experiência', a.exp_tipo], ['Fim da experiência', fimExp], ['Validade do ASO', dataBR(a.aso_validade)], ['Jovem aprendiz', a.aprendiz || 'Não'], ['Cadastrado', a.origem === 'rh' ? 'Pelo RH' : 'Pelo portal de admissão']])}</section>
     ${SECOES.map(s => `<section class="card"><h3>${esc(s.t)}</h3>${resumoSecao(s, d)}</section>`).join('')}
   </div>`;
 }
@@ -1799,6 +1802,7 @@ const pega = (defs, d) => Object.fromEntries(defs.filter(f => f.k).map(f => [f.k
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 const RS = {
   ativos: { l: 'Funcionários ativos', f: a => a.status === 'aprovado' },
+  aprendiz: { l: 'Jovens aprendizes', f: a => a.status === 'aprovado' && a.aprendiz === 'Sim' },
   desligados: { l: 'Desligados', f: a => a.status === 'desligado' },
   admissao: { l: 'Em admissão', f: a => EM_ADMISSAO.includes(a.status) },
   todos: { l: 'Todos (menos cancelados)', f: a => a.status !== 'cancelado' }
