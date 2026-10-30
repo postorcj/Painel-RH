@@ -377,6 +377,9 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
 .aviso.faixa2{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .aviso.faixa2 span{flex:1;min-width:200px}
 
+.rel-nome{font-weight:700;color:var(--tinta);font-size:15px}
+.rel-dia{display:inline-block;background:#fff1c2;color:#7a5a00;font-weight:700;border-radius:8px;padding:2px 10px;font-variant-numeric:tabular-nums}
+
 /* impressão (ficha do RH) */
 .only-print{display:none}
 @media print{
@@ -1584,7 +1587,7 @@ const RS = {
 const col = (k, l) => ({ k, l });
 const REL = {
   quadro: { l: 'Quadro de funcionários', cols: [col('nome', 'Nome'), col('cargo', 'Cargo'), col('data_admissao', 'Admissão'), col('tempo', 'Tempo de casa'), col('salario', 'Salário (R$)'), col('celular', 'Celular')] },
-  aniver: { l: 'Aniversariantes', cols: [col('aniv', 'Dia'), col('nome', 'Nome'), col('cargo', 'Cargo'), col('idade', 'Completa'), col('celular', 'Celular')] },
+  aniver: { l: 'Aniversariantes', cols: [col('nome', 'Nome'), col('aniv', 'Aniversário'), col('idade', 'Idade'), col('celular', 'Celular')] },
   contatos: { l: 'Telefones e e-mails', cols: [col('nome', 'Nome'), col('cargo', 'Cargo'), col('celular', 'Celular'), col('celular_whats', 'WhatsApp'), col('tel_recado', 'Recado'), col('email', 'E-mail')] },
   emergencia: { l: 'Contatos de emergência', cols: [col('nome', 'Nome'), col('celular', 'Celular'), col('emerg_nome', 'Contato'), col('emerg_parentesco', 'Parentesco'), col('emerg_tel', 'Telefone do contato')] },
   ferias: { l: 'Férias', cols: [col('nome', 'Nome'), col('cargo', 'Cargo'), col('data_admissao', 'Admissão'), col('fer_sit', 'Situação'), col('fer_per', 'Período'), col('fer_lim', 'Conceder até')] },
@@ -1638,7 +1641,8 @@ function celula(r, x) {
   if (!v) return '<span class="muted">—</span>';
   if (x.k === 'celular' && dig(v).length >= 10) return `<a href="https://wa.me/55${dig(v)}" target="_blank" rel="noopener">${esc(v)}</a>`;
   if (x.k === 'email') return `<a href="mailto:${esc(v)}">${esc(v)}</a>`;
-  if (x.k === 'aniv' && ehHoje(r)) return esc(v) + '<span class="tag-hoje">HOJE</span>';
+  if (R.rel.tipo === 'aniver' && x.k === 'nome') return `<b class="rel-nome">${esc(v)}</b>`;
+  if (x.k === 'aniv') return `<span class="rel-dia">${esc(v)}</span>${ehHoje(r) ? '<span class="tag-hoje">HOJE</span>' : ''}`;
   if (x.k === 'fer_sit') return `<span class="chip ${v === 'Vencidas' ? 's-cor' : v === 'A conceder' ? 's-env' : 's-ok'}">${esc(v)}</span>`;
   return esc(v);
 }
