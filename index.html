@@ -399,6 +399,16 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
 .contato-l a{display:inline-flex;align-items:center;gap:6px;background:var(--suave);color:var(--verde);text-decoration:none;font-weight:600;border-radius:999px;padding:8px 14px;font-size:14px}
 .contato-l a:hover{background:#e6e1cd}
 
+.seg{display:inline-flex;background:var(--suave);border-radius:12px;padding:4px;gap:4px;flex-wrap:wrap}
+.seg button{border:0;background:none;border-radius:9px;padding:8px 14px;font-weight:700;font-size:14px;color:var(--cinza)}
+.seg button.on{background:var(--verde);color:var(--ouro)}
+.pes-l{max-height:300px;overflow:auto;border:1.5px solid var(--linha);border-radius:12px;margin-top:8px;background:#fff}
+.pes{display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid var(--linha);cursor:pointer;font-weight:400}
+.pes:first-child{border-top:0}
+.pes.on{background:#f0f7f2}
+.pes input{width:18px;height:18px;min-height:0;flex:none;accent-color:var(--verde2)}
+.pes span{min-width:0}.pes b{display:block;font-size:14px}.pes small{display:block;color:var(--cinza);font-size:12.5px}
+
 /* impressão (ficha do RH) */
 .only-print{display:none}
 @media print{
@@ -1939,7 +1949,21 @@ async function carregarCom(abrirId) {
   } catch (e) { rLista(); erroRH(e); }
 }
 const aprovados = () => (R.com.dados || []).filter(a => a.status === 'aprovado').sort(nomeSort);
-const selecionados = () => aprovados().filter(a => !R.com.form.cargos.length || R.com.form.cargos.includes(a.cargo || 'Sem cargo'));
+const selecionados = () => {
+  const f = R.com.form;
+  if (f.modo === 'pessoas') return aprovados().filter(a => (f.pessoas || []).includes(a.codigo));
+  return aprovados().filter(a => !f.cargos.length || f.cargos.includes(a.cargo || 'Sem cargo'));
+};
+function listaPessoasCom() {
+  const f = R.com.form, b = normH(f.buscaP || ''), sel = new Set(f.pessoas || []);
+  const l = aprovados().filter(a => !b || normH(a.nome + ' ' + (a.cargo || '')).includes(b));
+  return l.length ? l.map(a => `<label class="pes${sel.has(a.codigo) ? ' on' : ''}"><input type="checkbox" data-pessoa="${esc(a.codigo)}"${sel.has(a.codigo) ? ' checked' : ''}>${avatar(a.nome, 30)}
+    <span><b>${esc(a.nome)}</b><small>${esc(a.cargo || '')}${a.celular ? ' · ' + esc(a.celular) : ' · sem celular'}</small></span></label>`).join('')
+    : '<p class="muted">Ninguém encontrado.</p>';
+}
+const publicoCom = () => { const f = R.com.form, l = selecionados();
+  if (f.modo === 'pessoas') return l.length <= 3 ? l.map(a => a.nome).join(', ') : `${l.length} funcionários escolhidos`;
+  return f.cargos.length ? f.cargos.join(', ') : 'Todos os ativos'; };
 function resumoCom() {
   const l = selecionados();
   const w = l.filter(telWhats).length, e = l.filter(a => /@/.test(a.email || '')).length;
@@ -1967,8 +1991,12 @@ function rCom() {
         <div class="fld"><label for="com_msg">Mensagem <span class="req">*</span></label><textarea id="com_msg" maxlength="1500" style="min-height:160px">${esc(f.m)}</textarea>
           <small>Troque os "__" pelas datas e horários. <b>{nome}</b> vira o primeiro nome de cada funcionário.</small></div>
         <div class="fld"><label>Para quem</label>
-          <div class="chips"><label><input type="checkbox" data-cargo=""${!f.cargos.length ? ' checked' : ''}>Todos os ativos</label>
-          ${cargos.map(c => `<label><input type="checkbox" data-cargo="${esc(c)}"${f.cargos.includes(c) ? ' checked' : ''}>${esc(c)}</label>`).join('')}</div>
+          <div class="seg"><button type="button" data-act="commodo" data-m="cargo" class="${f.modo !== 'pessoas' ? 'on' : ''}">Todos ou por cargo</button><button type="button" data-act="commodo" data-m="pessoas" class="${f.modo === 'pessoas' ? 'on' : ''}">Escolher funcionários</button></div>
+          ${f.modo === 'pessoas' ? `<input id="com_busca_p" type="search" placeholder="Buscar funcionário pelo nome ou cargo" value="${esc(f.buscaP || '')}" style="margin-top:10px">
+            <div class="pes-l" id="com_pes">${listaPessoasCom()}</div>
+            <div class="det-acoes" style="margin-top:6px"><button type="button" class="lnk2" data-act="compesall">marcar os da busca</button><button type="button" class="lnk2" data-act="compesnone">desmarcar todos</button></div>`
+          : `<div class="chips" style="margin-top:10px"><label><input type="checkbox" data-cargo=""${!f.cargos.length ? ' checked' : ''}>Todos os ativos</label>
+          ${cargos.map(c => `<label><input type="checkbox" data-cargo="${esc(c)}"${f.cargos.includes(c) ? ' checked' : ''}>${esc(c)}</label>`).join('')}</div>`}
           <p class="resumo-env" id="com_res">${resumoCom()}</p></div>
         <div class="fld"><label class="aceite" style="margin:0"><input type="checkbox" id="com_email"${f.email ? ' checked' : ''}><span>Enviar também por e-mail para quem cadastrou e-mail</span></label></div>
         <div class="fld"><label>Prévia${prev ? ' – como ' + esc(primeiro(prev.nome)) + ' vai receber' : ''}</label><div class="bolha" id="com_prev">${esc(personaliza(f.m, prev ? prev.nome : ''))}</div></div>
@@ -2342,6 +2370,11 @@ const ACOES_RH = {
 
   /* comunicados */
   comunicados: () => carregarCom(null),
+  commodo(b) { R.com.form.modo = b.dataset.m; rCom(); },
+  compesall() { const f = R.com.form, b = normH(f.buscaP || '');
+    f.pessoas = [...new Set([...(f.pessoas || []), ...aprovados().filter(a => !b || normH(a.nome + ' ' + (a.cargo || '')).includes(b)).map(a => a.codigo)])];
+    $('#com_pes').innerHTML = listaPessoasCom(); atualizarPrevia(); },
+  compesnone() { R.com.form.pessoas = []; $('#com_pes').innerHTML = listaPessoasCom(); atualizarPrevia(); },
   comabrir: b => { R.com.atual = b.dataset.id; rCom(); window.scrollTo(0, 0); },
   comvoltar: () => carregarCom(null),
   commodelo(b) {
@@ -2358,7 +2391,7 @@ const ACOES_RH = {
     b.disabled = true; b.textContent = 'Criando…';
     try {
       const r = await api('criarComunicado', { senha: R.senha, titulo: f.t.trim(), mensagem: f.m.trim(), codigos: l.map(a => a.codigo),
-        email: f.email, publico: f.cargos.length ? f.cargos.join(', ') : 'Todos os ativos' });
+        email: f.email, publico: publicoCom() });
       R.com.form = { ...MODELOS.livre(), t: '', cargos: [], email: true };
       if (r.emails) toast(`E-mail enviado para ${r.emails} funcionário(s)`);
       await carregarCom(r.id);
@@ -2393,6 +2426,7 @@ document.addEventListener('input', e => {
   if (!MODO_COLAB && R.form && el.dataset.k) { aoDigitar(el, R.form.d, R.form.mapa); R.form.aoMudar && R.form.aoMudar(el.dataset.k, R.form.d); }
   if (el.id === 'busca') { R.busca = el.value; $('#itens').innerHTML = itensHTML(); }
   if (el.id === 'com_tit') R.com.form.t = el.value;
+  if (el.id === 'com_busca_p') { R.com.form.buscaP = el.value; $('#com_pes').innerHTML = listaPessoasCom(); }
   if (el.id === 'com_msg') { R.com.form.m = el.value; atualizarPrevia(); }
   if (el.id === 'rel_busca') { R.rel.busca = el.value; const l = relLinhas(); $('#rel_tab').innerHTML = tabelaHTML(REL[R.rel.tipo], l); $('#rel_n').textContent = l.length + ' pessoa(s)'; }
 });
@@ -2400,6 +2434,11 @@ document.addEventListener('change', e => {
   const el = e.target;
   if (el.dataset.up) { const fs = [...el.files]; el.value = ''; if (fs.length) subir(el.dataset.up, fs); }
   if (el.id === 'com_email') R.com.form.email = el.checked;
+  if (el.dataset.pessoa !== undefined) {
+    const f = R.com.form, c = el.dataset.pessoa; f.pessoas = f.pessoas || [];
+    f.pessoas = el.checked ? [...new Set([...f.pessoas, c])] : f.pessoas.filter(x => x !== c);
+    el.closest('.pes').classList.toggle('on', el.checked); atualizarPrevia();
+  }
   if (el.dataset.cargo !== undefined) {
     const f = R.com.form, c = el.dataset.cargo;
     if (!c) f.cargos = []; else f.cargos = el.checked ? [...f.cargos, c] : f.cargos.filter(x => x !== c);
