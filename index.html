@@ -655,12 +655,14 @@ async function mock(acao, q) {
       db.eventos = db.eventos.filter(x => x !== e); break; }
     case 'desligar': { rh(); const a = adm(q.codigo), d = q.dados || {}; if (a.status !== 'aprovado') throw new Error('Só funcionários ativos podem ser desligados.');
       if (!d.deslig_data || !d.deslig_tipo) throw new Error('Informe a data e o tipo de desligamento.');
-      Object.assign(a, d, { status: 'desligado', deslig_em: agora });
+      Object.assign(a, d, { status: 'desligado', deslig_em: agora, grupo_pendente: 'remover' });
       ev(a, { tipo: 'desligamento', subtipo: d.deslig_tipo, data: d.deslig_data, descricao: [d.deslig_aviso && 'Aviso prévio: ' + d.deslig_aviso, d.deslig_recontratar && 'Pode ser recontratado: ' + d.deslig_recontratar, d.deslig_motivo].filter(Boolean).join(' · ') });
       break; }
     case 'reintegrar': { rh(); const a = adm(q.codigo); if (a.status !== 'desligado') throw new Error('Este funcionário não está desligado.');
       ['deslig_data', 'deslig_tipo', 'deslig_aviso', 'deslig_recontratar', 'deslig_motivo', 'deslig_em'].forEach(k => { a[k] = ''; }); a.status = 'aprovado';
+      a.grupo_pendente = 'convidar';
       ev(a, { tipo: 'reintegracao', data: iso(hoje0()), descricao: 'Voltou a ficar ativo no painel' }); break; }
+    case 'marcarGrupo': { rh(); adm(q.codigo).grupo_pendente = ''; break; }
     case 'comunicados': rh(); r = { itens: db.coms.slice().reverse() }; break;
     case 'criarComunicado': { rh(); if (!q.titulo || !q.mensagem) throw new Error('Preencha o título e a mensagem.');
       const dest = db.adms.filter(a => a.status === 'aprovado' && (q.codigos || []).includes(a.codigo));
@@ -1119,8 +1121,11 @@ function alertasFunc(p, evs) {
   }
   return out;
 }
-const alertas = () => R.itens.flatMap(a => alertasFunc(a, R.eventos)).sort((x, y) => x.quando - y.quando);
-const quandoTxt = x => x.d === 0 ? 'Hoje' : x.d === 1 ? 'Amanhã' : x.d < 0 ? `Há ${-x.d} dia(s)` : `Em ${x.d} dias · ${fmt(x.quando)}`;
+const GRUPO_TXT = { remover: 'Remover do grupo Avisos Posto Trevo (foi desligado)', convidar: 'Convidar de volta para o grupo Avisos Posto Trevo (foi reintegrado)' };
+const alertasGrupo = () => R.itens.filter(a => GRUPO_TXT[a.grupo_pendente] && (a.grupo_pendente === 'remover' ? a.status === 'desligado' : a.status === 'aprovado'))
+  .map(a => ({ codigo: a.codigo, nome: a.nome, quando: hoje0(), txt: GRUPO_TXT[a.grupo_pendente], nivel: 2, d: 0, pend: true }));
+const alertas = () => [...alertasGrupo(), ...R.itens.flatMap(a => alertasFunc(a, R.eventos)).sort((x, y) => x.quando - y.quando)];
+const quandoTxt = x => x.pend ? 'Pendente' : x.d === 0 ? 'Hoje' : x.d === 1 ? 'Amanhã' : x.d < 0 ? `Há ${-x.d} dia(s)` : `Em ${x.d} dias · ${fmt(x.quando)}`;
 const nivelChip = n => n === 2 ? 's-cor' : n === 1 ? 's-env' : 's-prog';
 
 function iniciarRH() {
@@ -1304,7 +1309,7 @@ function rInicio() {
         <p class="muted" style="margin:0;font-size:14px">Últimos 12 meses</p>
         <div class="cols-g">${meses.map(m => `<div class="cg"><div class="bars">${barra(m.a, 'ba')}${barra(m.d, 'bd')}</div><small>${m.l}</small></div>`).join('')}</div></section>
       <section class="card c4"><div class="card-h"><h3>Próximos alertas</h3>${avisos.length > 5 ? '<button class="lnk2" data-act="nav" data-n="alertas">ver todos</button>' : ''}</div>
-        ${avisos.length ? `<ul class="mini">${avisos.slice(0, 5).map(x => `<li data-act="abrir" data-c="${esc(x.codigo)}"><span class="chip ${nivelChip(x.nivel)}">${x.d < 0 ? 'Vencido' : x.d === 0 ? 'Hoje' : x.d + ' dias'}</span><div><b>${esc(x.nome)}</b><small>${esc(x.txt)}</small></div></li>`).join('')}</ul>`
+        ${avisos.length ? `<ul class="mini">${avisos.slice(0, 5).map(x => `<li data-act="abrir" data-c="${esc(x.codigo)}"><span class="chip ${nivelChip(x.nivel)}">${x.pend ? 'Pendente' : x.d < 0 ? 'Vencido' : x.d === 0 ? 'Hoje' : x.d + ' dias'}</span><div><b>${esc(x.nome)}</b><small>${esc(x.txt)}</small></div></li>`).join('')}</ul>`
           : '<p class="muted">Tudo em dia. Nenhum vencimento próximo.</p>'}</section>
       <section class="card c4"><h3>Por cargo</h3>${porCargo.length ? barrasH(porCargo) : '<p class="muted">Sem funcionários ativos.</p>'}</section>
       <section class="card c4"><h3>Tempo de casa</h3>${mesesCasa.length ? barrasH(faixas) : '<p class="muted">Preencha a data de admissão dos funcionários.</p>'}</section>
@@ -1462,7 +1467,7 @@ function modalForm({ titulo, texto = '', defs, d, ok = 'Salvar', arquivo, extra 
     const msg = validar && validar(dd); if (msg) { toast(msg, 'erro'); return; }
     const fs = arquivo ? [...(m.querySelector('#m_arq').files || [])] : [];
     b.disabled = true; b.textContent = 'Salvando…';
-    try { await onOk(dd, fs); fecharModal(); R.form = null; }
+    try { await onOk(dd, fs); if (document.getElementById('modal') === m) fecharModal(); R.form = null; }
     catch (e) { b.disabled = false; b.textContent = ok; erroRH(e); }
   };
   return m;
@@ -1655,6 +1660,10 @@ function rFunc() {
         <div><span>Documentos</span><b>${docs.length}</b></div>
       </div>
       ${st === 'desligado' ? `<div class="aviso"><b>Desligado em ${esc(dataBR(a.deslig_data))}</b> · ${esc(a.deslig_tipo)}${a.deslig_aviso ? ' · aviso ' + esc(a.deslig_aviso.toLowerCase()) : ''}${a.deslig_recontratar ? ' · recontratar: ' + esc(a.deslig_recontratar) : ''}${a.deslig_motivo ? `<br>${esc(a.deslig_motivo)}` : ''}</div>` : ''}
+      ${a.grupo_pendente === 'remover' && st === 'desligado' ? `<div class="aviso erro no-print faixa2"><span><b>Remover do grupo Avisos Posto Trevo</b> no WhatsApp${p.celular ? ` · celular ${esc(p.celular)}` : ''}</span>
+        <button class="btn sec sm" data-act="grupoinfo">Como remover</button><button class="btn pri sm" data-act="grupofeito">Já removi</button></div>`
+        : a.grupo_pendente === 'convidar' && st === 'aprovado' ? `<div class="aviso no-print faixa2"><span><b>Convidar de volta para o grupo Avisos Posto Trevo</b></span>
+        <button class="btn sec sm" data-act="convite">Enviar convite</button><button class="btn pri sm" data-act="grupofeito">Já convidei</button></div>` : ''}
       ${a.atualizacao === 'enviada' ? `<div class="aviso no-print faixa2"><span><b>Ficha atualizada pelo funcionário</b>${a.atualizacao_em ? ' em ' + esc(a.atualizacao_em) : ''}. Confira os dados abaixo.</span>
         <button class="btn pri sm" data-act="atconferida">Marcar como conferida</button><button class="btn sec sm" data-act="atcorrigir">Pedir correção</button></div>`
         : a.atualizacao === 'aberta' ? `<div class="aviso no-print faixa2"><span><b>Aguardando o funcionário atualizar a ficha</b> pelo link do grupo${a.atualizacao_obs ? ` · correção pedida: ${esc(a.atualizacao_obs)}` : ''}</span>
@@ -1996,6 +2005,16 @@ function modalConvite(p, aposAprovar) {
     <div class="det-acoes"><button class="btn sec" data-act="copiarmsg" data-v="${esc(msg)}">Copiar mensagem</button></div>
     <div class="modal-acoes"><button class="btn sec" data-act="fechar">${aposAprovar ? 'Agora não' : 'Fechar'}</button></div>`);
 }
+function modalRemoverGrupo(p) {
+  abrirModal(`<h2>Remover do grupo de avisos</h2>
+    <p class="muted">O WhatsApp não deixa nenhum sistema tirar pessoas de um grupo. Faça pelo seu celular (precisa ser administrador do grupo):</p>
+    <div class="aviso" style="font-size:16px"><b>${esc(p.nome)}</b>${p.celular ? `<br>Celular: <b>${esc(p.celular)}</b>` : ''}</div>
+    <ol style="margin:8px 0 0;padding-left:20px;line-height:1.7"><li>Abra o grupo <b>Avisos Posto Trevo</b> e toque no nome do grupo.</li>
+      <li>Na lista de participantes, toque em <b>${esc(primeiro(p.nome))}</b>${p.celular ? ' (ou procure pelo número)' : ''}.</li><li>Toque em <b>Remover do grupo</b>.</li></ol>
+    <p class="muted" style="font-size:13px">Até você marcar como feito, o lembrete fica nos Alertas e na ficha.</p>
+    <div class="modal-acoes"><button class="btn sec" data-act="fechar">Depois</button><button class="btn pri" data-act="grupofeito">Já removi</button></div>`);
+}
+
 function exportarVcf() {
   const l = (R.com && R.com.dados ? R.com.dados : R.itens).filter(a => a.status === 'aprovado' && [10, 11].includes(dig(a.celular).length)).sort(nomeSort);
   if (!l.length) { toast('Nenhum funcionário ativo com celular cadastrado', 'erro'); return; }
@@ -2114,12 +2133,13 @@ const ACOES_RH = {
         await api('desligar', { senha: R.senha, codigo: a.codigo, dados: pega(DESLIG, dd) });
         if (fs.length) await subirRH(a.codigo, fs, { categoria: 'TRCT / rescisão', descricao: 'Desligamento em ' + dataBR(dd.deslig_data) });
         toast('Desligamento registrado'); await recarregarDet('dados');
+        modalRemoverGrupo(pessoa());
       } });
   },
   async reintegrar(b) {
     if (!confirm('Reintegrar este funcionário? Ele volta para a lista de ativos. O desligamento anterior fica no histórico.')) return;
     b.disabled = true;
-    try { await api('reintegrar', { senha: R.senha, codigo: R.det.adm.codigo }); toast('Funcionário reintegrado'); await recarregarDet('dados'); }
+    try { await api('reintegrar', { senha: R.senha, codigo: R.det.adm.codigo }); toast('Funcionário reintegrado'); await recarregarDet('dados'); if (CONFIG.GRUPO_WHATS) modalConvite(pessoa(), false); }
     catch (e) { b.disabled = false; erroRH(e); }
   },
   docrh() {
@@ -2150,6 +2170,12 @@ const ACOES_RH = {
   importar: () => modalImportar(),
   vcf: () => exportarVcf(),
   convite: () => modalConvite(pessoa(), false),
+  grupoinfo: () => modalRemoverGrupo(pessoa()),
+  async grupofeito(b) {
+    b.disabled = true;
+    try { await api('marcarGrupo', { senha: R.senha, codigo: R.det.adm.codigo }); fecharModal(); toast('Pronto, lembrete concluído'); await recarregarDet(); }
+    catch (e) { b.disabled = false; erroRH(e); }
+  },
   linkgrupo: () => modalLinkGrupo(),
   filtrofunc(b) { R.aba = 'func'; R.filtro = b.dataset.f; R.busca = ''; rLista(); },
   async atabrirtodos(b) {
