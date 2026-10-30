@@ -629,6 +629,7 @@ async function mock(acao, q) {
     case 'criar': { rh(); if (!q.nome) throw new Error('Informe o nome do colaborador.');
       const codigo = novoId();
       db.adms.push({ codigo, nome: q.nome, cargo: q.cargo, data_prevista: q.data_prevista, status: 'novo', obs_rh: '', criado_em: agora, atualizado_em: agora });
+      if ([10, 11].includes(dig(q.celular).length)) db.fichas[codigo] = { celular: q.celular };
       r = { codigo }; break; }
     case 'detalhe': { rh(); const a = adm(q.codigo);
       r = { adm: { ...a, pasta_url: '' }, ficha: { ...(db.fichas[a.codigo] || {}) }, docs: docsDe(a.codigo), eventos: db.eventos.filter(e => e.codigo === a.codigo) }; break; }
@@ -1487,13 +1488,16 @@ function modalNova() {
       <div class="fld"><label for="n_nome">Nome do colaborador <span class="req">*</span></label><input id="n_nome" required maxlength="100" style="text-transform:uppercase"></div>
       <div class="fld h"><label for="n_cargo">Cargo</label><input id="n_cargo" list="l_cargos" maxlength="60"><datalist id="l_cargos">${CARGOS.map(c => `<option value="${esc(c)}">`).join('')}</datalist></div>
       <div class="fld h"><label for="n_data">Início previsto</label><input id="n_data" type="date"></div>
+      <div class="fld"><label for="n_cel">WhatsApp do colaborador</label><input id="n_cel" type="tel" inputmode="tel" maxlength="15" placeholder="(64) 99999-0000">
+        <small>Com o número, o link já abre direto na conversa dele.</small><em class="err"></em></div>
       <div class="modal-acoes fld"><button type="button" class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri">Gerar link</button></div>
     </form>`);
   m.querySelector('#fnova').addEventListener('submit', async e => {
     e.preventDefault();
     const b = e.submitter || m.querySelector('.btn.pri'); b.disabled = true; b.textContent = 'Gerando…';
     try {
-      const dados = { nome: $('#n_nome').value.trim().replace(/\s+/g, ' ').toUpperCase(), cargo: $('#n_cargo').value.trim(), data_prevista: $('#n_data').value };
+      const dados = { nome: $('#n_nome').value.trim().replace(/\s+/g, ' ').toUpperCase(), cargo: $('#n_cargo').value.trim(), data_prevista: $('#n_data').value, celular: $('#n_cel').value.trim() };
+      if (dados.celular && ![10, 11].includes(dig(dados.celular).length)) { toast('Celular com DDD, ex.: (64) 99999-0000', 'erro'); b.disabled = false; b.textContent = 'Gerar link'; $('#n_cel').focus(); return; }
       const r = await api('criar', { senha: R.senha, ...dados });
       R.aba = 'adm'; R.filtroAdm = 'andamento';
       await carregarLista(false);
@@ -1508,11 +1512,12 @@ function msgWhats(a, obs) {
     : `Olá, ${nome}! Seja bem-vindo(a) à equipe do Posto Trevo. Para agilizar sua admissão, preencha sua ficha cadastral e envie as fotos dos seus documentos por este link:\n${link}\n\nQualquer dúvida, fale com o RH.`;
 }
 function modalLink(a, obs) {
-  const link = linkDe(a.codigo);
+  const link = linkDe(a.codigo), cel = dig(a.celular), temCel = [10, 11].includes(cel.length);
   abrirModal(`<h2>${obs ? 'Avisar o colaborador' : 'Link criado'}</h2>
     <p>Envie este link <b>só para ${esc(primeiro(a.nome))}</b>. Quem tiver o link consegue abrir e preencher a ficha.</p>
     <div class="bolha" style="margin:12px 0;max-width:none;font-size:14px">${esc(msgWhats(a, obs))}</div>
-    <a class="btn wa big" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(msgWhats(a, obs))}">Enviar pelo WhatsApp</a>
+    <a class="btn wa big" target="_blank" rel="noopener" href="https://wa.me/${temCel ? '55' + cel : ''}?text=${encodeURIComponent(msgWhats(a, obs))}">${temCel ? `Enviar para ${esc(a.celular)} no WhatsApp` : 'Enviar pelo WhatsApp'}</a>
+    ${temCel ? '' : '<p class="muted" style="font-size:13px;margin:6px 0 0">Sem número cadastrado: o WhatsApp vai pedir para você escolher a conversa.</p>'}
     <div class="det-acoes"><button class="btn sec" data-act="copiarmsg" data-v="${esc(msgWhats(a, obs))}">Copiar mensagem</button><button class="btn sec" data-act="copiar" data-v="${esc(link)}">Copiar só o link</button></div>
     <div class="modal-acoes"><button class="btn sec" data-act="fechar">Fechar</button></div>`);
 }
@@ -2030,7 +2035,7 @@ const ACOES_RH = {
   fechar() { fecharModal(); },
   copiar: b => copiar(b.dataset.v),
   copiarmsg: b => copiar(b.dataset.v, 'Mensagem copiada. É só colar no WhatsApp.'),
-  link(b, e) { e.stopPropagation(); const a = R.itens.find(x => x.codigo === b.dataset.c) || R.det?.adm; a && modalLink(a); },
+  link(b, e) { e.stopPropagation(); const a = R.itens.find(x => x.codigo === b.dataset.c) || (R.det && { ...R.det.adm, celular: R.det.ficha.celular }); a && modalLink(a); },
   abrir: b => abrirDet(b.dataset.c, 'dados'),
   lista() { R.det = null; carregarLista(true); },
   voltadet: () => abrirDet(R.det.adm.codigo, R.sub),
@@ -2062,7 +2067,7 @@ const ACOES_RH = {
     m.querySelector('#okobs').onclick = async ev => {
       const obs = $('#obs').value.trim(); if (!obs) { toast('Escreva o que precisa ajustar', 'erro'); return; }
       ev.target.disabled = true;
-      try { await mudarStatus('correcao', obs); modalLink(R.det.adm, obs); } catch (e) { ev.target.disabled = false; erroRH(e); }
+      try { await mudarStatus('correcao', obs); modalLink({ ...R.det.adm, celular: R.det.ficha.celular }, obs); } catch (e) { ev.target.disabled = false; erroRH(e); }
     };
   },
   async cancelar(b) {
@@ -2323,6 +2328,7 @@ document.addEventListener('input', e => {
   const el = e.target;
   if (MODO_COLAB && el.dataset.k) aoDigitarColab(el);
   if (el.id === 'g_cpf') el.value = mascara('000.000.000-00', el.value);
+  if (el.id === 'n_cel') el.value = mascara('tel', el.value);
   if (!MODO_COLAB && R.form && el.dataset.k) { aoDigitar(el, R.form.d, R.form.mapa); R.form.aoMudar && R.form.aoMudar(el.dataset.k, R.form.d); }
   if (el.id === 'busca') { R.busca = el.value; $('#itens').innerHTML = itensHTML(); }
   if (el.id === 'com_tit') R.com.form.t = el.value;
