@@ -380,6 +380,12 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
 .rel-nome{font-weight:700;color:var(--tinta);font-size:15px}
 .rel-dia{display:inline-block;background:#fff1c2;color:#7a5a00;font-weight:700;border-radius:8px;padding:2px 10px;font-variant-numeric:tabular-nums}
 
+.contato-rh{margin:20px 0 8px;padding:16px 18px;border-radius:var(--r);background:#fff;border:1.5px dashed var(--linha)}
+.contato-rh h3{font-size:14px;margin:0 0 10px;color:var(--verde)}
+.contato-l{display:flex;flex-wrap:wrap;gap:8px}
+.contato-l a{display:inline-flex;align-items:center;gap:6px;background:var(--suave);color:var(--verde);text-decoration:none;font-weight:600;border-radius:999px;padding:8px 14px;font-size:14px}
+.contato-l a:hover{background:#e6e1cd}
+
 /* impressão (ficha do RH) */
 .only-print{display:none}
 @media print{
@@ -413,7 +419,10 @@ const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwlcSxpCCp0CW290uAuL5xz64Qb792shpW3_Gexv2scUonLK3EqY4z2agMo6E6LWwTE/exec',
   EMPRESA: 'RCJ Combustíveis – Posto Trevo',
   CNPJ: '37.372.802/0001-32',
-  CONTATO_RH: 'RH do Posto Trevo – (64) 98445-4698 (WhatsApp) ou (64) 3051-4698'
+  CONTATO_RH: 'RH do Posto Trevo – (64) 3051-4698, (64) 98445-4698 (WhatsApp) ou rcj_ltda@uol.com.br',
+  RH_FIXO: '(64) 3051-4698',
+  RH_CELULAR: '(64) 98445-4698',
+  RH_EMAIL: 'rcj_ltda@uol.com.br'
 };
 const DEMO = !CONFIG.API_URL;
 
@@ -730,7 +739,7 @@ function telaGrupo(msg) {
     </div>
     ${msg ? `<div class="aviso erro">${esc(msg)}</div>` : ''}
     <button class="btn pri big" style="margin-top:16px">Abrir minha ficha</button>
-    <p class="muted" style="font-size:13px;margin-top:12px">Cada pessoa só consegue abrir a própria ficha. Seus dados ficam guardados com o RH, conforme a LGPD.</p></form></main>`;
+    <p class="muted" style="font-size:13px;margin-top:12px">Cada pessoa só consegue abrir a própria ficha. Seus dados ficam guardados com o RH, conforme a LGPD.</p></form>${contatoRH()}</main>`;
   $('#g_cpf').focus();
 }
 async function entrarGrupo(e) {
@@ -742,10 +751,17 @@ async function entrarGrupo(e) {
     C.passo = 0; iniciarColab(r.codigo);
   } catch (x) { telaGrupo(x.message); }
 }
+function contatoRH() {
+  const cel = dig(CONFIG.RH_CELULAR), fixo = dig(CONFIG.RH_FIXO);
+  return `<section class="contato-rh"><h3>Dúvidas? Fale com o RH</h3><div class="contato-l">
+    <a href="tel:+55${fixo}">📞 ${esc(CONFIG.RH_FIXO)}</a>
+    <a href="https://wa.me/55${cel}" target="_blank" rel="noopener">💬 ${esc(CONFIG.RH_CELULAR)} (WhatsApp)</a>
+    <a href="mailto:${esc(CONFIG.RH_EMAIL)}">✉️ ${esc(CONFIG.RH_EMAIL)}</a></div></section>`;
+}
 function telaFim(tipo, titulo, txt) {
   app.innerHTML = topo(GRUPO ? 'Atualização cadastral' : 'Ficha de admissão') + `<main class="wrap"><section class="card fim">
     <div class="selo ${tipo === 'ok' ? '' : tipo}">${tipo === 'ok' ? '✓' : tipo === 'erro' ? '!' : 'i'}</div>
-    <h1>${esc(titulo)}</h1><p class="muted">${esc(txt)}</p></section></main>`;
+    <h1>${esc(titulo)}</h1><p class="muted">${esc(txt)}</p></section>${contatoRH()}</main>`;
 }
 function dadosLimpos() {
   const d = {};
@@ -767,7 +783,7 @@ function rColab() {
   else if (p === P_ANEXOS) corpo = passoAnexos();
   else corpo = passoRevisao();
   const passos = p ? `<ol class="steps" aria-label="Etapas">${PASSOS.map((n, i) => `<li class="${i + 1 < p ? 'done' : i + 1 === p ? 'cur' : ''}"><em>${i + 1}. ${esc(n)}</em></li>`).join('')}</ol>` : '';
-  app.innerHTML = topo(tituloColab()) + `<main class="wrap">${passos}${corpo}</main>`;
+  app.innerHTML = topo(tituloColab()) + `<main class="wrap">${passos}${corpo}${contatoRH()}</main>`;
 }
 function navHTML(proximo = 'Salvar e continuar') {
   return `<div class="nav"><button class="btn sec" data-act="voltar">Voltar</button><button class="btn pri" data-act="avancar">${proximo}</button></div>`;
@@ -916,7 +932,7 @@ function rReenvio() {
     ${a.reenvio_obs ? `<div class="aviso"><b>Recado do RH:</b><br>${esc(a.reenvio_obs)}</div>` : ''}
     <p class="muted">Tire as fotos com boa luz, o documento inteiro aparecendo e sem reflexo. Também vale PDF.</p>
     <div class="docs">${defs.map(docCard).join('')}</div></section>
-    <div class="nav"><button class="btn pri" data-act="concluirreenvio"${falta.length ? ' disabled' : ''}>${falta.length ? 'Envie os documentos acima' : 'Concluir envio'}</button></div></main>`;
+    <div class="nav"><button class="btn pri" data-act="concluirreenvio"${falta.length ? ' disabled' : ''}>${falta.length ? 'Envie os documentos acima' : 'Concluir envio'}</button></div>${contatoRH()}</main>`;
 }
 
 const ACOES_COLAB = {
