@@ -557,7 +557,7 @@ const linkGrupo = () => location.href.split(/[?#]/)[0] + '?atualizar';
 const TRAVA = new Set();
 const modoAt = () => !!(C.adm && C.adm.modo === 'atualizacao');
 const tituloColab = () => modoAt() ? 'Atualização cadastral' : 'Ficha de admissão';
-const docsColab = d => docsVisiveis(d).map(x => modoAt() ? { ...x, req: 0 } : x);
+const docsColab = d => docsVisiveis(d);
 const primeiro = n => { const w = String(n || '').trim().split(/\s+/)[0] || ''; return w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ''; };
 
 /* ═══════════ API ═══════════ */
@@ -779,7 +779,7 @@ function passoInicio() {
     <h1>Olá, ${esc(primeiro(C.ficha.nome || a.nome))}!</h1>
     <p>O RH do Posto Trevo está atualizando o cadastro da equipe. Alguns dados já estão preenchidos: confira, corrija o que estiver errado e complete o que falta. Leva cerca de 10 minutos.</p>
     ${a.obs_rh ? `<div class="aviso"><b>O RH pediu um ajuste:</b><br>${esc(a.obs_rh)}</div>` : ''}
-    <p>No final, se tiver em mãos, mande fotos dos seus documentos (RG ou CNH, comprovante de residência e foto). Os anexos não são obrigatórios.</p>
+    <p>No final, mande fotos dos seus documentos. Separe: <b>RG ou CNH</b>, <b>comprovante de residência</b>, uma <b>foto 3x4 ou selfie</b> e a <b>Carteira de Trabalho Digital</b> (print do app).</p>
     <p class="muted">Pode parar e continuar depois: é só abrir o link de novo e entrar com seu CPF e data de nascimento.</p>
     <button class="btn pri big" data-act="ir" data-p="1">Começar</button>
   </section>`;
