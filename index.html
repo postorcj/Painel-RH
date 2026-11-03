@@ -405,6 +405,7 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
 .pes-l{max-height:300px;overflow:auto;border:1.5px solid var(--linha);border-radius:12px;margin-top:8px;background:#fff}
 .pes{display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid var(--linha);cursor:pointer;font-weight:400}
 .pes:first-child{border-top:0}
+.iam-box{margin-top:12px;padding:12px;border:1.5px solid var(--verde2);border-radius:12px;background:var(--fundo2,#f6f8f4)}.iam-box .iam-t{font-weight:700;display:block;margin-bottom:6px}
 .dest-op{display:grid;gap:6px}.dest-op .pes{border:1.5px solid var(--linha);border-radius:12px}.dest-op .pes.on{border-color:var(--verde2)}
 .pes input[type=radio]{width:18px;height:18px;min-height:0;flex:none;accent-color:var(--verde2)}
 .pes.on{background:#f0f7f2}
@@ -1075,8 +1076,14 @@ const CONTRATO = [
   { k: 'salario', l: 'Salário (R$)', w: 'h', ph: 'Ex.: 2.150,00', max: 20 },
   { k: 'exp_tipo', l: 'Contrato de experiência', t: 'select', op: ['45 + 45 dias', '30 + 60 dias', '90 dias', 'Sem experiência'], w: 'h' },
   { k: 'aso_validade', l: 'Validade do ASO (exame periódico)', t: 'date', w: 'h', v: V.data, hint: 'Normalmente 1 ano depois do último exame.' },
-  { k: 'aprendiz', l: 'Jovem aprendiz?', t: 'select', op: ['Não', 'Sim'], w: 'h' }
+  { k: 'aprendiz', l: 'Jovem aprendiz?', t: 'select', op: ['Não', 'Sim'], w: 'h' },
+  { k: 'ap_lider', l: 'Líder imediato do aprendiz', w: 'h', ph: 'Ex.: JOÃO DA SILVA', max: 60, up: 1, show: d => d.aprendiz === 'Sim' },
+  { k: 'ap_lider_tel', l: 'Telefone do setor / líder', w: 'h', mask: 'tel', ph: '(64) 00000-0000', max: 30, show: d => d.aprendiz === 'Sim' },
+  { k: 'ap_horario', l: 'Horário de entrada e saída', w: 'h', ph: 'Ex.: 07:00 às 13:00', max: 60, show: d => d.aprendiz === 'Sim' },
+  { k: 'ap_dia_curso', l: 'Dia favorável para o curso', w: 'h', ph: 'Ex.: Quarta-feira', max: 60, show: d => d.aprendiz === 'Sim' }
 ];
+const AP_PAD = { ap_lider: 'ap_lider', ap_lider_tel: 'ap_lider_tel', ap_horario: 'ap_horario', ap_dia_curso: 'ap_dia_curso', salario: 'ap_salario' };
+const comPadraoAp = (d, cfg) => { const o = { ...d }; if (o.aprendiz === 'Sim') Object.entries(AP_PAD).forEach(([k, c]) => { if (!o[k] && cfg[c]) o[k] = cfg[c]; }); return o; };
 const DESLIG = [
   { k: 'deslig_data', l: 'Data do desligamento', t: 'date', req: 1, w: 'h', v: V.data },
   { k: 'deslig_tipo', l: 'Tipo', t: 'select', req: 1, w: 'h', op: ['Sem justa causa (pela empresa)', 'Pedido de demissão', 'Justa causa', 'Acordo (art. 484-A)', 'Fim do contrato de experiência', 'Término de contrato', 'Falecimento'] },
@@ -1732,7 +1739,9 @@ function subDados() {
   const fimExp = ad && exp ? exp.map(n => fmt(addDias(ad, n - 1))).join(' e ') : '';
   return `<div class="cols">
     <section class="card"><h3>Contrato</h3>${kv([['Cargo', a.cargo], ['Data de admissão', dataBR(a.data_admissao)], ['Salário', a.salario ? 'R$ ' + a.salario : ''],
-      ['Experiência', a.exp_tipo], ['Fim da experiência', fimExp], ['Validade do ASO', dataBR(a.aso_validade)], ['Jovem aprendiz', a.aprendiz || 'Não'], ['Cadastrado', a.origem === 'rh' ? 'Pelo RH' : 'Pelo portal de admissão']])}</section>
+      ['Experiência', a.exp_tipo], ['Fim da experiência', fimExp], ['Validade do ASO', dataBR(a.aso_validade)], ['Jovem aprendiz', a.aprendiz || 'Não'],
+      ...(a.aprendiz === 'Sim' ? [['Líder imediato', [a.ap_lider, a.ap_lider_tel].filter(Boolean).join(' – ')], ['Horário', a.ap_horario], ['Dia do curso', a.ap_dia_curso]] : []),
+      ['Cadastrado', a.origem === 'rh' ? 'Pelo RH' : 'Pelo portal de admissão']])}</section>
     ${SECOES.map(s => `<section class="card"><h3>${esc(s.t)}</h3>${resumoSecao(s, d)}</section>`).join('')}
   </div>`;
 }
@@ -2100,7 +2109,13 @@ const CFG_DEFS = [
   { k: 'email_contab', l: 'E-mail', w: 'h', t: 'email', ph: 'contato@escritorio.com.br', max: 120, hint: 'Para mais de um, separe por vírgula.' },
   { sub: 'IAM – Instituto de Assistência a Menores (jovem aprendiz)' },
   { k: 'nome_iam', l: 'Nome / responsável', w: 'h', ph: 'Ex.: IAM Rio Verde', max: 80 },
-  { k: 'email_iam', l: 'E-mail', w: 'h', t: 'email', ph: 'contato@iam.org.br', max: 120, hint: 'Para mais de um, separe por vírgula.' }
+  { k: 'email_iam', l: 'E-mail', w: 'h', t: 'email', ph: 'contato@iam.org.br', max: 120, hint: 'Para mais de um, separe por vírgula.' },
+  { sub: 'Jovem aprendiz – dados padrão enviados ao IAM' },
+  { k: 'ap_lider', l: 'Líder imediato', w: 'h', ph: 'Ex.: JOÃO DA SILVA', max: 60, up: 1 },
+  { k: 'ap_lider_tel', l: 'Telefone do setor / líder', w: 'h', mask: 'tel', ph: '(64) 00000-0000', max: 30 },
+  { k: 'ap_salario', l: 'Salário do aprendiz (R$)', w: 'h', ph: 'Ex.: 1.731,21', max: 20 },
+  { k: 'ap_horario', l: 'Horário de entrada e saída', w: 'h', ph: 'Ex.: 07:00 às 13:00', max: 60 },
+  { k: 'ap_dia_curso', l: 'Dia favorável para o curso', w: 'h', ph: 'Ex.: Quarta-feira', max: 60, hint: 'Esses dados já vêm preenchidos para cada aprendiz e podem ser trocados na ficha dele.' }
 ];
 const emailsOk = v => !v || String(v).split(/[,;]\s*/).every(e => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e));
 async function pegarConfig() {
@@ -2116,7 +2131,7 @@ async function carregarConfig() {
 function rConfig() {
   R.form = { d: { ...R.cfg }, mapa: mapaDe(CFG_DEFS) };
   app.innerHTML = shell('config', `<div class="estreito-f">
-    <div class="pg-h"><div><h1>Configurações</h1><p>E-mails usados no botão <b>Enviar por e-mail</b> da ficha de cada funcionário.</p></div></div>
+    <div class="pg-h"><div><h1>Configurações</h1><p>E-mails usados no botão <b>Enviar por e-mail</b> e dados padrão do jovem aprendiz.</p></div></div>
     <section class="card">${formHTML(CFG_DEFS, R.form.d)}
       <div class="det-acoes"><button class="btn pri" data-act="salvarcfg">Salvar</button></div></section>
     <section class="card"><h3>Como funciona</h3><p class="muted">Na ficha do funcionário, clique em <b>Enviar por e-mail</b>, escolha para quem (contabilidade, IAM ou outro e-mail) e quais documentos vão junto. A ficha de registro vai em PDF, e os documentos vão anexados. O envio fica registrado no histórico do funcionário.</p></section>
@@ -2128,7 +2143,8 @@ function fichaHtmlPdf(p) {
   const linhas = pares => pares.map(([l, v]) => `<tr><td class="l">${esc(l)}</td><td>${esc(v) || '—'}</td></tr>`).join('');
   const contrato = [['Cargo', a.cargo], ['Data de admissão', dataBR(a.data_admissao)], ['Salário', a.salario ? 'R$ ' + a.salario : ''],
     ['Contrato de experiência', a.exp_tipo], ['Fim da experiência', ad && exp ? exp.map(n => fmt(addDias(ad, n - 1))).join(' e ') : ''],
-    ['Jovem aprendiz', a.aprendiz || 'Não'], ['Validade do ASO', dataBR(a.aso_validade)]];
+    ['Jovem aprendiz', a.aprendiz || 'Não'], ['Validade do ASO', dataBR(a.aso_validade)],
+    ...(a.aprendiz === 'Sim' ? [['Líder imediato / telefone', [a.ap_lider, a.ap_lider_tel].filter(Boolean).join(' – ')], ['Horário de entrada e saída', a.ap_horario], ['Dia favorável para o curso', a.ap_dia_curso]] : [])];
   const secao = s => linhas(s.campos.filter(f => f.k && (!f.show || f.show(d))).map(f => [f.l, f.t === 'date' ? dataBR(d[f.k]) : d[f.k]]));
   return `<html><head><meta charset="utf-8"><style>
     *{box-sizing:border-box} body{font-family:Arial,Helvetica,sans-serif;font-size:10.5px;color:#111;margin:0 auto;max-width:180mm}
@@ -2151,11 +2167,18 @@ async function modalEnviarFicha() {
   const p = pessoa(), docs = R.det.docs, aprendiz = R.det.adm.aprendiz === 'Sim';
   const opc = [['contab', `${cfg.nome_contab || 'Escritório de contabilidade'}`, cfg.email_contab], ['iam', `${cfg.nome_iam || 'IAM'} (jovem aprendiz)`, cfg.email_iam], ['outro', 'Outro e-mail', '']];
   const pad = aprendiz && cfg.email_iam ? 'iam' : 'contab';
+  const ad0 = comPadraoAp(R.det.adm, cfg);
+  const IAM_F = [['lider', 'Líder imediato', ad0.ap_lider, 'Nome do líder'], ['tel', 'Telefone do setor', ad0.ap_lider_tel, '(64) 00000-0000'],
+    ['horario', 'Horário de entrada e saída', ad0.ap_horario, 'Ex.: 07:00 às 13:00'], ['dia', 'Dia favorável para o curso', ad0.ap_dia_curso, 'Ex.: Quarta-feira'],
+    ['inicio', 'Data de início do contrato', dataBR(ad0.data_admissao), 'dd/mm/aaaa'], ['salario', 'Salário (R$)', ad0.salario, 'Ex.: 1.731,21']];
   const m = abrirModal(`<h2>Enviar por e-mail</h2><p class="muted">Ficha e documentos de <b>${esc(p.nome)}</b>.</p>
     <div class="fld"><label>Para <small class="muted" style="font-weight:400">(pode marcar mais de um)</small></label><div class="dest-op">${opc.map(([k, l, e]) => `<label class="pes${k === pad ? ' on' : ''}"><input type="checkbox" name="env_dest" value="${k}"${k === pad ? ' checked' : ''}>
       <span><b>${esc(l)}</b><small>${k === 'outro' ? 'Digite abaixo' : e ? esc(e) : 'E-mail não cadastrado – cadastre em Configurações'}</small></span></label>`).join('')}</div>
       <input id="env_email" type="email" placeholder="email@exemplo.com.br" style="margin-top:8px"${pad === 'outro' ? '' : ' hidden'}>
       <button type="button" class="lnk2" data-act="nav" data-n="config" style="margin-top:4px">editar e-mails cadastrados</button></div>
+    ${aprendiz ? `<div class="iam-box" id="env_iam"${pad === 'iam' ? '' : ' hidden'}><label class="iam-t">Informações para o IAM <small class="muted">(vão no e-mail do IAM)</small></label>
+      <div class="grid">${IAM_F.map(([k, l, v, ph]) => `<div class="fld h"><label for="iam_${k}">${esc(l)}</label><input id="iam_${k}" value="${esc(v)}" placeholder="${esc(ph)}" maxlength="80"${k === 'tel' ? ' data-tel="1"' : ''}></div>`).join('')}</div>
+      <small class="muted">Alterações aqui ficam salvas na ficha do aprendiz.</small></div>` : ''}
     <div class="fld" style="margin-top:12px"><label>O que enviar</label><div class="pes-l" style="max-height:240px">
       <label class="pes on"><input type="checkbox" id="env_ficha" checked><span><b>Ficha de registro (PDF)</b><small>Gerada agora com os dados do painel</small></span></label>
       ${docs.length ? docs.map(f => `<label class="pes on"><input type="checkbox" class="env-doc" value="${esc(f.file_id)}" data-tam="${+f.tamanho || 0}" checked>
@@ -2166,9 +2189,11 @@ async function modalEnviarFicha() {
   const tam = () => { const t = [...m.querySelectorAll('.env-doc:checked')].reduce((s, i) => s + +i.dataset.tam, 0);
     m.querySelector('#env_tam').textContent = `Documentos marcados: ${kb(t)}${t > 23 * 1048576 ? ' – passa do limite de 24 MB do e-mail' : ''}`; };
   tam();
+  m.addEventListener('input', ev => { if (ev.target.dataset.tel) ev.target.value = mascara('tel', ev.target.value); });
   m.addEventListener('change', ev => {
     const el = ev.target;
     if (el.name === 'env_dest') { el.closest('.pes').classList.toggle('on', el.checked);
+      const bx = m.querySelector('#env_iam'); if (bx) bx.hidden = !m.querySelector('[name=env_dest][value=iam]').checked;
       const outro = m.querySelector('[name=env_dest][value=outro]').checked; m.querySelector('#env_email').hidden = !outro; if (el.value === 'outro' && el.checked) m.querySelector('#env_email').focus(); return; }
     if (el.type === 'checkbox') { el.closest('.pes').classList.toggle('on', el.checked); tam(); }
   });
@@ -2185,8 +2210,16 @@ async function modalEnviarFicha() {
     const b = ev.currentTarget; b.disabled = true; b.textContent = 'Enviando…';
     const rotulos = {}; docs.forEach(f => { rotulos[f.file_id] = rotuloDoc(f); });
     try {
+      let infoIam = null;
+    if (aprendiz && destinos.includes('iam')) {
+      infoIam = Object.fromEntries(IAM_F.map(([k]) => [k, m.querySelector('#iam_' + k).value.trim()]));
+      const a = R.det.adm, novo = { ap_lider: infoIam.lider.toUpperCase(), ap_lider_tel: infoIam.tel, ap_horario: infoIam.horario, ap_dia_curso: infoIam.dia, salario: infoIam.salario };
+      infoIam.lider = novo.ap_lider;
+      const mud = Object.fromEntries(Object.entries(novo).filter(([k, v]) => v !== (a[k] || '')));
+      if (Object.keys(mud).length) { await api('atualizarContrato', { senha: R.senha, codigo: a.codigo, contrato: mud }); Object.assign(a, mud); }
+    }
       const r = await api('enviarFicha', { senha: R.senha, codigo: R.det.adm.codigo, destinos, email, docs: sel.map(i => i.value), rotulos,
-        fichaHtml: ficha ? fichaHtmlPdf(p) : '', mensagem: m.querySelector('#env_msg').value });
+        fichaHtml: ficha ? fichaHtmlPdf(p) : '', mensagem: m.querySelector('#env_msg').value, infoIam });
       fecharModal(); toast(`E-mail enviado para ${r.para} com ${r.arquivos} arquivo(s)`); await recarregarDet();
     } catch (e) { b.disabled = false; b.innerHTML = `${ic('mail')}Enviar`; erroRH(e); }
   };
@@ -2286,9 +2319,11 @@ const ACOES_RH = {
       }
     } catch (e) { b.disabled = false; b.textContent = novo ? 'Cadastrar funcionário' : 'Salvar alterações'; erroRH(e); }
   },
-  contrato() {
-    const a = R.det.adm;
-    modalForm({ titulo: 'Contrato', defs: CONTRATO, d: pega(CONTRATO, a),
+  async contrato() {
+    const a = R.det.adm; let cfg = {}; try { cfg = await pegarConfig(); } catch (e) {}
+    modalForm({ titulo: 'Contrato', defs: CONTRATO, d: comPadraoAp(pega(CONTRATO, a), cfg),
+      aoMudar(k, dd) { if (k !== 'aprendiz' || dd.aprendiz !== 'Sim') return;
+        Object.assign(dd, comPadraoAp(dd, cfg)); Object.keys(AP_PAD).forEach(c => { const el = $('#f_' + c); if (el && !el.value) el.value = dd[c] || ''; }); },
       texto: 'Para promoções e reajustes, prefira <b>Cargo e salário → Registrar alteração</b>, que guarda o histórico.',
       async onOk(dd) { await api('atualizarContrato', { senha: R.senha, codigo: a.codigo, contrato: pega(CONTRATO, dd) }); toast('Contrato atualizado'); await recarregarDet(); } });
   },
