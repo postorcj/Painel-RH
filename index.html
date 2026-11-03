@@ -2152,7 +2152,7 @@ async function modalEnviarFicha() {
   const opc = [['contab', `${cfg.nome_contab || 'Escritório de contabilidade'}`, cfg.email_contab], ['iam', `${cfg.nome_iam || 'IAM'} (jovem aprendiz)`, cfg.email_iam], ['outro', 'Outro e-mail', '']];
   const pad = aprendiz && cfg.email_iam ? 'iam' : 'contab';
   const m = abrirModal(`<h2>Enviar por e-mail</h2><p class="muted">Ficha e documentos de <b>${esc(p.nome)}</b>.</p>
-    <div class="fld"><label>Para</label><div class="dest-op">${opc.map(([k, l, e]) => `<label class="pes${k === pad ? ' on' : ''}"><input type="radio" name="env_dest" value="${k}"${k === pad ? ' checked' : ''}>
+    <div class="fld"><label>Para <small class="muted" style="font-weight:400">(pode marcar mais de um)</small></label><div class="dest-op">${opc.map(([k, l, e]) => `<label class="pes${k === pad ? ' on' : ''}"><input type="checkbox" name="env_dest" value="${k}"${k === pad ? ' checked' : ''}>
       <span><b>${esc(l)}</b><small>${k === 'outro' ? 'Digite abaixo' : e ? esc(e) : 'E-mail não cadastrado – cadastre em Configurações'}</small></span></label>`).join('')}</div>
       <input id="env_email" type="email" placeholder="email@exemplo.com.br" style="margin-top:8px"${pad === 'outro' ? '' : ' hidden'}>
       <button type="button" class="lnk2" data-act="nav" data-n="config" style="margin-top:4px">editar e-mails cadastrados</button></div>
@@ -2168,22 +2168,24 @@ async function modalEnviarFicha() {
   tam();
   m.addEventListener('change', ev => {
     const el = ev.target;
-    if (el.name === 'env_dest') { m.querySelectorAll('.dest-op .pes').forEach(x => x.classList.toggle('on', x.contains(el))); m.querySelector('#env_email').hidden = el.value !== 'outro'; if (el.value === 'outro') m.querySelector('#env_email').focus(); }
+    if (el.name === 'env_dest') { el.closest('.pes').classList.toggle('on', el.checked);
+      const outro = m.querySelector('[name=env_dest][value=outro]').checked; m.querySelector('#env_email').hidden = !outro; if (el.value === 'outro' && el.checked) m.querySelector('#env_email').focus(); return; }
     if (el.type === 'checkbox') { el.closest('.pes').classList.toggle('on', el.checked); tam(); }
   });
   m.querySelector('#env_ok').onclick = async ev => {
-    const destino = m.querySelector('[name=env_dest]:checked').value, email = m.querySelector('#env_email').value.trim();
-    const c = opc.find(x => x[0] === destino);
-    if (destino !== 'outro' && !c[2]) { toast('Cadastre esse e-mail em Configurações', 'erro'); return; }
-    if (destino === 'outro' && (!email || !emailsOk(email))) { toast('Digite um e-mail válido', 'erro'); return; }
+    const destinos = [...m.querySelectorAll('[name=env_dest]:checked')].map(i => i.value), email = m.querySelector('#env_email').value.trim();
+    if (!destinos.length) { toast('Escolha para quem enviar', 'erro'); return; }
+    for (const d of destinos) { const c = opc.find(x => x[0] === d);
+      if (d !== 'outro' && !c[2]) { toast(`Cadastre o e-mail ${d === 'iam' ? 'do IAM' : 'da contabilidade'} em Configurações`, 'erro'); return; } }
+    if (destinos.includes('outro') && (!email || !emailsOk(email))) { toast('Digite um e-mail válido', 'erro'); return; }
     const sel = [...m.querySelectorAll('.env-doc:checked')], ficha = m.querySelector('#env_ficha').checked;
     if (!sel.length && !ficha) { toast('Marque pelo menos um item', 'erro'); return; }
-    const para = destino === 'outro' ? email : c[2];
+    const para = destinos.map(d => d === 'outro' ? email : opc.find(x => x[0] === d)[2]).join(' e ');
     if (!confirm(`Enviar ${sel.length + (ficha ? 1 : 0)} arquivo(s) para ${para}?`)) return;
     const b = ev.currentTarget; b.disabled = true; b.textContent = 'Enviando…';
     const rotulos = {}; docs.forEach(f => { rotulos[f.file_id] = rotuloDoc(f); });
     try {
-      const r = await api('enviarFicha', { senha: R.senha, codigo: R.det.adm.codigo, destino, email, docs: sel.map(i => i.value), rotulos,
+      const r = await api('enviarFicha', { senha: R.senha, codigo: R.det.adm.codigo, destinos, email, docs: sel.map(i => i.value), rotulos,
         fichaHtml: ficha ? fichaHtmlPdf(p) : '', mensagem: m.querySelector('#env_msg').value });
       fecharModal(); toast(`E-mail enviado para ${r.para} com ${r.arquivos} arquivo(s)`); await recarregarDet();
     } catch (e) { b.disabled = false; b.innerHTML = `${ic('mail')}Enviar`; erroRH(e); }
