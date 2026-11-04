@@ -406,6 +406,8 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
 .pes{display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid var(--linha);cursor:pointer;font-weight:400}
 .pes:first-child{border-top:0}
 .iam-box{margin-top:12px;padding:12px;border:1.5px solid var(--verde2);border-radius:12px;background:var(--fundo2,#f6f8f4)}.iam-box .iam-t{font-weight:700;display:block;margin-bottom:6px}
+.cx-l{display:grid;grid-template-columns:1fr 1.4fr auto;gap:8px;align-items:end;margin-top:8px}.cx-l .fld{margin:0;grid-column:auto!important}.cx-del{padding:10px 12px}
+@media(max-width:560px){.cx-l{grid-template-columns:1fr auto;padding-bottom:8px;border-bottom:1px solid var(--linha)}.cx-l .fld:first-child{grid-column:1/-1!important}}
 .dest-op{display:grid;gap:6px}.dest-op .pes{border:1.5px solid var(--linha);border-radius:12px}.dest-op .pes.on{border-color:var(--verde2)}
 .pes input[type=radio]{width:18px;height:18px;min-height:0;flex:none;accent-color:var(--verde2)}
 .pes.on{background:#f0f7f2}
@@ -2117,6 +2119,12 @@ const CFG_DEFS = [
   { k: 'ap_horario', l: 'Horário de entrada e saída', w: 'h', ph: 'Ex.: 07:00 às 13:00', max: 60 },
   { k: 'ap_dia_curso', l: 'Dia favorável para o curso', w: 'h', ph: 'Ex.: Quarta-feira', max: 60, hint: 'Esses dados já vêm preenchidos para cada aprendiz e podem ser trocados na ficha dele.' }
 ];
+const extrasCfg = cfg => { try { const l = JSON.parse(cfg.extras || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
+const novoId = () => Math.random().toString(36).slice(2, 10);
+const linhaExtra = (x = {}) => `<div class="cx-l" data-id="${esc(x.id || novoId())}">
+  <div class="fld"><label>Nome</label><input class="cx-nome" value="${esc(x.nome || '')}" placeholder="Ex.: CIPA" maxlength="80"></div>
+  <div class="fld"><label>E-mail</label><input class="cx-email" type="email" value="${esc(x.email || '')}" placeholder="cipa@exemplo.com.br" maxlength="200"></div>
+  <button type="button" class="btn sec cx-del" data-act="cfgdel" title="Remover">✕</button></div>`;
 const emailsOk = v => !v || String(v).split(/[,;]\s*/).every(e => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e));
 async function pegarConfig() {
   if (R.cfg) return R.cfg;
@@ -2132,9 +2140,12 @@ function rConfig() {
   R.form = { d: { ...R.cfg }, mapa: mapaDe(CFG_DEFS) };
   app.innerHTML = shell('config', `<div class="estreito-f">
     <div class="pg-h"><div><h1>Configurações</h1><p>E-mails usados no botão <b>Enviar por e-mail</b> e dados padrão do jovem aprendiz.</p></div></div>
-    <section class="card">${formHTML(CFG_DEFS, R.form.d)}
-      <div class="det-acoes"><button class="btn pri" data-act="salvarcfg">Salvar</button></div></section>
-    <section class="card"><h3>Como funciona</h3><p class="muted">Na ficha do funcionário, clique em <b>Enviar por e-mail</b>, escolha para quem (contabilidade, IAM ou outro e-mail) e quais documentos vão junto. A ficha de registro vai em PDF, e os documentos vão anexados. O envio fica registrado no histórico do funcionário.</p></section>
+    <section class="card">${formHTML(CFG_DEFS, R.form.d)}</section>
+    <section class="card"><h3>Outros e-mails cadastrados</h3><p class="muted">CIPA, sindicato, médico do trabalho… Eles aparecem como opção no <b>Enviar por e-mail</b>. Para mais de um e-mail no mesmo contato, separe por vírgula.</p>
+      <div id="cx_lista">${extrasCfg(R.cfg).map(linhaExtra).join('')}</div>
+      <button type="button" class="btn sec" data-act="cfgadd" style="margin-top:8px">+ Adicionar e-mail</button></section>
+    <div class="det-acoes"><button class="btn pri" data-act="salvarcfg">Salvar</button></div>
+    <section class="card"><h3>Como funciona</h3><p class="muted">Na ficha do funcionário, clique em <b>Enviar por e-mail</b>, escolha para quem (contabilidade, IAM, os outros e-mails cadastrados ou um e-mail qualquer) e quais documentos vão junto. A ficha de registro vai em PDF, e os documentos vão anexados. O envio fica registrado no histórico do funcionário.</p></section>
   </div>`);
 }
 function fichaHtmlPdf(p) {
@@ -2165,7 +2176,8 @@ function rotuloDoc(f) { return f.origem === 'rh' ? (f.categoria || 'Documento') 
 async function modalEnviarFicha() {
   let cfg; try { cfg = await pegarConfig(); } catch (e) { return erroRH(e); }
   const p = pessoa(), docs = R.det.docs, aprendiz = R.det.adm.aprendiz === 'Sim';
-  const opc = [['contab', `${cfg.nome_contab || 'Escritório de contabilidade'}`, cfg.email_contab], ['iam', `${cfg.nome_iam || 'IAM'} (jovem aprendiz)`, cfg.email_iam], ['outro', 'Outro e-mail', '']];
+  const opc = [['contab', `${cfg.nome_contab || 'Escritório de contabilidade'}`, cfg.email_contab], ['iam', `${cfg.nome_iam || 'IAM'} (jovem aprendiz)`, cfg.email_iam],
+    ...extrasCfg(cfg).map(x => ['x:' + x.id, x.nome, x.email]), ['outro', 'Outro e-mail', '']];
   const pad = aprendiz && cfg.email_iam ? 'iam' : 'contab';
   const ad0 = comPadraoAp(R.det.adm, cfg);
   const IAM_F = [['lider', 'Líder imediato', ad0.ap_lider, 'Nome do líder'], ['tel', 'Telefone do setor', ad0.ap_lider_tel, '(64) 00000-0000'],
@@ -2376,10 +2388,18 @@ const ACOES_RH = {
   async salvarcfg(b) {
     const d = R.form.d;
     for (const k of ['email_contab', 'email_iam']) if (!emailsOk(d[k])) { toast('E-mail inválido em ' + (k === 'email_iam' ? 'IAM' : 'contabilidade'), 'erro'); return; }
+    const extras = [...document.querySelectorAll('.cx-l')].map(l => ({ id: l.dataset.id, nome: l.querySelector('.cx-nome').value.trim(), email: l.querySelector('.cx-email').value.trim() }))
+      .filter(x => x.nome || x.email);
+    for (const x of extras) {
+      if (!x.nome) { toast('Dê um nome para o e-mail ' + x.email, 'erro'); return; }
+      if (!x.email || !emailsOk(x.email)) { toast('E-mail inválido em ' + x.nome, 'erro'); return; }
+    }
     b.disabled = true; b.textContent = 'Salvando…';
-    try { R.cfg = (await api('setConfig', { senha: R.senha, config: pega(CFG_DEFS, d) })).config; toast('Configurações salvas'); rConfig(); }
+    try { R.cfg = (await api('setConfig', { senha: R.senha, config: { ...pega(CFG_DEFS, d), extras: JSON.stringify(extras) } })).config; toast('Configurações salvas'); rConfig(); }
     catch (e) { b.disabled = false; b.textContent = 'Salvar'; erroRH(e); }
   },
+  cfgadd() { $('#cx_lista').insertAdjacentHTML('beforeend', linhaExtra()); const l = [...document.querySelectorAll('.cx-l .cx-nome')].pop(); if (l) l.focus(); },
+  cfgdel(b) { b.closest('.cx-l').remove(); },
   convite: () => modalConvite(pessoa(), false),
   grupoinfo: () => modalRemoverGrupo(pessoa()),
   async grupofeito(b) {
