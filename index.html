@@ -428,6 +428,16 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
 .iam-box{margin-top:12px;padding:12px;border:1.5px solid var(--verde2);border-radius:12px;background:var(--fundo2,#f6f8f4)}.iam-box .iam-t{font-weight:700;display:block;margin-bottom:6px}
 .cx-l{display:grid;grid-template-columns:1fr 1.4fr auto;gap:8px;align-items:end;margin-top:8px}.cx-l .fld{margin:0;grid-column:auto!important}.cx-del{padding:10px 12px}
 @media(max-width:560px){.cx-l{grid-template-columns:1fr auto;padding-bottom:8px;border-bottom:1px solid var(--linha)}.cx-l .fld:first-child{grid-column:1/-1!important}}
+.hol-res{display:flex;flex-wrap:wrap;gap:8px 16px;margin:4px 0 10px;font-size:15px}
+.hol-pag{max-height:46vh;overflow:auto;border:1px solid var(--linha);border-radius:12px}
+.hol-pag .hp{display:grid;grid-template-columns:64px minmax(0,1fr) minmax(180px,260px);gap:6px 12px;align-items:center;padding:8px 12px;border-top:1px solid var(--linha)}
+.hol-pag .hp:first-child{border-top:0}
+.hol-pag .hp.rev{background:#FFF8E1}
+.hol-pag .hp b{font-family:var(--disp);font-size:18px}
+.hol-pag .hp small{display:block;color:var(--cinza);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hol-pag .hp.rev small{white-space:normal}
+.hol-pag select{min-height:40px;padding:6px 30px 6px 10px;font-size:14px;background-position:calc(100% - 16px) 17px,calc(100% - 11px) 17px}
+@media(max-width:600px){.hol-pag .hp{grid-template-columns:48px minmax(0,1fr)}.hol-pag .hp select{grid-column:1/-1}}
 .dest-op{display:grid;gap:6px}.dest-op .pes{border:1.5px solid var(--linha);border-radius:12px}.dest-op .pes.on{border-color:var(--verde2)}
 .pes input[type=radio]{width:18px;height:18px;min-height:0;flex:none;accent-color:var(--verde2)}
 .pes.on{background:#f0f7f2}
@@ -1377,7 +1387,7 @@ function rLista() {
   app.innerHTML = shell(R.aba, `
     <div class="pg-h"><div><h1>${func ? 'Funcionários' : 'Admissões'}</h1><p>${func ? 'A equipe do posto: ativos e desligados.' : 'Novos colaboradores preenchendo a ficha pelo link.'}</p></div>
       <div class="det-acoes" style="margin:0">${func && nAnt ? `<button class="btn sec" data-act="ferantodos">Lançar férias anteriores (${nAnt})</button>` : ''}
-      ${func ? `<button class="btn sec" data-act="importar">${ic('file')}Importar lista</button><button class="btn sec" data-act="linkgrupo">${ic('send')}Link do grupo</button>` : ''}
+      ${func ? `<button class="btn sec" data-act="holerites">${ic('file')}Separar holerites</button><button class="btn sec" data-act="importar">${ic('file')}Importar lista</button><button class="btn sec" data-act="linkgrupo">${ic('send')}Link do grupo</button>` : ''}
       ${func ? `<button class="btn ouro" data-act="cadastrar">${ic('userplus')}Cadastrar funcionário</button>` : `<button class="btn ouro" data-act="nova">${ic('send')}Nova admissão</button>`}</div></div>
     <div class="barra">
       <div class="filtros">${Object.entries(F).map(([k, v]) => `<button data-act="filtro" data-f="${k}" class="${filtroAtual() === k ? 'on' : ''}">${v.l} <span class="n">${cont(k)}</span></button>`).join('')}</div>
@@ -2311,7 +2321,7 @@ function fichaHtmlPdf(p) {
     <table class="ass"><tr><td>${esc(p.nome)}</td><td class="sp"></td><td>Responsável RH</td></tr></table>
   </body></html>`;
 }
-const ACAO_L = { candidato: 'Nova candidatura', candidato_contratado: 'Contratou candidato', candidato_removido: 'Excluiu candidato', link_email: 'Enviou o link da ficha por e-mail', entrar: 'Entrou no painel', senha: 'Trocou a senha', usuario: 'Usuários', backup: 'Backup', emails: 'Configurações', envio_email: 'Enviou e-mail',
+const ACAO_L = { holerites: 'Separou holerites', holerite: 'Holerite salvo', candidato: 'Nova candidatura', candidato_contratado: 'Contratou candidato', candidato_removido: 'Excluiu candidato', link_email: 'Enviou o link da ficha por e-mail', entrar: 'Entrou no painel', senha: 'Trocou a senha', usuario: 'Usuários', backup: 'Backup', emails: 'Configurações', envio_email: 'Enviou e-mail',
   criado: 'Criou admissão', enviado: 'Colaborador enviou a ficha', cadastro_rh: 'Cadastrou funcionário', ficha_editada_rh: 'Editou a ficha', contrato: 'Alterou o contrato',
   documento_removido: 'Removeu documento', desligado: 'Desligou', reintegrado: 'Reintegrou', comunicado: 'Comunicado', importar: 'Importou lista', ferias_antigas: 'Lançou férias antigas',
   identificou: 'Colaborador entrou pelo link do grupo', atualizacao_enviada: 'Colaborador atualizou a ficha', reenvio_pedido: 'Pediu reenvio de documento', reenvio_cancelado: 'Cancelou reenvio',
@@ -2454,6 +2464,151 @@ function modalDivulgar() {
     <div style="text-align:center;margin-top:12px"><img alt="QR code do link" width="180" height="180" src="https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=8&data=${encodeURIComponent(link)}" style="border-radius:8px">
       <p class="muted" style="font-size:13px;margin:4px 0 0">QR code para imprimir num cartaz: clique com o botão direito e salve a imagem.</p></div>
     <div class="modal-acoes"><button class="btn sec" data-act="fechar">Fechar</button></div>`, true);
+}
+/* ── Holerites: separa o PDF único da contabilidade por funcionário ── */
+const LIBS_PDF = {
+  pdfjs: ['https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs', 'https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.min.mjs'],
+  pdflib: ['https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js', 'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js']
+};
+async function libsPdf() {
+  if (!window.__pdfjs) {
+    let erro;
+    for (const u of LIBS_PDF.pdfjs) {
+      try { const m = await import(u); m.GlobalWorkerOptions.workerSrc = u.replace('pdf.min.mjs', 'pdf.worker.min.mjs'); window.__pdfjs = m; break; } catch (e) { erro = e; }
+    }
+    if (!window.__pdfjs) throw new Error('Não foi possível carregar o leitor de PDF. Verifique a internet e tente de novo.');
+  }
+  if (!window.PDFLib) {
+    for (const u of LIBS_PDF.pdflib) {
+      try { await new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = u; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); }); if (window.PDFLib) break; } catch (e) {}
+    }
+    if (!window.PDFLib) throw new Error('Não foi possível carregar o separador de PDF. Verifique a internet e tente de novo.');
+  }
+  return { pdfjs: window.__pdfjs, PDFLib: window.PDFLib };
+}
+const normTxt = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+const LIGA = new Set(['DA', 'DE', 'DO', 'DAS', 'DOS', 'E']);
+// Descobre de quem é cada página: primeiro pelo CPF, depois pelo nome completo (aceita nome abreviado no fim)
+function identificarPaginas(textos, pessoas) {
+  const porCpf = {}; pessoas.forEach(a => { const c = dig(a.cpf); if (c.length === 11) porCpf[c] = a; });
+  const nomes = pessoas.map(a => ({ a, n: normTxt(a.nome), t: normTxt(a.nome).split(' ').filter(w => w.length > 1 && !LIGA.has(w)) })).filter(x => x.t.length >= 2);
+  const res = textos.map(txt => {
+    const N = ' ' + normTxt(txt) + ' ', pal = new Set(N.trim().split(' '));
+    const cpfs = [...new Set((txt.match(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/g) || []).map(dig))].map(c => porCpf[c]).filter(Boolean);
+    const unicos = [...new Set(cpfs)];
+    if (unicos.length === 1) return { a: unicos[0], como: 'CPF' };
+    if (unicos.length > 1) return { como: 'varios', varios: unicos };
+    const cands = nomes.map(x => {
+      if (N.includes(' ' + x.n + ' ')) return { a: x.a, sc: 2 + x.t.length / 100 };
+      if (!pal.has(x.t[0])) return null;
+      const achou = x.t.filter(w => pal.has(w)).length, ultimo = x.t[x.t.length - 1];
+      const abrev = !pal.has(ultimo) && [...pal].some(w => w.length >= 1 && w.length < ultimo.length && ultimo.startsWith(w)) ? 1 : 0;
+      const sc = (achou + abrev * .5) / x.t.length;
+      return sc >= .75 ? { a: x.a, sc } : null;
+    }).filter(Boolean).sort((p, q) => q.sc - p.sc);
+    if (!cands.length) return { como: txt.trim() ? 'nada' : 'vazia' };
+    const cheios = cands.filter(c => c.sc >= 2), cheiosDist = [...new Set(cheios.map(c => c.a))];
+    // um nome contido em outro (JOAO SILVA x JOAO SILVA SANTOS): fica o mais longo
+    const fora = cheios.filter(c => cheios.some(o => o !== c && normTxt(o.a.nome).includes(normTxt(c.a.nome)) && o.a !== c.a)).map(c => c.a);
+    const finais = cheiosDist.filter(a => !fora.includes(a));
+    if (finais.length > 1) return { como: 'varios', varios: finais };
+    if (finais.length === 1) return { a: finais[0], como: 'nome' };
+    if (cands.length > 1 && cands[0].sc === cands[1].sc) return { como: 'varios', varios: cands.slice(0, 3).map(c => c.a) };
+    return { a: cands[0].a, como: 'nome' };
+  });
+  // página sem ninguém identificado logo depois de uma identificada: pode ser continuação, mas também pode ser
+  // alguém sem cadastro. Por segurança não atribui sozinho: só sugere o anterior para o RH conferir.
+  res.forEach((r, i) => { if (r.como === 'nada' && i && (res[i - 1].a || res[i - 1].sug)) r.sug = res[i - 1].a || res[i - 1].sug; });
+  return res;
+}
+function modalHolerites() {
+  const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1);
+  const comp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const m = abrirModal(`<h2>Separar holerites</h2>
+    <p class="muted">Anexe o PDF com os holerites de todos que a contabilidade manda. O sistema lê cada página, encontra o funcionário pelo CPF ou pelo nome e guarda em <b>Documentos</b> de cada um só o holerite dele.</p>
+    <div class="grid">
+      <div class="fld h"><label for="hol_comp">Mês do holerite</label><input id="hol_comp" type="month" value="${comp}"></div>
+      <div class="fld"><label for="hol_arq">PDF dos holerites</label><input id="hol_arq" type="file" accept="application/pdf,.pdf"></div>
+    </div>
+    <div id="hol_area"></div>
+    <div class="modal-acoes"><button class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri" id="hol_ler">Ler o PDF</button></div>`, true);
+  m.querySelector('#hol_ler').onclick = async ev => {
+    const f = m.querySelector('#hol_arq').files[0], cp = m.querySelector('#hol_comp').value;
+    if (!/^\d{4}-\d{2}$/.test(cp)) { toast('Escolha o mês do holerite', 'erro'); return; }
+    if (!f) { toast('Escolha o PDF dos holerites', 'erro'); return; }
+    const b = ev.currentTarget; b.disabled = true; b.innerHTML = '<span class="spin"></span> Lendo o PDF…';
+    try {
+      const { pdfjs } = await libsPdf();
+      const bytes = new Uint8Array(await f.arrayBuffer());
+      const doc = await pdfjs.getDocument({ data: bytes.slice() }).promise, textos = [];
+      for (let i = 1; i <= doc.numPages; i++) {
+        b.innerHTML = `<span class="spin"></span> Lendo página ${i} de ${doc.numPages}…`;
+        const tc = await (await doc.getPage(i)).getTextContent();
+        textos.push(tc.items.map(x => x.str).join(' '));
+      }
+      if (!textos.some(t => t.trim())) throw new Error('Este PDF é uma imagem escaneada, sem texto para ler. Peça para a contabilidade mandar o PDF gerado pelo sistema da folha.');
+      const pessoas = R.itens.filter(a => a.status !== 'cancelado' && a.nome);
+      // trecho igual no começo de todas as páginas (cabeçalho da empresa) não ajuda a reconhecer: pula na prévia
+      const tt = textos.map(t => t.trim()).filter(Boolean); let pref = 0;
+      if (tt.length > 1) { while (pref < tt[0].length && tt.every(t => t[pref] === tt[0][pref])) pref++; pref = Math.max(0, tt[0].lastIndexOf(' ', pref)); }
+      R.hol = { comp: cp, bytes, textos, pessoas, pref, res: identificarPaginas(textos, pessoas), so: false };
+      rHolerites(m);
+    } catch (e) { b.disabled = false; b.textContent = 'Ler o PDF'; toast(e.message, 'erro'); }
+  };
+}
+function rHolerites(m) {
+  const H = R.hol, rev = r => (!r.a && r.como !== 'vazia') || r.como === 'varios';
+  const pessoasOrd = [...H.pessoas].sort(nomeSort);
+  const quem = new Set(H.res.filter(r => r.a).map(r => r.a.codigo));
+  const nRev = H.res.filter(r => rev(r) && r.como !== 'ignorar').length;
+  const ativos = R.itens.filter(a => a.status === 'aprovado'), semHol = ativos.filter(a => !quem.has(a.codigo));
+  const como = { CPF: 'pelo CPF', nome: 'pelo nome', varios: 'mais de um funcionário nesta página – escolha', nada: 'ninguém do cadastro encontrado – escolha ou deixe ignorada', vazia: 'página em branco', ignorar: 'ignorada', manual: 'escolhido por você' };
+  m.querySelector('.modal-c').innerHTML = `<h2>Separar holerites – ${esc(H.comp.slice(5) + '/' + H.comp.slice(0, 4))}</h2>
+    <div class="hol-res"><span><b>${H.res.length}</b> página(s)</span><span><b>${quem.size}</b> funcionário(s) identificados</span>
+      ${nRev ? `<span style="color:#7a5a00"><b>${nRev}</b> página(s) para conferir</span>` : '<span style="color:#17663a">Tudo identificado</span>'}</div>
+    ${semHol.length ? `<details style="padding:0 0 8px"><summary style="font-weight:600;font-size:14px">${semHol.length} funcionário(s) ativo(s) sem holerite neste PDF</summary><p class="muted" style="font-size:14px">${semHol.map(a => esc(a.nome)).join(', ')}</p></details>` : ''}
+    <label style="display:flex;gap:8px;align-items:center;font-weight:400;font-size:14px;margin-bottom:8px"><input type="checkbox" id="hol_so" style="width:18px;height:18px;min-height:0"${H.so ? ' checked' : ''}> Mostrar só as páginas para conferir</label>
+    <div class="hol-pag">${H.res.map((r, i) => (H.so && !(rev(r) && r.como !== 'ignorar')) ? '' : `<div class="hp${rev(r) && r.como !== 'ignorar' ? ' rev' : ''}">
+      <b>Pág. ${i + 1}</b>
+      <div style="min-width:0">${r.a ? `<span style="font-weight:600">${esc(r.a.nome)}</span>` : ''}<small>${esc(como[r.como] || '')}${r.sug && !r.a ? ` · se for continuação, escolha ${esc(r.sug.nome)}` : ''}</small>${!r.a && H.textos[i].trim() ? `<small>${esc(H.textos[i].trim().slice(H.pref).trim().slice(0, 110))}</small>` : ''}</div>
+      <select data-pag="${i}"><option value="">— Ignorar esta página —</option>${[...(r.varios || []), ...(r.sug && !(r.varios || []).includes(r.sug) ? [r.sug] : []), ...pessoasOrd.filter(a => !(r.varios || []).includes(a) && a !== r.sug)].map(a => `<option value="${esc(a.codigo)}"${r.a === a ? ' selected' : ''}>${esc(a.nome)}</option>`).join('')}</select></div>`).join('')}</div>
+    <p class="muted" style="font-size:13px;margin:8px 0 0">O holerite de cada funcionário fica em <b>Documentos</b>, na categoria Holerite. Se ele já tiver o holerite deste mês, o anterior é substituído.</p>
+    <div class="modal-acoes"><button class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri" id="hol_ok"${quem.size ? '' : ' disabled'}>Salvar holerites de ${quem.size} funcionário(s)</button></div>`;
+  m.querySelector('#hol_so').onchange = ev => { H.so = ev.target.checked; rHolerites(m); };
+  m.querySelectorAll('select[data-pag]').forEach(s => s.onchange = () => {
+    const r = H.res[+s.dataset.pag];
+    if (!s.value) Object.assign(r, { a: null, como: 'ignorar' });
+    else Object.assign(r, { a: H.pessoas.find(a => a.codigo === s.value), como: 'manual' });
+    rHolerites(m);
+  });
+  m.querySelector('#hol_ok').onclick = ev => salvarHolerites(m, ev.currentTarget);
+}
+async function salvarHolerites(m, b) {
+  const H = R.hol, rev = H.res.filter(r => r.como === 'varios' || r.como === 'nada').length;
+  if (rev && !confirm(`${rev} página(s) não foram atribuídas a ninguém e serão ignoradas. Salvar assim mesmo?`)) return;
+  b.disabled = true;
+  try {
+    const { PDFLib } = await libsPdf();
+    const src = await PDFLib.PDFDocument.load(H.bytes);
+    const grupos = new Map();
+    H.res.forEach((r, i) => { if (r.a) { if (!grupos.has(r.a.codigo)) grupos.set(r.a.codigo, { a: r.a, pags: [] }); grupos.get(r.a.codigo).pags.push(i); } });
+    const lista = [...grupos.values()], salvos = [];
+    for (let i = 0; i < lista.length; i += 5) {
+      const lote = [];
+      for (const g of lista.slice(i, i + 5)) {
+        b.innerHTML = `<span class="spin"></span> Separando ${Math.min(salvos.length + lote.length + 1, lista.length)} de ${lista.length}…`;
+        const novo = await PDFLib.PDFDocument.create();
+        (await novo.copyPages(src, g.pags)).forEach(p => novo.addPage(p));
+        novo.setTitle(`Holerite ${H.comp.slice(5)}/${H.comp.slice(0, 4)} – ${g.a.nome}`);
+        lote.push({ codigo: g.a.codigo, base64: await paraB64(new Blob([await novo.save()], { type: 'application/pdf' })) });
+      }
+      b.innerHTML = `<span class="spin"></span> Salvando ${salvos.length + lote.length} de ${lista.length}…`;
+      const r = await api('salvarHolerites', { senha: R.senha, competencia: H.comp, itens: lote });
+      salvos.push(...r.salvos);
+    }
+    fecharModal(); R.hol = null;
+    toast(`Holerites salvos para ${salvos.length} funcionário(s)`);
+  } catch (e) { b.disabled = false; b.textContent = 'Tentar de novo'; erroRH(e); }
 }
 function rotuloDoc(f) { return f.origem === 'rh' ? (f.categoria || 'Documento') : (DOC_L[f.tipo] || f.tipo); }
 async function modalEnviarFicha() {
@@ -2711,6 +2866,7 @@ const ACOES_RH = {
       $('#ativ_busca').oninput = ev => { const q = ev.target.value.toLowerCase(); document.querySelectorAll('.ativ tbody tr').forEach(tr => { tr.hidden = q && !tr.textContent.toLowerCase().includes(q); }); };
     } catch (e) { b.disabled = false; erroRH(e); }
   },
+  holerites: () => modalHolerites(),
   cfiltro(b) { R.cf = b.dataset.f; rCand(); },
   cand(b) { const c = R.cands.find(x => x.codigo === b.dataset.c); if (c) modalCand(c); },
   divulgar: () => modalDivulgar(),
