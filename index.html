@@ -1678,9 +1678,10 @@ function msgWhats(a, obs) {
     ? `Olá, ${nome}! Precisamos de um ajuste na sua ficha de admissão do Posto Trevo: ${obs}\n\nÉ só abrir o mesmo link e corrigir: ${link}`
     : `Olá, ${nome}! Seja bem-vindo(a) à equipe do Posto Trevo. Para agilizar sua admissão, preencha sua ficha cadastral e envie as fotos dos seus documentos por este link:\n${link}\n\nQualquer dúvida, fale com o RH.`;
 }
-function modalLink(a, obs) {
+function modalLink(a, obs, emailOk) {
   const link = linkDe(a.codigo), cel = dig(a.celular), temCel = [10, 11].includes(cel.length);
   abrirModal(`<h2>${obs ? 'Avisar o colaborador' : 'Link criado'}</h2>
+    ${emailOk ? `<div class="aviso" style="margin:0 0 10px">${ic('mail')} O link da ficha já foi enviado para <b>${esc(emailOk)}</b>. Mande também pelo WhatsApp, que a pessoa vê mais rápido.</div>` : ''}
     <p>Envie este link <b>só para ${esc(primeiro(a.nome))}</b>. Quem tiver o link consegue abrir e preencher a ficha.</p>
     <div class="bolha" style="margin:12px 0;max-width:none;font-size:14px">${esc(msgWhats(a, obs))}</div>
     <a class="btn wa big" target="_blank" rel="noopener" href="https://wa.me/${temCel ? '55' + cel : ''}?text=${encodeURIComponent(msgWhats(a, obs))}">${temCel ? `Enviar para ${esc(a.celular)} no WhatsApp` : 'Enviar pelo WhatsApp'}</a>
@@ -2310,7 +2311,7 @@ function fichaHtmlPdf(p) {
     <table class="ass"><tr><td>${esc(p.nome)}</td><td class="sp"></td><td>Responsável RH</td></tr></table>
   </body></html>`;
 }
-const ACAO_L = { entrar: 'Entrou no painel', senha: 'Trocou a senha', usuario: 'Usuários', backup: 'Backup', emails: 'Configurações', envio_email: 'Enviou e-mail',
+const ACAO_L = { candidato: 'Nova candidatura', candidato_contratado: 'Contratou candidato', candidato_removido: 'Excluiu candidato', link_email: 'Enviou o link da ficha por e-mail', entrar: 'Entrou no painel', senha: 'Trocou a senha', usuario: 'Usuários', backup: 'Backup', emails: 'Configurações', envio_email: 'Enviou e-mail',
   criado: 'Criou admissão', enviado: 'Colaborador enviou a ficha', cadastro_rh: 'Cadastrou funcionário', ficha_editada_rh: 'Editou a ficha', contrato: 'Alterou o contrato',
   documento_removido: 'Removeu documento', desligado: 'Desligou', reintegrado: 'Reintegrou', comunicado: 'Comunicado', importar: 'Importou lista', ferias_antigas: 'Lançou férias antigas',
   identificou: 'Colaborador entrou pelo link do grupo', atualizacao_enviada: 'Colaborador atualizou a ficha', reenvio_pedido: 'Pediu reenvio de documento', reenvio_cancelado: 'Cancelou reenvio',
@@ -2388,11 +2389,14 @@ function modalCand(c) {
       <a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/55${cel}?text=${encodeURIComponent(msgCand(c))}">WhatsApp</a>
       ${c.email ? `<a class="btn sec" href="mailto:${esc(c.email)}">${ic('mail')}E-mail</a>` : ''}</div>
     <div class="grid" style="margin-top:12px">
-      <div class="fld h"><label for="c_st">Situação</label><select id="c_st">${Object.entries(ST_CAND).map(([k, [l]]) => `<option value="${k}"${k === c.status ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="fld h"><label for="c_st">Situação</label><select id="c_st">${Object.entries(ST_CAND).filter(([k]) => k !== 'contratado' || c.admissao).map(([k, [l]]) => `<option value="${k}"${k === c.status ? ' selected' : ''}>${l}</option>`).join('')}
+        ${c.admissao ? '' : '<option value="contratar">Contratar (criar admissão e enviar link)</option>'}</select></div>
       <div class="fld"><label for="c_obs">Anotações do RH</label><textarea id="c_obs" maxlength="500" placeholder="Ex.: entrevista sexta às 10h; boa comunicação…">${esc(c.obs_rh || '')}</textarea></div></div>
     <div class="modal-acoes" style="flex-wrap:wrap"><button type="button" class="lnk2" id="c_del" style="margin-right:auto">Excluir candidato (LGPD)</button>
-      ${c.admissao ? '' : `<button class="btn sec" id="c_contr">${ic('userplus')}Contratar</button>`}
+      ${c.admissao ? `<button class="btn sec" id="c_veradm">${ic('userplus')}Ver admissão</button>` : `<button class="btn ouro" id="c_contr">${ic('userplus')}Contratar</button>`}
       <button class="btn sec" data-act="fechar">Fechar</button><button class="btn pri" id="c_ok">Salvar</button></div>`, true);
+  m.querySelector('#c_st').addEventListener('change', ev => { if (ev.target.value === 'contratar') { ev.target.value = c.status; modalContratar(c); } });
+  const va = m.querySelector('#c_veradm'); if (va) va.onclick = () => { fecharModal(); abrirDet(c.admissao); };
   m.querySelector('#c_ok').onclick = async ev => {
     const b = ev.currentTarget; b.disabled = true;
     try { await api('candidatoStatus', { senha: R.senha, codigo: c.codigo, status: $('#c_st').value, obs: $('#c_obs').value });
@@ -2420,10 +2424,12 @@ function modalContratar(c) {
     d: { cargo: CARGOS.includes(c.cargo) ? c.cargo : '', aprendiz: apr ? 'Sim' : 'Não' },
     async onOk(d) {
       const cargo = d.cargo === OUTRO ? d.cargo_outro.trim() : d.cargo;
-      const r = await api('contratarCandidato', { senha: R.senha, codigo: c.codigo, cargo, aprendiz: d.aprendiz === 'Sim', data_prevista: d.data_prevista });
+      const r = await api('contratarCandidato', { senha: R.senha, codigo: c.codigo, cargo, aprendiz: d.aprendiz === 'Sim', data_prevista: d.data_prevista, linkBase: linkDe('') });
       Object.assign(c, { status: 'contratado', admissao: r.codigo });
-      await carregarLista(false); R.aba = 'adm';
-      modalLink({ codigo: r.codigo, nome: c.nome, celular: c.celular, cargo });
+      R.candNovos = (R.cands || []).filter(x => x.status === 'novo').length;
+      R.aba = 'adm'; R.tela = 'adm'; R.filtroAdm = 'andamento'; R.busca = '';
+      await carregarLista(false); window.scrollTo(0, 0);
+      modalLink({ codigo: r.codigo, nome: c.nome, celular: c.celular, cargo }, '', r.emailEnviado ? c.email : '');
     } });
 }
 function modalDivulgar() {
