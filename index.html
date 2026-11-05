@@ -45,6 +45,8 @@ button{font:inherit;cursor:pointer}
 .wrap{max-width:780px;margin:0 auto;padding:20px 16px 64px}
 .wrap.largo{max-width:1080px}
 .wrap.estreito{max-width:420px}
+.wrap.trab{max-width:620px}
+.trab h1{font-size:clamp(20px,5.4vw,34px);line-height:1.15;margin:4px 0 10px}.trab h1 span{display:inline-block}
 .card{background:var(--papel);border-radius:var(--r);padding:22px;box-shadow:0 1px 0 var(--linha),0 8px 24px -18px rgba(19,51,31,.35);margin-bottom:16px}
 .muted{color:var(--cinza)}
 .eyebrow{font-weight:700;color:var(--verde2);text-transform:uppercase;letter-spacing:.08em;font-size:13px;margin:0 0 6px}
@@ -828,8 +830,8 @@ const VAGAS_CV = [...CARGOS, 'Jovem aprendiz', 'Qualquer vaga'];
 const ESCOL_CV = ['Ensino fundamental incompleto', 'Ensino fundamental completo', 'Ensino médio incompleto', 'Ensino médio completo', 'Superior incompleto', 'Superior completo'];
 function telaTrabalhe(msg, d = {}) {
   const sel = (id, op, v, ph = 'Selecione…') => `<select id="${id}"><option value="">${ph}</option>${op.map(o => `<option${o === v ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
-  app.innerHTML = topo('Trabalhe Conosco') + `<main class="wrap estreito"><form class="card" id="ftrab" style="margin-top:24px" novalidate>
-    <p class="eyebrow">Trabalhe Conosco</p><h1>Venha trabalhar no Posto Trevo</h1>
+  app.innerHTML = topo('Trabalhe Conosco') + `<main class="wrap trab"><form class="card" id="ftrab" style="margin-top:24px" novalidate>
+    <p class="eyebrow">Trabalhe Conosco</p><h1><span>Venha trabalhar</span> <span>no Posto Trevo</span></h1>
     <p class="muted">Preencha seus dados e, se tiver, anexe seu currículo. Quando surgir uma vaga com o seu perfil, o RH entra em contato pelo WhatsApp.</p>
     <div class="grid" style="margin-top:12px">
       <div class="fld"><label for="t_nome">Nome completo <span class="req">*</span></label><input id="t_nome" maxlength="100" autocomplete="name" value="${esc(d.nome || '')}" style="text-transform:uppercase"></div>
@@ -2398,16 +2400,20 @@ function modalCand(c) {
   if (bc) bc.onclick = () => modalContratar(c);
 }
 function modalContratar(c) {
-  const aprendiz = /aprendiz/i.test(c.cargo);
+  const OUTRO = 'Outro (digitar)', apr = /aprendiz/i.test(c.cargo);
   modalForm({ titulo: 'Contratar ' + primeiro(c.nome), ok: 'Criar admissão',
-    texto: (aprendiz ? 'Candidato a <b>jovem aprendiz</b>: a admissão já sai marcada como aprendiz. ' : '') + 'Cria a admissão com nome, celular, e-mail e data de nascimento já preenchidos. O currículo vai para os documentos do funcionário. Depois é só enviar o link da ficha pelo WhatsApp.',
-    defs: [{ k: 'cargo', l: 'Cargo', list: CARGOS, req: 1, w: 'h', max: 60 }, { k: 'data_prevista', l: 'Início previsto', t: 'date', w: 'h', v: V.data }],
-    d: { cargo: CARGOS.includes(c.cargo) ? c.cargo : '' },
+    texto: `Candidatou-se para: <b>${esc(c.cargo || '—')}</b>. Escolha abaixo o cargo em que vai ser contratado – pode ser outro.<br>A admissão já sai com nome, celular, e-mail e data de nascimento preenchidos, e o currículo vai para os documentos do funcionário.`,
+    defs: [{ k: 'cargo', l: 'Cargo da contratação', t: 'select', op: [...CARGOS, OUTRO], req: 1, w: 'h' },
+      { k: 'cargo_outro', l: 'Qual cargo?', req: 1, w: 'h', max: 60, show: d => d.cargo === OUTRO },
+      { k: 'aprendiz', l: 'Jovem aprendiz?', t: 'select', op: ['Não', 'Sim'], req: 1, w: 'h' },
+      { k: 'data_prevista', l: 'Início previsto', t: 'date', w: 'h', v: V.data }],
+    d: { cargo: CARGOS.includes(c.cargo) ? c.cargo : '', aprendiz: apr ? 'Sim' : 'Não' },
     async onOk(d) {
-      const r = await api('contratarCandidato', { senha: R.senha, codigo: c.codigo, cargo: d.cargo, aprendiz, data_prevista: d.data_prevista });
+      const cargo = d.cargo === OUTRO ? d.cargo_outro.trim() : d.cargo;
+      const r = await api('contratarCandidato', { senha: R.senha, codigo: c.codigo, cargo, aprendiz: d.aprendiz === 'Sim', data_prevista: d.data_prevista });
       Object.assign(c, { status: 'contratado', admissao: r.codigo });
       await carregarLista(false); R.aba = 'adm';
-      modalLink({ codigo: r.codigo, nome: c.nome, celular: c.celular });
+      modalLink({ codigo: r.codigo, nome: c.nome, celular: c.celular, cargo });
     } });
 }
 function modalDivulgar() {
