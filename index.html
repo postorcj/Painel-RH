@@ -279,6 +279,10 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
 .navi .ic{width:20px;height:20px}
 .navi .bdg{margin-left:auto;background:var(--ouro);color:var(--verde);border-radius:10px;font-size:12px;padding:1px 8px;font-weight:700}
 .side .sp,.rh-top .sp{flex:1}
+.quem{padding:10px 12px;margin-bottom:4px;border-top:1px solid rgba(247,245,236,.12);color:#F7F5EC;font-size:13px;line-height:1.3}.quem b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.quem small{color:rgba(247,245,236,.6)}
+.quem-m{margin-right:10px;color:var(--muted,#666)}
+.usr-l{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--linha)}.usr-l:last-child{border-bottom:0}.usr-l .t{flex:1;min-width:0}.usr-l .t b{display:block}.usr-l .t small{color:var(--muted,#666)}
+.ativ{width:100%;border-collapse:collapse;font-size:13px}.ativ td,.ativ th{padding:6px 8px;border-bottom:1px solid var(--linha);text-align:left;vertical-align:top}.ativ th{font-size:12px;color:var(--muted,#666)}
 .rh-main{min-width:0}
 .rh-wrap{max-width:1180px;margin:0 auto;padding:28px 28px 64px}
 .rh-top{display:none}
@@ -719,6 +723,15 @@ async function mock(acao, q) {
     case 'marcarWhats': { rh(); const c = db.coms.find(x => x.codigo === q.id); if (!c) throw new Error('Comunicado não encontrado.');
       let l = c.whats_enviados ? c.whats_enviados.split(',') : []; l = l.filter(x => x !== q.codigo); if (q.enviado !== false) l.push(q.codigo);
       c.whats_enviados = l.join(','); r = { whats_enviados: c.whats_enviados }; break; }
+    case 'entrar': if (String(q.usuario).toLowerCase() !== 'admin' || q.senha !== 'trevo2026') throw new Error('Usuário ou senha incorretos.');
+      r = { token: 'trevo2026', usuario: { login: 'admin', nome: 'Administrador', perfil: 'admin' } }; break;
+    case 'sairPainel': break;
+    case 'getConfig': rh(); r = { config: db.cfg || {} }; break;
+    case 'setConfig': rh(); db.cfg = q.config; r = { config: db.cfg }; break;
+    case 'usuarios': rh(); r = { usuarios: [] }; break;
+    case 'infoSeguranca': rh(); r = { backup: { ligado: false, quando: '' } }; break;
+    case 'atividades': rh(); r = { itens: [] }; break;
+    case 'minhaSenha': case 'backupAgora': case 'salvarUsuario': case 'removerUsuario': rh(); throw new Error('Não disponível no modo demonstração.');
     default: throw new Error('Ação inválida.');
   }
   try { localStorage.setItem(MOCK.k, JSON.stringify(db)); } catch (e) {}
@@ -737,9 +750,9 @@ function campoHTML(f, d) {
   } else if (f.list) {
     inp = `<input id="${id}" data-k="${f.k}" value="${esc(val)}" list="dl_${f.k}" autocomplete="off" maxlength="${f.max || 120}"${f.ph ? ` placeholder="${esc(f.ph)}"` : ''}><datalist id="dl_${f.k}">${f.list.map(o => `<option value="${esc(o)}">`).join('')}</datalist>`;
   } else {
-    const tipo = f.t === 'date' ? 'date' : f.t === 'email' ? 'email' : 'text';
+    const tipo = f.t === 'date' ? 'date' : f.t === 'email' ? 'email' : f.t === 'password' ? 'password' : 'text';
     const modo = f.mask ? (f.mask === 'tel' ? 'tel' : 'numeric') : f.t === 'email' ? 'email' : '';
-    inp = `<input id="${id}" data-k="${f.k}" type="${tipo}" value="${esc(val)}" autocomplete="${f.auto || 'off'}"${modo ? ` inputmode="${modo}"` : ''}${f.ph ? ` placeholder="${esc(f.ph)}"` : ''}${f.mask && f.mask !== 'tel' ? ` maxlength="${f.mask.length}"` : ` maxlength="${f.max || 120}"`}${TRAVA.has(f.k) ? ' readonly' : ''}>`;
+    inp = `<input id="${id}" data-k="${f.k}" type="${tipo}" value="${esc(val)}" autocomplete="${f.auto || (f.t === 'password' ? 'new-password' : 'off')}"${modo ? ` inputmode="${modo}"` : ''}${f.ph ? ` placeholder="${esc(f.ph)}"` : ''}${f.mask && f.mask !== 'tel' ? ` maxlength="${f.mask.length}"` : ` maxlength="${f.max || 120}"`}${TRAVA.has(f.k) ? ' readonly' : ''}>`;
   }
   return `<div class="fld ${f.w || ''}" data-wrap="${f.k}"${f.show && !f.show(d) ? ' hidden' : ''}>
     <label for="${id}">${esc(f.l)}${f.req ? ' <span class="req">*</span>' : ''}</label>${inp}
@@ -1180,22 +1193,38 @@ const quandoTxt = x => x.pend ? 'Pendente' : x.d === 0 ? 'Hoje' : x.d === 1 ? 'A
 const nivelChip = n => n === 2 ? 's-cor' : n === 1 ? 's-env' : 's-prog';
 
 function iniciarRH() {
-  try { R.senha = sessionStorage.getItem('rh_s') || ''; } catch (e) {}
+  try { R.senha = sessionStorage.getItem('rh_s') || ''; R.user = JSON.parse(sessionStorage.getItem('rh_u') || 'null'); } catch (e) {}
+  if (!R.user) R.senha = '';
   if (R.senha) carregarLista(true); else telaLogin();
 }
-function telaLogin(msg) {
+function telaLogin(msg, usr) {
   document.body.classList.remove('rh-on'); fecharModal();
   app.innerHTML = topo('Painel do RH') + `<main class="wrap estreito"><form class="card" id="flogin" style="margin-top:24px">
     <p class="eyebrow">Acesso restrito</p><h1>Painel do RH</h1>
     <p class="muted">Funcionários, admissões, documentos e comunicados do Posto Trevo.</p>
-    ${DEMO ? '<div class="aviso">Modo demonstração. Senha: <b>trevo2026</b></div>' : ''}
-    <div class="fld" style="margin:16px 0"><label for="senha">Senha</label><input type="password" id="senha" autocomplete="current-password" required></div>
+    ${DEMO ? '<div class="aviso">Modo demonstração. Usuário: <b>admin</b> · Senha: <b>trevo2026</b></div>' : ''}
+    <div class="fld" style="margin:16px 0 0"><label for="usuario">Usuário</label><input id="usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+    <div class="fld" style="margin:12px 0 16px"><label for="senha">Senha</label><input type="password" id="senha" autocomplete="current-password" required></div>
     ${msg ? `<div class="aviso erro">${esc(msg)}</div>` : ''}
     <button class="btn pri big">Entrar</button></form></main>`;
-  $('#senha').focus();
+  let u = usr || ''; if (!u) try { u = localStorage.getItem('rh_login') || ''; } catch (e) {}
+  $('#usuario').value = u; (u ? $('#senha') : $('#usuario')).focus();
 }
+const limparSessao = () => { R.senha = ''; R.user = null; R.cfg = null; try { sessionStorage.removeItem('rh_s'); sessionStorage.removeItem('rh_u'); } catch (x) {} };
+async function entrarRH(e) {
+  e.preventDefault();
+  const usuario = $('#usuario').value.trim().toLowerCase(), b = e.target.querySelector('button');
+  b.disabled = true; b.textContent = 'Entrando…';
+  try {
+    const r = await api('entrar', { usuario, senha: $('#senha').value });
+    R.senha = r.token; R.user = r.usuario;
+    try { sessionStorage.setItem('rh_u', JSON.stringify(r.usuario)); localStorage.setItem('rh_login', usuario); } catch (x) {}
+    carregarLista(true);
+  } catch (x) { telaLogin(x.message, usuario); }
+}
+const ehAdmin = () => R.user && R.user.perfil === 'admin';
 function erroRH(e) {
-  if (/senha|tentativas/i.test(e.message)) { R.senha = ''; try { sessionStorage.removeItem('rh_s'); } catch (x) {} telaLogin(e.message); }
+  if (/sessão expirada|senha incorreta|tentativas/i.test(e.message)) { limparSessao(); telaLogin(e.message); }
   else toast(e.message, 'erro');
 }
 async function carregarLista(mostrar) {
@@ -1246,9 +1275,10 @@ function shell(ativo, corpo) {
   <div class="rh">
     <aside class="side no-print"><div class="marca">${marca}</div>
       ${NAV.map(([k, l, i]) => `<button class="navi${ativo === k ? ' on' : ''}" data-act="nav" data-n="${k}">${ic(i)}<span>${l}</span>${b(k)}</button>`).join('')}
-      <div class="sp"></div><button class="navi" data-act="sair">${ic('logout')}<span>Sair</span></button></aside>
+      <div class="sp"></div>${R.user ? `<div class="quem"><b>${esc(R.user.nome)}</b><small>${R.user.perfil === 'admin' ? 'Administrador' : 'RH'}</small></div>` : ''}
+      <button class="navi" data-act="sair">${ic('logout')}<span>Sair</span></button></aside>
     <div class="rh-main">
-      <header class="rh-top no-print">${marca}<div class="sp"></div><button class="lnk" data-act="sair">Sair</button></header>
+      <header class="rh-top no-print">${marca}<div class="sp"></div>${R.user ? `<small class="quem-m">${esc(primeiro(R.user.nome))}</small>` : ''}<button class="lnk" data-act="sair">Sair</button></header>
       <main class="rh-wrap">${corpo}</main>
     </div>
     <nav class="bottom no-print">${[...NAV.slice(0, 4), ['mais', 'Mais', 'more']].map(([k, l, i]) =>
@@ -2133,10 +2163,38 @@ async function pegarConfig() {
 }
 async function carregarConfig() {
   carregandoRH('Carregando configurações…', 'config');
-  try { R.cfg = null; await pegarConfig(); rConfig(); window.scrollTo(0, 0); }
+  try {
+    R.cfg = null; R.usrs = null; R.seg = null;
+    const [, u, sg] = await Promise.all([pegarConfig(), ehAdmin() ? api('usuarios', { senha: R.senha }) : null, ehAdmin() ? api('infoSeguranca', { senha: R.senha }) : null]);
+    R.usrs = u ? u.usuarios : []; R.seg = sg ? sg.backup : null;
+    rConfig(); window.scrollTo(0, 0);
+  }
   catch (e) { rLista(); erroRH(e); }
 }
+const cardMinhaSenha = () => `<section class="card"><h3>Minha senha</h3><p class="muted">Você entra como <b>${esc(R.user ? R.user.nome : '')}</b>. Troque a sua senha aqui quando quiser.</p>
+  <button class="btn sec" data-act="senhaminha">Trocar minha senha</button></section>`;
+function cardUsuarios() {
+  return `<section class="card"><h3>Usuários do painel</h3><p class="muted">Cada pessoa do RH entra com o próprio usuário e senha, e tudo o que ela faz fica registrado com o nome dela. <b>RH</b> usa o painel; <b>Administrador</b> também mexe nas configurações, nos usuários e vê o registro de atividades.</p>
+    <div class="usr-l"><div class="t"><b>Administrador</b><small>usuário admin · administrador principal (senha do RH)</small></div></div>
+    ${R.usrs.map(u => `<div class="usr-l"><div class="t"><b>${esc(u.nome)}${u.ativo ? '' : ' <span class="chip s-cor">desativado</span>'}</b>
+      <small>usuário ${esc(u.login)} · ${u.perfil === 'admin' ? 'administrador' : 'RH'}${u.ultimo ? ' · último acesso ' + esc(u.ultimo) : ' · nunca entrou'}</small></div>
+      <button class="btn sec" data-act="usredit" data-l="${esc(u.login)}">${ic('edit')}Editar</button></div>`).join('')}
+    <button class="btn sec" data-act="usrnovo" style="margin-top:10px">+ Novo usuário</button></section>`;
+}
+function cardSeguranca() {
+  const b = R.seg || {};
+  return `<section class="card"><h3>Segurança dos dados</h3>
+    <div class="usr-l"><div class="t"><b>Backup automático da planilha</b><small>${b.ligado ? 'Ligado: todo dia às 2h, guarda os últimos 30 dias.' : '<b style="color:#B3261E">Desligado</b> – rode a função setup no Apps Script para ligar.'}${b.quando ? ' Último backup: ' + esc(b.quando) + '.' : ''}</small></div>
+      <button class="btn sec" data-act="backupagora">Fazer backup agora</button></div>
+    <div class="usr-l"><div class="t"><b>Registro de atividades</b><small>Quem entrou, cadastrou, alterou, enviou e-mail ou mudou configurações.</small></div>
+      <button class="btn sec" data-act="atividades">Ver registro</button></div></section>`;
+}
 function rConfig() {
+  if (!ehAdmin()) {
+    R.form = null;
+    app.innerHTML = shell('config', `<div class="estreito-f"><div class="pg-h"><div><h1>Configurações</h1><p>Só o administrador altera e-mails, usuários e backups.</p></div></div>${cardMinhaSenha()}</div>`);
+    return;
+  }
   R.form = { d: { ...R.cfg }, mapa: mapaDe(CFG_DEFS) };
   app.innerHTML = shell('config', `<div class="estreito-f">
     <div class="pg-h"><div><h1>Configurações</h1><p>E-mails usados no botão <b>Enviar por e-mail</b> e dados padrão do jovem aprendiz.</p></div></div>
@@ -2145,6 +2203,7 @@ function rConfig() {
       <div id="cx_lista">${extrasCfg(R.cfg).map(linhaExtra).join('')}</div>
       <button type="button" class="btn sec" data-act="cfgadd" style="margin-top:8px">+ Adicionar e-mail</button></section>
     <div class="det-acoes"><button class="btn pri" data-act="salvarcfg">Salvar</button></div>
+    ${cardUsuarios()}${cardSeguranca()}${cardMinhaSenha()}
     <section class="card"><h3>Como funciona</h3><p class="muted">Na ficha do funcionário, clique em <b>Enviar por e-mail</b>, escolha para quem (contabilidade, IAM, os outros e-mails cadastrados ou um e-mail qualquer) e quais documentos vão junto. A ficha de registro vai em PDF, e os documentos vão anexados. O envio fica registrado no histórico do funcionário.</p></section>
   </div>`);
 }
@@ -2171,6 +2230,39 @@ function fichaHtmlPdf(p) {
     ${SECOES.map(s => `<h2>${esc(s.t)}</h2><table>${secao(s)}</table>`).join('')}
     <table class="ass"><tr><td>${esc(p.nome)}</td><td class="sp"></td><td>Responsável RH</td></tr></table>
   </body></html>`;
+}
+const ACAO_L = { entrar: 'Entrou no painel', senha: 'Trocou a senha', usuario: 'Usuários', backup: 'Backup', emails: 'Configurações', envio_email: 'Enviou e-mail',
+  criado: 'Criou admissão', enviado: 'Colaborador enviou a ficha', cadastro_rh: 'Cadastrou funcionário', ficha_editada_rh: 'Editou a ficha', contrato: 'Alterou o contrato',
+  documento_removido: 'Removeu documento', desligado: 'Desligou', reintegrado: 'Reintegrou', comunicado: 'Comunicado', importar: 'Importou lista', ferias_antigas: 'Lançou férias antigas',
+  identificou: 'Colaborador entrou pelo link do grupo', atualizacao_enviada: 'Colaborador atualizou a ficha', reenvio_pedido: 'Pediu reenvio de documento', reenvio_cancelado: 'Cancelou reenvio',
+  reenvio_concluido: 'Colaborador reenviou documento', registro_removido: 'Removeu registro', aprovado: 'Aprovou', correcao: 'Pediu correção', cancelado: 'Cancelou admissão', preenchendo: 'Reabriu a ficha',
+  registro_ferias: 'Registrou férias', registro_ocorrencia: 'Registrou ocorrência', registro_cargo: 'Alterou cargo/salário' };
+const acaoL = a => ACAO_L[a] || (a.startsWith('grupo_') ? 'Grupo do WhatsApp' : a.startsWith('atualizacao_') ? 'Link de atualização' : a.startsWith('registro_') ? 'Registro' : a.replace(/_/g, ' '));
+function modalUsuario(u) {
+  const novo = !u;
+  const defs = [{ k: 'nome', l: 'Nome', req: 1, up: 1, max: 60, w: 'h' },
+    { k: 'login', l: 'Usuário (para entrar)', req: 1, max: 30, w: 'h', ph: 'Ex.: ana.rh', hint: novo ? 'Sem espaço e sem acento.' : 'O usuário não pode ser trocado.' },
+    { k: 'perfil', l: 'Perfil', t: 'select', op: ['RH', 'Administrador'], req: 1, w: 'h' },
+    { k: 'ativo', l: 'Acesso', t: 'select', op: ['Ativo', 'Desativado'], req: 1, w: 'h' },
+    { k: 'senha', l: novo ? 'Senha' : 'Nova senha (deixe vazio para manter)', t: 'password', req: novo ? 1 : 0, w: 'h', hint: 'Pelo menos 6 caracteres. Passe para a pessoa e peça para ela trocar em Configurações.' }];
+  const m = modalForm({ titulo: novo ? 'Novo usuário' : 'Editar usuário', ok: 'Salvar', defs,
+    d: novo ? { perfil: 'RH', ativo: 'Ativo' } : { nome: u.nome, login: u.login, perfil: u.perfil === 'admin' ? 'Administrador' : 'RH', ativo: u.ativo ? 'Ativo' : 'Desativado' },
+    extra: novo ? '' : `<p style="margin:0 0 8px"><button type="button" class="lnk2" id="usr_del">Remover este usuário</button></p>`,
+    validar: d => { const l = d.login.trim().toLowerCase();
+      if (!/^[a-z0-9._-]{3,30}$/.test(l)) return 'O usuário precisa ter pelo menos 3 caracteres, sem espaço e sem acento.';
+      if (l === 'admin') return '"admin" é reservado para o administrador principal.';
+      if (d.senha && d.senha.length < 6) return 'A senha precisa ter pelo menos 6 caracteres.'; return ''; },
+    async onOk(d) {
+      const r = await api('salvarUsuario', { senha: R.senha, usuario: { novo, login: d.login.trim().toLowerCase(), nome: d.nome, perfil: d.perfil === 'Administrador' ? 'admin' : 'rh', ativo: d.ativo === 'Ativo', senha: d.senha || '' } });
+      R.usrs = r.usuarios; toast(novo ? 'Usuário criado' : 'Usuário atualizado'); rConfig();
+    } });
+  if (!novo) {
+    const l = m.querySelector('#f_login'); if (l) l.readOnly = true;
+    m.querySelector('#usr_del').onclick = async () => {
+      if (!confirm(`Remover o usuário ${u.login}? Ele perde o acesso na hora. O que ele já fez continua no registro de atividades.`)) return;
+      try { const r = await api('removerUsuario', { senha: R.senha, login: u.login }); R.usrs = r.usuarios; fecharModal(); toast('Usuário removido'); rConfig(); } catch (e) { erroRH(e); }
+    };
+  }
 }
 function rotuloDoc(f) { return f.origem === 'rh' ? (f.categoria || 'Documento') : (DOC_L[f.tipo] || f.tipo); }
 async function modalEnviarFicha() {
@@ -2240,7 +2332,7 @@ async function modalEnviarFicha() {
 /* ═══════════ AÇÕES DO RH ═══════════ */
 const hojeISO = () => iso(hoje0());
 const ACOES_RH = {
-  sair() { R.senha = ''; try { sessionStorage.removeItem('rh_s'); } catch (e) {} telaLogin(); },
+  sair() { if (R.senha) api('sairPainel', { senha: R.senha }).catch(() => {}); limparSessao(); telaLogin(); },
   nav(b) {
     fecharModal(); const n = b.dataset.n;
     if (n === 'com') return carregarCom(null);
@@ -2397,6 +2489,34 @@ const ACOES_RH = {
     b.disabled = true; b.textContent = 'Salvando…';
     try { R.cfg = (await api('setConfig', { senha: R.senha, config: { ...pega(CFG_DEFS, d), extras: JSON.stringify(extras) } })).config; toast('Configurações salvas'); rConfig(); }
     catch (e) { b.disabled = false; b.textContent = 'Salvar'; erroRH(e); }
+  },
+  usrnovo() { modalUsuario(null); },
+  usredit(b) { modalUsuario(R.usrs.find(u => u.login === b.dataset.l)); },
+  senhaminha() {
+    modalForm({ titulo: 'Trocar minha senha', ok: 'Trocar senha',
+      defs: [{ k: 'atual', l: 'Senha atual', t: 'password', req: 1 }, { k: 'nova', l: 'Nova senha', t: 'password', req: 1, hint: 'Pelo menos 6 caracteres.' }, { k: 'nova2', l: 'Repita a nova senha', t: 'password', req: 1 }],
+      d: {}, validar: d => d.nova.length < 6 ? 'A nova senha precisa ter pelo menos 6 caracteres.' : d.nova !== d.nova2 ? 'As duas senhas novas não são iguais.' : '',
+      async onOk(d) { await api('minhaSenha', { senha: R.senha, atual: d.atual, nova: d.nova }); toast('Senha trocada'); } });
+  },
+  async backupagora(b) {
+    b.disabled = true; b.textContent = 'Fazendo backup…';
+    try { const r = await api('backupAgora', { senha: R.senha }); R.seg = { ...(R.seg || {}), quando: r.backup.quando }; toast('Backup feito: ' + r.backup.nome); rConfig(); }
+    catch (e) { b.disabled = false; b.textContent = 'Fazer backup agora'; erroRH(e); }
+  },
+  async atividades(b) {
+    b.disabled = true;
+    try {
+      const r = await api('atividades', { senha: R.senha }); b.disabled = false;
+      const nomes = Object.fromEntries(R.itens.map(a => [a.codigo, a.nome]));
+      const quem = x => x.codigo === 'acesso' || x.codigo === 'config' ? '' : nomes[x.codigo] || '';
+      abrirModal(`<h2>Registro de atividades</h2><p class="muted">As últimas ${r.itens.length} ações (as mais recentes primeiro).</p>
+        <input id="ativ_busca" placeholder="Filtrar por nome, usuário ou ação…" style="margin-bottom:8px">
+        <div style="max-height:60vh;overflow:auto"><table class="ativ"><thead><tr><th>Quando</th><th>Quem fez</th><th>O quê</th></tr></thead><tbody>
+        ${r.itens.map(x => `<tr><td style="white-space:nowrap">${esc(x.quando)}</td><td>${esc(x.usuario || (x.codigo === 'acesso' ? '' : 'Colaborador / sistema'))}</td>
+          <td><b>${esc(acaoL(x.acao))}</b>${quem(x) ? ' · ' + esc(quem(x)) : ''}${x.detalhe ? `<br><small class="muted">${esc(x.detalhe)}</small>` : ''}</td></tr>`).join('') || '<tr><td colspan="3">Nada registrado ainda.</td></tr>'}</tbody></table></div>
+        <div class="modal-acoes"><button class="btn sec" data-act="fechar">Fechar</button></div>`, true);
+      $('#ativ_busca').oninput = ev => { const q = ev.target.value.toLowerCase(); document.querySelectorAll('.ativ tbody tr').forEach(tr => { tr.hidden = q && !tr.textContent.toLowerCase().includes(q); }); };
+    } catch (e) { b.disabled = false; erroRH(e); }
   },
   cfgadd() { $('#cx_lista').insertAdjacentHTML('beforeend', linhaExtra()); const l = [...document.querySelectorAll('.cx-l .cx-nome')].pop(); if (l) l.focus(); },
   cfgdel(b) { b.closest('.cx-l').remove(); },
@@ -2623,7 +2743,7 @@ document.addEventListener('change', e => {
 document.addEventListener('submit', e => {
   if (e.target.id === 'fgrupo') return entrarGrupo(e);
   if (e.target.id !== 'flogin') return;
-  e.preventDefault(); R.senha = $('#senha').value; carregarLista(true);
+  entrarRH(e);
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
 
