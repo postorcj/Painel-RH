@@ -2389,18 +2389,19 @@ function modalCand(c) {
       <a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/55${cel}?text=${encodeURIComponent(msgCand(c))}">WhatsApp</a>
       ${c.email ? `<a class="btn sec" href="mailto:${esc(c.email)}">${ic('mail')}E-mail</a>` : ''}</div>
     <div class="grid" style="margin-top:12px">
-      <div class="fld h"><label for="c_st">Situação</label><select id="c_st">${Object.entries(ST_CAND).filter(([k]) => k !== 'contratado' || c.admissao).map(([k, [l]]) => `<option value="${k}"${k === c.status ? ' selected' : ''}>${l}</option>`).join('')}
-        ${c.admissao ? '' : '<option value="contratar">Contratar (criar admissão e enviar link)</option>'}</select></div>
+      <div class="fld h"><label for="c_st">Situação</label><select id="c_st">${Object.entries(ST_CAND).filter(([k]) => k !== 'contratado').map(([k, [l]]) => `<option value="${k}"${k === c.status ? ' selected' : ''}>${l}</option>`).join('')}
+        <option value="contratar"${c.status === 'contratado' ? ' selected' : ''}>Contratar</option></select>
+        <small>Contratar cria a admissão e abre a tela de Admissões para enviar o link da ficha.</small></div>
       <div class="fld"><label for="c_obs">Anotações do RH</label><textarea id="c_obs" maxlength="500" placeholder="Ex.: entrevista sexta às 10h; boa comunicação…">${esc(c.obs_rh || '')}</textarea></div></div>
     <div class="modal-acoes" style="flex-wrap:wrap"><button type="button" class="lnk2" id="c_del" style="margin-right:auto">Excluir candidato (LGPD)</button>
-      ${c.admissao ? `<button class="btn sec" id="c_veradm">${ic('userplus')}Ver admissão</button>` : `<button class="btn ouro" id="c_contr">${ic('userplus')}Contratar</button>`}
+      <button class="btn ouro" id="c_contr">${ic('userplus')}${admDe(c) ? 'Enviar link da ficha' : 'Contratar'}</button>
       <button class="btn sec" data-act="fechar">Fechar</button><button class="btn pri" id="c_ok">Salvar</button></div>`, true);
-  m.querySelector('#c_st').addEventListener('change', ev => { if (ev.target.value === 'contratar') { ev.target.value = c.status; modalContratar(c); } });
-  const va = m.querySelector('#c_veradm'); if (va) va.onclick = () => { fecharModal(); abrirDet(c.admissao); };
+  m.querySelector('#c_st').addEventListener('change', ev => { if (ev.target.value === 'contratar') { ev.target.value = c.status === 'contratado' ? 'contratar' : c.status; contratar(c); } });
   m.querySelector('#c_ok').onclick = async ev => {
     const b = ev.currentTarget; b.disabled = true;
-    try { await api('candidatoStatus', { senha: R.senha, codigo: c.codigo, status: $('#c_st').value, obs: $('#c_obs').value });
-      Object.assign(c, { status: $('#c_st').value, obs_rh: $('#c_obs').value }); R.candNovos = R.cands.filter(x => x.status === 'novo').length;
+    const st = $('#c_st').value === 'contratar' ? 'contratado' : $('#c_st').value;
+    try { await api('candidatoStatus', { senha: R.senha, codigo: c.codigo, status: st, obs: $('#c_obs').value });
+      Object.assign(c, { status: st, obs_rh: $('#c_obs').value }); R.candNovos = R.cands.filter(x => x.status === 'novo').length;
       fecharModal(); toast('Candidato atualizado'); rCand(); }
     catch (e) { b.disabled = false; erroRH(e); }
   };
@@ -2410,8 +2411,19 @@ function modalCand(c) {
       R.candNovos = R.cands.filter(x => x.status === 'novo').length; fecharModal(); toast('Candidato excluído'); rCand(); }
     catch (e) { erroRH(e); }
   };
-  const bc = m.querySelector('#c_contr');
-  if (bc) bc.onclick = () => modalContratar(c);
+  m.querySelector('#c_contr').onclick = () => contratar(c);
+}
+// admissão já criada para o candidato (ignora se foi cancelada ou não existe mais)
+const admDe = c => c.admissao && R.itens.find(a => a.codigo === c.admissao && a.status !== 'cancelado');
+async function contratar(c) {
+  const a = admDe(c);
+  if (!a) return modalContratar(c);
+  fecharModal();
+  if (!EDITAVEL.includes(a.status)) { toast(`${primeiro(c.nome)} já está com a ficha ${a.status === 'aprovado' ? 'aprovada' : 'enviada'}`); return abrirDet(a.codigo); }
+  R.aba = 'adm'; R.tela = 'adm'; R.filtroAdm = 'andamento'; R.busca = '';
+  await carregarLista(false); window.scrollTo(0, 0);
+  const x = R.itens.find(i => i.codigo === a.codigo) || a;
+  modalLink({ codigo: x.codigo, nome: x.nome, celular: x.celular || c.celular, cargo: x.cargo });
 }
 function modalContratar(c) {
   const OUTRO = 'Outro (digitar)', apr = /aprendiz/i.test(c.cargo);
