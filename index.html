@@ -542,7 +542,7 @@ const SECOES = [
     { k: 'uf', l: 'UF', t: 'select', op: UFS, req: 1, w: 't' },
     { k: 'celular', l: 'Celular', req: 1, w: 'h', mask: 'tel', v: V.tel, auto: 'tel' },
     { k: 'celular_whats', l: 'Esse número tem WhatsApp?', t: 'select', op: SN, req: 1, w: 'h' },
-    { k: 'email', l: 'E-mail', t: 'email', w: 'h', v: V.email, auto: 'email' },
+    { k: 'email', l: 'E-mail', t: 'email', req: 1, w: 'h', v: V.email, auto: 'email', hint: 'Usado para receber avisos e documentos do RH.' },
     { k: 'tel_recado', l: 'Telefone para recado', w: 'h', mask: 'tel', v: V.tel }
   ]},
   { id: 'extras', t: 'Emergência e uniforme', curto: 'Emergência', d: 'Um contato para emergências e os tamanhos do uniforme. A conta para o salário é aberta pelo posto.', campos: [
