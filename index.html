@@ -168,6 +168,10 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
 .filtros [data-f=conferir]{--c:#a86b00;--bg:#fff1c2}
 .filtros [data-f=desligados],.filtros [data-f=cancelado]{--c:#b3261e;--bg:#fbeceb}
 .filtros [data-f=todos]{--c:#475569;--bg:#eef0f3}
+.filtros [data-f=c_entrevista]{--c:#1f56ad;--bg:#e7effc}.filtros [data-f=c_analise]{--c:#a86b00;--bg:#fff1c2}.filtros [data-f=c_banco]{--c:#6d3fb5;--bg:#f0e9fb}
+.filtros [data-f=c_descartado]{--c:#b3261e;--bg:#fbeceb}.filtros [data-f=c_todos]{--c:#475569;--bg:#eef0f3}
+.s-banco{background:#f0e9fb;color:#6d3fb5}.s-desc{background:#eef0f3;color:#475569}
+.cand-msg{white-space:pre-wrap;background:#f6f4ec;border-radius:10px;padding:10px 12px;font-size:14px;margin:8px 0}
 .filtros [data-f=aprendiz]{--c:#6B4FBB;--bg:#efeafb}
 .s-aprendiz{background:#efeafb;color:#5b3fa8}
 .itens{display:grid;gap:10px}
@@ -613,6 +617,7 @@ const carregando = (msg, sub) => { app.innerHTML = topo(sub || 'Admissão') + `<
 const chip = s => `<span class="chip ${(STATUS[s] || {}).c || ''}">${esc((STATUS[s] || { l: s }).l)}</span>`;
 const linkDe = c => location.href.split(/[?#]/)[0] + '?c=' + c;
 const linkGrupo = () => location.href.split(/[?#]/)[0] + '?atualizar';
+const linkTrabalhe = () => location.href.split(/[?#]/)[0] + '?trabalhe';
 const TRAVA = new Set();
 const modoAt = () => !!(C.adm && C.adm.modo === 'atualizacao');
 const tituloColab = () => modoAt() ? 'Atualização cadastral' : 'Ficha de admissão';
@@ -731,6 +736,11 @@ async function mock(acao, q) {
     case 'usuarios': rh(); r = { usuarios: [] }; break;
     case 'infoSeguranca': rh(); r = { backup: { ligado: false, quando: '' } }; break;
     case 'atividades': rh(); r = { itens: [] }; break;
+    case 'candidatar': db.cands = db.cands || []; db.cands.push({ ...q.dados, codigo: 'cv' + novoId().slice(0, 10), quando: agora, status: 'novo', arquivo: q.arquivo ? q.arquivo.nome : '', file_id: q.arquivo ? 'demo' : '', url: '' }); break;
+    case 'candidatos': rh(); r = { candidatos: [...(db.cands || [])].reverse() }; break;
+    case 'candidatoStatus': { rh(); const c = (db.cands || []).find(x => x.codigo === q.codigo); Object.assign(c, { status: q.status, obs_rh: q.obs }); break; }
+    case 'removerCandidato': rh(); db.cands = (db.cands || []).filter(x => x.codigo !== q.codigo); break;
+    case 'contratarCandidato': throw new Error('Não disponível no modo demonstração.');
     case 'minhaSenha': case 'backupAgora': case 'salvarUsuario': case 'removerUsuario': rh(); throw new Error('Não disponível no modo demonstração.');
     default: throw new Error('Ação inválida.');
   }
@@ -812,6 +822,62 @@ async function entrarGrupo(e) {
     try { sessionStorage.setItem('grp_c', r.codigo); } catch (x) {}
     C.passo = 0; iniciarColab(r.codigo);
   } catch (x) { telaGrupo(x.message); }
+}
+/* ── Trabalhe Conosco (página pública) ── */
+const VAGAS_CV = [...CARGOS, 'Jovem aprendiz', 'Qualquer vaga'];
+const ESCOL_CV = ['Ensino fundamental incompleto', 'Ensino fundamental completo', 'Ensino médio incompleto', 'Ensino médio completo', 'Superior incompleto', 'Superior completo'];
+function telaTrabalhe(msg, d = {}) {
+  const sel = (id, op, v, ph = 'Selecione…') => `<select id="${id}"><option value="">${ph}</option>${op.map(o => `<option${o === v ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+  app.innerHTML = topo('Trabalhe Conosco') + `<main class="wrap estreito"><form class="card" id="ftrab" style="margin-top:24px" novalidate>
+    <p class="eyebrow">Trabalhe Conosco</p><h1>Venha trabalhar no Posto Trevo</h1>
+    <p class="muted">Preencha seus dados e, se tiver, anexe seu currículo. Quando surgir uma vaga com o seu perfil, o RH entra em contato pelo WhatsApp.</p>
+    <div class="grid" style="margin-top:12px">
+      <div class="fld"><label for="t_nome">Nome completo <span class="req">*</span></label><input id="t_nome" maxlength="100" autocomplete="name" value="${esc(d.nome || '')}" style="text-transform:uppercase"></div>
+      <div class="fld h"><label for="t_cel">Celular / WhatsApp <span class="req">*</span></label><input id="t_cel" type="tel" inputmode="tel" maxlength="15" placeholder="(64) 99999-0000" autocomplete="tel" value="${esc(d.celular || '')}"></div>
+      <div class="fld h"><label for="t_email">E-mail</label><input id="t_email" type="email" maxlength="120" autocomplete="email" value="${esc(d.email || '')}"></div>
+      <div class="fld h"><label for="t_nasc">Data de nascimento <span class="req">*</span></label><input id="t_nasc" type="date" value="${esc(d.nascimento || '')}"></div>
+      <div class="fld h"><label for="t_cidade">Cidade onde mora <span class="req">*</span></label><input id="t_cidade" maxlength="60" placeholder="Ex.: Rio Verde" value="${esc(d.cidade || '')}"></div>
+      <div class="fld h"><label for="t_cargo">Vaga de interesse <span class="req">*</span></label>${sel('t_cargo', VAGAS_CV, d.cargo)}</div>
+      <div class="fld h"><label for="t_turno">Horário que pode trabalhar</label>${sel('t_turno', ['Manhã', 'Tarde', 'Noite', 'Qualquer horário'], d.turno)}</div>
+      <div class="fld h"><label for="t_exp">Já trabalhou em posto?</label>${sel('t_exp', ['Sim', 'Não'], d.exp_posto)}</div>
+      <div class="fld h"><label for="t_esc">Escolaridade</label>${sel('t_esc', ESCOL_CV, d.escolaridade)}</div>
+      <div class="fld"><label for="t_msg">Conte um pouco sobre você e suas experiências</label><textarea id="t_msg" maxlength="1500" placeholder="Onde já trabalhou, o que sabe fazer, por que quer trabalhar no posto…">${esc(d.mensagem || '')}</textarea></div>
+      <div class="fld"><label for="t_cv">Currículo <small class="muted" style="font-weight:400">(opcional)</small></label>
+        <input id="t_cv" type="file" accept="application/pdf,image/*,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+        <small>PDF, Word ou foto do currículo, até 10 MB. Não tem currículo? Pode enviar só os dados acima.</small></div>
+      <input id="t_site" name="site" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
+      <label class="fld" style="flex-direction:row;align-items:flex-start;gap:10px;font-size:14px"><input type="checkbox" id="t_lgpd" style="width:20px;height:20px;min-height:0;margin-top:2px;flex:none">
+        <span style="font-weight:400">Autorizo o Posto Trevo (RCJ Combustíveis) a guardar meus dados e currículo <b>só para processos seletivos</b>, por até 12 meses, conforme a LGPD. Posso pedir a exclusão a qualquer momento pelo contato do RH.</span></label>
+    </div>
+    ${msg ? `<div class="aviso erro" style="margin-top:12px">${esc(msg)}</div>` : ''}
+    <button class="btn pri big" style="margin-top:16px">Enviar candidatura</button></form>${contatoRH()}</main>`;
+}
+async function enviarTrabalhe(e) {
+  e.preventDefault();
+  const v = id => $('#' + id).value.trim();
+  const d = { nome: v('t_nome').replace(/\s+/g, ' ').toUpperCase(), celular: v('t_cel'), email: v('t_email'), nascimento: v('t_nasc'), cidade: v('t_cidade'),
+    cargo: v('t_cargo'), turno: v('t_turno'), exp_posto: v('t_exp'), escolaridade: v('t_esc'), mensagem: v('t_msg') };
+  const erro = !d.nome || d.nome.split(' ').length < 2 ? ['t_nome', 'Informe seu nome completo.']
+    : ![10, 11].includes(dig(d.celular).length) ? ['t_cel', 'Informe o celular com DDD, ex.: (64) 99999-0000.']
+    : d.email && V.email(d.email) ? ['t_email', 'E-mail inválido.']
+    : !data(d.nascimento) || idade(d.nascimento) < 14 || idade(d.nascimento) > 90 ? ['t_nasc', 'Informe uma data de nascimento válida.']
+    : !d.cidade ? ['t_cidade', 'Informe a cidade onde mora.'] : !d.cargo ? ['t_cargo', 'Escolha a vaga de interesse.']
+    : !$('#t_lgpd').checked ? ['t_lgpd', 'Para enviar, marque a autorização de uso dos dados.'] : null;
+  if (erro) { toast(erro[1], 'erro'); $('#' + erro[0]).focus(); return; }
+  const b = e.target.querySelector('button.pri'); b.disabled = true; b.textContent = 'Enviando…';
+  try {
+    let arquivo = null; const f = $('#t_cv').files[0];
+    if (f) {
+      const { blob, mime, nome } = await preparar(f);
+      if (!/^(image\/(jpeg|png|webp|heic|heif)|application\/(pdf|msword|vnd\.openxmlformats-officedocument\.wordprocessingml\.document))$/.test(mime)) throw new Error('Currículo em formato não aceito. Envie PDF, Word ou foto.');
+      if (blob.size > 10 * 1024 * 1024) throw new Error('O currículo passa de 10 MB.');
+      arquivo = { nome, mime, base64: await paraB64(blob) };
+    }
+    await api('candidatar', { dados: d, lgpd: true, arquivo, site: $('#t_site').value });
+    app.innerHTML = topo('Trabalhe Conosco') + `<main class="wrap"><section class="card fim"><div class="selo">✓</div>
+      <h1>Recebemos sua candidatura!</h1><p class="muted">Obrigado, ${esc(primeiro(d.nome))}. Seus dados ficaram com o RH do Posto Trevo. Quando surgir uma vaga com o seu perfil, entraremos em contato pelo WhatsApp ${esc(d.celular)}.</p></section>${contatoRH()}</main>`;
+    window.scrollTo(0, 0);
+  } catch (x) { telaTrabalhe(x.message, d); window.scrollTo(0, 0); }
 }
 function contatoRH() {
   const cel = dig(CONFIG.RH_CELULAR), fixo = dig(CONFIG.RH_FIXO);
@@ -943,7 +1009,7 @@ function termoLGPD() {
 function mimeDe(file) {
   if (file.type) return file.type;
   const e = (file.name.split('.').pop() || '').toLowerCase();
-  return { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', heic: 'image/heic', heif: 'image/heif', webp: 'image/webp' }[e] || '';
+  return { doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', heic: 'image/heic', heif: 'image/heif', webp: 'image/webp' }[e] || '';
 }
 function carregarImg(file) {
   return new Promise((ok, no) => { const u = URL.createObjectURL(file), i = new Image();
@@ -1231,7 +1297,7 @@ async function carregarLista(mostrar) {
   if (mostrar) carregandoRH('Carregando…');
   try {
     const r = await api('listar', { senha: R.senha });
-    R.itens = r.itens || []; R.eventos = r.eventos || []; R.al = alertas();
+    R.itens = r.itens || []; R.eventos = r.eventos || []; R.al = alertas(); R.candNovos = +r.candNovos || 0;
     try { sessionStorage.setItem('rh_s', R.senha); } catch (e) {}
     R.det = null; R.form = null; rLista();
   } catch (e) { erroRH(e); }
@@ -1239,6 +1305,7 @@ async function carregarLista(mostrar) {
 
 /* ── estrutura visual do painel ── */
 const ICON = {
+  brief: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/>',
   home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
   users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18 14.8c2 .7 3.2 2.4 3.6 5.2"/>',
   userplus: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M19 8v6M16 11h6"/>',
@@ -1265,10 +1332,10 @@ function avatar(nome, t = 40) {
   let h = 0; for (const ch of String(nome || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return `<span class="av" style="width:${t}px;height:${t}px;font-size:${Math.round(t * .38)}px;background:${CORES_AV[h % CORES_AV.length]}">${esc(ini)}</span>`;
 }
-const NAV = [['inicio', 'Início', 'home'], ['func', 'Funcionários', 'users'], ['adm', 'Admissões', 'userplus'], ['alertas', 'Alertas', 'bell'], ['com', 'Comunicados', 'send'], ['rel', 'Relatórios', 'chart'], ['config', 'Configurações', 'gear']];
+const NAV = [['inicio', 'Início', 'home'], ['func', 'Funcionários', 'users'], ['adm', 'Admissões', 'userplus'], ['alertas', 'Alertas', 'bell'], ['cand', 'Candidatos', 'brief'], ['com', 'Comunicados', 'send'], ['rel', 'Relatórios', 'chart'], ['config', 'Configurações', 'gear']];
 function shell(ativo, corpo) {
   R.tela = ativo; document.body.classList.add('rh-on');
-  const bdg = { adm: R.itens.filter(a => a.status === 'enviado').length, alertas: R.al.filter(x => x.nivel > 0).length };
+  const bdg = { adm: R.itens.filter(a => a.status === 'enviado').length, alertas: R.al.filter(x => x.nivel > 0).length, cand: R.candNovos || 0 };
   const b = k => bdg[k] ? `<span class="bdg">${bdg[k]}</span>` : '';
   const marca = `${LOGO}<div><div class="brand">POSTO TREVO</div><div class="brand-sub">Painel do RH</div></div>`;
   return `${DEMO ? '<div class="demo-strip no-print">Modo demonstração – os dados ficam só neste navegador</div>' : ''}
@@ -1282,7 +1349,7 @@ function shell(ativo, corpo) {
       <main class="rh-wrap">${corpo}</main>
     </div>
     <nav class="bottom no-print">${[...NAV.slice(0, 4), ['mais', 'Mais', 'more']].map(([k, l, i]) =>
-      `<button class="${ativo === k || (k === 'mais' && ['com', 'rel', 'config'].includes(ativo)) ? 'on' : ''}" data-act="${k === 'mais' ? 'mais' : 'nav'}" data-n="${k}">${ic(i)}<span>${l}</span>${b(k)}</button>`).join('')}</nav>
+      `<button class="${ativo === k || (k === 'mais' && ['cand', 'com', 'rel', 'config'].includes(ativo)) ? 'on' : ''}" data-act="${k === 'mais' ? 'mais' : 'nav'}" data-n="${k}">${ic(i)}<span>${l}</span>${b(k)}</button>`).join('')}</nav>
   </div>`;
 }
 const carregandoRH = (msg, tela) => { app.innerHTML = shell(tela || R.tela || 'inicio', `<div class="carregando"><span class="spin"></span>${esc(msg)}</div>`); };
@@ -2264,6 +2331,96 @@ function modalUsuario(u) {
     };
   }
 }
+/* ── Candidatos (Trabalhe Conosco) ── */
+const ST_CAND = { novo: ['Novo', 's-prog'], analise: ['Em análise', 's-env'], entrevista: ['Entrevista', 's-prog'], banco: ['Banco de talentos', 's-banco'],
+  contratado: ['Contratado', 's-ok'], descartado: ['Descartado', 's-desc'] };
+const FILTROS_CAND = { c_novo: ['Novos', c => c.status === 'novo'], c_analise: ['Em análise', c => c.status === 'analise'], c_entrevista: ['Entrevista', c => c.status === 'entrevista'],
+  c_banco: ['Banco de talentos', c => c.status === 'banco'], c_contratado: ['Contratados', c => c.status === 'contratado'], c_descartado: ['Descartados', c => c.status === 'descartado'], c_todos: ['Todos', () => true] };
+const chipCand = st => `<span class="chip ${(ST_CAND[st] || ST_CAND.novo)[1]}">${(ST_CAND[st] || ST_CAND.novo)[0]}</span>`;
+async function carregarCand() {
+  carregandoRH('Carregando candidatos…', 'cand');
+  try {
+    R.cands = (await api('candidatos', { senha: R.senha })).candidatos || [];
+    R.candNovos = R.cands.filter(c => c.status === 'novo').length;
+    R.cf = R.cf || (R.candNovos ? 'c_novo' : 'c_todos'); R.cbusca = R.cbusca || '';
+    rCand(); window.scrollTo(0, 0);
+  } catch (e) { rLista(); erroRH(e); }
+}
+function rCand() {
+  app.innerHTML = shell('cand', `
+    <div class="pg-h"><div><h1>Candidatos</h1><p>Quem se candidatou pelo <b>Trabalhe Conosco</b>.</p></div>
+      <div class="det-acoes" style="margin:0"><button class="btn ouro" data-act="divulgar">${ic('send')}Divulgar o link</button></div></div>
+    <div class="barra">
+      <div class="filtros">${Object.entries(FILTROS_CAND).map(([k, [l, f]]) => `<button data-act="cfiltro" data-f="${k}" class="${R.cf === k ? 'on' : ''}">${l} <span class="n">${R.cands.filter(f).length}</span></button>`).join('')}</div>
+      <input class="busca" id="cbusca" type="search" placeholder="Buscar por nome, vaga ou cidade" value="${esc(R.cbusca)}">
+    </div>
+    <div class="itens" id="citens">${candItens()}</div>`);
+}
+function candItens() {
+  const b = R.cbusca.toLowerCase();
+  const l = R.cands.filter(FILTROS_CAND[R.cf][1]).filter(c => !b || [c.nome, c.cargo, c.cidade].join(' ').toLowerCase().includes(b));
+  if (!l.length) return `<div class="vazio card"><h2>Nada por aqui</h2><p>${R.cands.length ? 'Nenhum candidato neste filtro.' : 'Clique em <b>Divulgar o link</b> e coloque no WhatsApp, Instagram ou num cartaz com QR code no posto.'}</p></div>`;
+  return l.map(c => { const i = idade(c.nascimento);
+    return `<div class="item pessoa" data-act="cand" data-c="${esc(c.codigo)}">${avatar(c.nome, 44)}
+      <div class="pi"><div class="nome">${esc(c.nome)}</div><div class="meta">${[c.cargo, c.cidade, i != null && i + ' anos', c.exp_posto === 'Sim' && 'Já trabalhou em posto', c.file_id ? 'Com currículo' : 'Sem currículo', 'Recebido ' + String(c.quando).slice(0, 10)].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('')}</div></div>
+      <div class="acoes">${chipCand(c.status)}${ic('chev', 'chev')}</div></div>`; }).join('');
+}
+const msgCand = c => `Olá, ${primeiro(c.nome)}! Aqui é do RH do Posto Trevo. Recebemos seu cadastro no Trabalhe Conosco para a vaga de ${String(c.cargo || '').toLowerCase()}. `;
+function modalCand(c) {
+  const cel = dig(c.celular), i = idade(c.nascimento);
+  const m = abrirModal(`<h2>${esc(c.nome)}</h2><p style="margin:0 0 8px">${chipCand(c.status)}${c.admissao ? ' <small class="muted">virou admissão</small>' : ''}</p>
+    ${kv([['Vaga de interesse', c.cargo], ['Celular / WhatsApp', c.celular], ['E-mail', c.email], ['Idade', i != null ? `${i} anos (${dataBR(c.nascimento)})` : ''], ['Cidade', c.cidade],
+      ['Horário', c.turno], ['Já trabalhou em posto?', c.exp_posto], ['Escolaridade', c.escolaridade], ['Recebido em', c.quando]])}
+    ${c.mensagem ? `<div class="cand-msg">${esc(c.mensagem.replace(/ \/ /g, '\n'))}</div>` : ''}
+    <div class="det-acoes">${c.url ? `<a class="btn pri" href="${esc(c.url)}" target="_blank" rel="noopener">${ic('file')}Abrir currículo</a>` : '<span class="muted" style="align-self:center">Sem currículo anexado</span>'}
+      <a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/55${cel}?text=${encodeURIComponent(msgCand(c))}">WhatsApp</a>
+      ${c.email ? `<a class="btn sec" href="mailto:${esc(c.email)}">${ic('mail')}E-mail</a>` : ''}</div>
+    <div class="grid" style="margin-top:12px">
+      <div class="fld h"><label for="c_st">Situação</label><select id="c_st">${Object.entries(ST_CAND).map(([k, [l]]) => `<option value="${k}"${k === c.status ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="fld"><label for="c_obs">Anotações do RH</label><textarea id="c_obs" maxlength="500" placeholder="Ex.: entrevista sexta às 10h; boa comunicação…">${esc(c.obs_rh || '')}</textarea></div></div>
+    <div class="modal-acoes" style="flex-wrap:wrap"><button type="button" class="lnk2" id="c_del" style="margin-right:auto">Excluir candidato (LGPD)</button>
+      ${c.admissao ? '' : `<button class="btn sec" id="c_contr">${ic('userplus')}Contratar</button>`}
+      <button class="btn sec" data-act="fechar">Fechar</button><button class="btn pri" id="c_ok">Salvar</button></div>`, true);
+  m.querySelector('#c_ok').onclick = async ev => {
+    const b = ev.currentTarget; b.disabled = true;
+    try { await api('candidatoStatus', { senha: R.senha, codigo: c.codigo, status: $('#c_st').value, obs: $('#c_obs').value });
+      Object.assign(c, { status: $('#c_st').value, obs_rh: $('#c_obs').value }); R.candNovos = R.cands.filter(x => x.status === 'novo').length;
+      fecharModal(); toast('Candidato atualizado'); rCand(); }
+    catch (e) { b.disabled = false; erroRH(e); }
+  };
+  m.querySelector('#c_del').onclick = async () => {
+    if (!confirm(`Excluir ${c.nome} e o currículo dele? Não dá para desfazer.`)) return;
+    try { await api('removerCandidato', { senha: R.senha, codigo: c.codigo }); R.cands = R.cands.filter(x => x !== c);
+      R.candNovos = R.cands.filter(x => x.status === 'novo').length; fecharModal(); toast('Candidato excluído'); rCand(); }
+    catch (e) { erroRH(e); }
+  };
+  const bc = m.querySelector('#c_contr');
+  if (bc) bc.onclick = () => modalContratar(c);
+}
+function modalContratar(c) {
+  const aprendiz = /aprendiz/i.test(c.cargo);
+  modalForm({ titulo: 'Contratar ' + primeiro(c.nome), ok: 'Criar admissão',
+    texto: (aprendiz ? 'Candidato a <b>jovem aprendiz</b>: a admissão já sai marcada como aprendiz. ' : '') + 'Cria a admissão com nome, celular, e-mail e data de nascimento já preenchidos. O currículo vai para os documentos do funcionário. Depois é só enviar o link da ficha pelo WhatsApp.',
+    defs: [{ k: 'cargo', l: 'Cargo', list: CARGOS, req: 1, w: 'h', max: 60 }, { k: 'data_prevista', l: 'Início previsto', t: 'date', w: 'h', v: V.data }],
+    d: { cargo: CARGOS.includes(c.cargo) ? c.cargo : '' },
+    async onOk(d) {
+      const r = await api('contratarCandidato', { senha: R.senha, codigo: c.codigo, cargo: d.cargo, aprendiz, data_prevista: d.data_prevista });
+      Object.assign(c, { status: 'contratado', admissao: r.codigo });
+      await carregarLista(false); R.aba = 'adm';
+      modalLink({ codigo: r.codigo, nome: c.nome, celular: c.celular });
+    } });
+}
+function modalDivulgar() {
+  const link = linkTrabalhe(), msg = `🚗⛽ Venha trabalhar no Posto Trevo!\n\nEstamos sempre em busca de pessoas para fazer parte da nossa equipe. Cadastre-se e envie seu currículo pelo link:\n${link}`;
+  abrirModal(`<h2>Divulgar o Trabalhe Conosco</h2><p class="muted">Um link só para todo mundo: WhatsApp, status, Instagram, Facebook ou cartaz com QR code no posto. Cada candidatura cai aqui em <b>Candidatos</b> e você recebe um e-mail de aviso.</p>
+    <div class="bolha" style="margin:12px 0;max-width:none;font-size:14px">${esc(msg)}</div>
+    <a class="btn wa big" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(msg)}">Enviar pelo WhatsApp</a>
+    <div class="det-acoes"><button class="btn sec" data-act="copiarmsg" data-v="${esc(msg)}">Copiar mensagem</button><button class="btn sec" data-act="copiar" data-v="${esc(link)}">Copiar só o link</button>
+      <a class="btn sec" target="_blank" rel="noopener" href="${esc(link)}">Ver a página</a></div>
+    <div style="text-align:center;margin-top:12px"><img alt="QR code do link" width="180" height="180" src="https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=8&data=${encodeURIComponent(link)}" style="border-radius:8px">
+      <p class="muted" style="font-size:13px;margin:4px 0 0">QR code para imprimir num cartaz: clique com o botão direito e salve a imagem.</p></div>
+    <div class="modal-acoes"><button class="btn sec" data-act="fechar">Fechar</button></div>`, true);
+}
 function rotuloDoc(f) { return f.origem === 'rh' ? (f.categoria || 'Documento') : (DOC_L[f.tipo] || f.tipo); }
 async function modalEnviarFicha() {
   let cfg; try { cfg = await pegarConfig(); } catch (e) { return erroRH(e); }
@@ -2338,10 +2495,12 @@ const ACOES_RH = {
     if (n === 'com') return carregarCom(null);
     if (n === 'rel') return carregarRel();
     if (n === 'config') return carregarConfig();
+    if (n === 'cand') return carregarCand();
     R.aba = n; R.tela = n; R.busca = ''; R.det = null; carregarLista(true);
   },
   mais() {
     abrirModal(`<h2>Mais opções</h2><div class="mais">
+      <button class="navi2" data-act="nav" data-n="cand">${ic('brief')}Candidatos${R.candNovos ? ` <span class="bdg">${R.candNovos}</span>` : ''}</button>
       <button class="navi2" data-act="nav" data-n="com">${ic('send')}Comunicados</button>
       <button class="navi2" data-act="nav" data-n="rel">${ic('chart')}Relatórios</button>
       <button class="navi2" data-act="nav" data-n="config">${ic('gear')}Configurações</button>
@@ -2518,6 +2677,9 @@ const ACOES_RH = {
       $('#ativ_busca').oninput = ev => { const q = ev.target.value.toLowerCase(); document.querySelectorAll('.ativ tbody tr').forEach(tr => { tr.hidden = q && !tr.textContent.toLowerCase().includes(q); }); };
     } catch (e) { b.disabled = false; erroRH(e); }
   },
+  cfiltro(b) { R.cf = b.dataset.f; rCand(); },
+  cand(b) { const c = R.cands.find(x => x.codigo === b.dataset.c); if (c) modalCand(c); },
+  divulgar: () => modalDivulgar(),
   cfgadd() { $('#cx_lista').insertAdjacentHTML('beforeend', linhaExtra()); const l = [...document.querySelectorAll('.cx-l .cx-nome')].pop(); if (l) l.focus(); },
   cfgdel(b) { b.closest('.cx-l').remove(); },
   convite: () => modalConvite(pessoa(), false),
@@ -2698,6 +2860,7 @@ const ACOES_RH = {
 /* ═══════════ EVENTOS ═══════════ */
 const CODIGO = new URLSearchParams(location.search).get('c');
 const GRUPO = !CODIGO && new URLSearchParams(location.search).has('atualizar');
+const TRABALHE = !CODIGO && !GRUPO && /^\?(trabalhe|vagas)\b/i.test(location.search);
 const MODO_COLAB = !!(CODIGO || GRUPO);
 const ACOES = MODO_COLAB ? ACOES_COLAB : ACOES_RH;
 
@@ -2710,9 +2873,10 @@ document.addEventListener('input', e => {
   const el = e.target;
   if (MODO_COLAB && el.dataset.k) aoDigitarColab(el);
   if (el.id === 'g_cpf') el.value = mascara('000.000.000-00', el.value);
-  if (el.id === 'n_cel') el.value = mascara('tel', el.value);
+  if (el.id === 'n_cel' || el.id === 't_cel') el.value = mascara('tel', el.value);
   if (!MODO_COLAB && R.form && el.dataset.k) { aoDigitar(el, R.form.d, R.form.mapa); R.form.aoMudar && R.form.aoMudar(el.dataset.k, R.form.d); }
   if (el.id === 'busca') { R.busca = el.value; $('#itens').innerHTML = itensHTML(); }
+  if (el.id === 'cbusca') { R.cbusca = el.value; $('#citens').innerHTML = candItens(); }
   if (el.id === 'com_tit') R.com.form.t = el.value;
   if (el.id === 'com_busca_p') { R.com.form.buscaP = el.value; $('#com_pes').innerHTML = listaPessoasCom(); }
   if (el.id === 'com_msg') { R.com.form.m = el.value; atualizarPrevia(); }
@@ -2742,6 +2906,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('submit', e => {
   if (e.target.id === 'fgrupo') return entrarGrupo(e);
+  if (e.target.id === 'ftrab') return enviarTrabalhe(e);
   if (e.target.id !== 'flogin') return;
   entrarRH(e);
 });
@@ -2753,6 +2918,7 @@ else if (GRUPO) {
   let c = ''; try { c = sessionStorage.getItem('grp_c') || ''; } catch (e) {}
   if (c) iniciarColab(c); else telaGrupo();
 }
+else if (TRABALHE) { document.title = 'Trabalhe Conosco · Posto Trevo'; telaTrabalhe(); }
 else iniciarRH();
 </script>
 </body>
