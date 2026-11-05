@@ -1867,11 +1867,56 @@ function subDados() {
     ${SECOES.map(s => `<section class="card"><h3>${esc(s.t)}</h3>${resumoSecao(s, d)}</section>`).join('')}
   </div>`;
 }
+/* holerites do funcionário em ordem de mês (mais recente primeiro) */
+function holeritesDe(docs) {
+  return docs.filter(f => f.origem === 'rh' && f.categoria === 'Holerite').map(f => {
+    let m = String(f.descricao || '').match(/(\d{2})\/(\d{4})/) || String(f.arquivo || '').match(/(\d{2})-(\d{4})/);
+    if (!m) { const e = String(f.enviado_em || '').match(/^\d{2}\/(\d{2})\/(\d{4})/); if (e) m = e; }
+    return { f, comp: m ? m[2] + '-' + m[1] : '' };
+  }).sort((x, y) => y.comp.localeCompare(x.comp) || String(y.f.enviado_em).localeCompare(String(x.f.enviado_em)));
+}
+const compTxt = c => c ? `${MESES[+c.slice(5) - 1]}/${c.slice(0, 4)}` : 'Sem mês';
+function cardHolerites() {
+  const hs = holeritesDe(R.det.docs); if (!hs.length) return '';
+  const n = R.holN || 3, vis = n === 'todos' ? hs : hs.slice(0, n);
+  return `<section class="card"><div class="card-h"><h3>Holerites (${hs.length})</h3>
+      <div class="seg no-print">${[[3, 'Últimos 3'], [6, 'Últimos 6'], [12, 'Últimos 12'], ['todos', 'Todos']].map(([k, l]) => `<button data-act="holn" data-n="${k}" class="${String(n) === String(k) ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+    <ul class="lista-ev">${vis.map(h => `<li><span class="dt">${esc(compTxt(h.comp))}</span><div>${linkArq(h.f)}</div><span></span></li>`).join('')}</ul>
+    <div class="det-acoes no-print"><button class="btn pri" data-act="holjuntar">${ic('file')}Baixar ${vis.length > 1 ? `os ${vis.length} em um PDF` : 'o PDF'}</button>
+      <button class="btn sec" data-act="holemail">${ic('mail')}Enviar por e-mail</button></div></section>`;
+}
+const holVisiveis = () => { const hs = holeritesDe(R.det.docs), n = R.holN || 3; return n === 'todos' ? hs : hs.slice(0, n); };
+async function juntarHolerites(b) {
+  const vis = holVisiveis(); if (!vis.length) return;
+  const txt = b.innerHTML; b.disabled = true; b.innerHTML = '<span class="spin"></span> Juntando…';
+  try {
+    const { PDFLib } = await libsPdf();
+    const r = await api('baixarArquivos', { senha: R.senha, codigo: R.det.adm.codigo, file_ids: vis.map(h => h.f.file_id) });
+    const porId = Object.fromEntries(r.arquivos.map(a => [a.file_id, a]));
+    const out = await PDFLib.PDFDocument.create();
+    for (const h of [...vis].reverse()) { // do mais antigo para o mais recente
+      const a = porId[h.f.file_id]; if (!a) continue;
+      const bytes = Uint8Array.from(atob(a.base64), c => c.charCodeAt(0));
+      if (/pdf/.test(a.mime)) { const src = await PDFLib.PDFDocument.load(bytes); (await out.copyPages(src, src.getPageIndices())).forEach(pg => out.addPage(pg)); }
+      else if (/jpe?g|png/.test(a.mime)) {
+        const img = /png/.test(a.mime) ? await out.embedPng(bytes) : await out.embedJpg(bytes);
+        const pg = out.addPage([595, 842]), k = Math.min(555 / img.width, 802 / img.height);
+        pg.drawImage(img, { x: (595 - img.width * k) / 2, y: (842 - img.height * k) / 2, width: img.width * k, height: img.height * k });
+      }
+    }
+    const nome = `Holerites ${primeiro(R.det.adm.nome)} - ${vis.length > 1 ? `${compTxt(vis[vis.length - 1].comp)} a ${compTxt(vis[0].comp)}` : compTxt(vis[0].comp)}.pdf`.replace(/\//g, '-');
+    const url = URL.createObjectURL(new Blob([await out.save()], { type: 'application/pdf' }));
+    const a = document.createElement('a'); a.href = url; a.download = nome; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    toast('PDF baixado: ' + nome);
+  } catch (e) { erroRH(e); }
+  b.disabled = false; b.innerHTML = txt;
+}
 function subDocs() {
   const { ficha: d, docs, eventos } = R.det;
   const rh = docs.filter(f => f.origem === 'rh').sort((x, y) => String(y.enviado_em).localeCompare(String(x.enviado_em)));
   const adm = docs.filter(f => f.origem !== 'rh');
-  return `<section class="card"><div class="card-h"><h3>Documentos do RH (${rh.length})</h3><button class="btn ouro sm no-print" data-act="docrh">+ Anexar documento</button></div>
+  return `${cardHolerites()}<section class="card"><div class="card-h"><h3>Documentos do RH (${rh.length})</h3><button class="btn ouro sm no-print" data-act="docrh">+ Anexar documento</button></div>
       ${rh.length ? `<ul class="lista-ev">${rh.map(f => `<li><span class="dt">${esc(String(f.enviado_em || '').slice(0, 10))}</span>
         <div><b>${esc(f.categoria || 'Documento')}</b>${f.descricao ? `<small>${esc(f.descricao)}</small>` : ''}${linkArq(f)}</div>
         <button class="x no-print" data-act="rmdocrh" data-id="${esc(f.file_id)}" aria-label="Remover">×</button></li>`).join('')}</ul>`
@@ -2611,9 +2656,9 @@ async function salvarHolerites(m, b) {
   } catch (e) { b.disabled = false; b.textContent = 'Tentar de novo'; erroRH(e); }
 }
 function rotuloDoc(f) { return f.origem === 'rh' ? (f.categoria || 'Documento') : (DOC_L[f.tipo] || f.tipo); }
-async function modalEnviarFicha() {
+async function modalEnviarFicha(sel) {
   let cfg; try { cfg = await pegarConfig(); } catch (e) { return erroRH(e); }
-  const p = pessoa(), docs = R.det.docs, aprendiz = R.det.adm.aprendiz === 'Sim';
+  const p = pessoa(), docs = R.det.docs, aprendiz = R.det.adm.aprendiz === 'Sim' && !sel;
   const opc = [['contab', `${cfg.nome_contab || 'Escritório de contabilidade'}`, cfg.email_contab], ['iam', `${cfg.nome_iam || 'IAM'} (jovem aprendiz)`, cfg.email_iam],
     ...extrasCfg(cfg).map(x => ['x:' + x.id, x.nome, x.email]), ['outro', 'Outro e-mail', '']];
   const pad = aprendiz && cfg.email_iam ? 'iam' : 'contab';
@@ -2630,11 +2675,11 @@ async function modalEnviarFicha() {
       <div class="grid">${IAM_F.map(([k, l, v, ph]) => `<div class="fld h"><label for="iam_${k}">${esc(l)}</label><input id="iam_${k}" value="${esc(v)}" placeholder="${esc(ph)}" maxlength="80"${k === 'tel' ? ' data-tel="1"' : ''}></div>`).join('')}</div>
       <small class="muted">Alterações aqui ficam salvas na ficha do aprendiz.</small></div>` : ''}
     <div class="fld" style="margin-top:12px"><label>O que enviar</label><div class="pes-l" style="max-height:240px">
-      <label class="pes on"><input type="checkbox" id="env_ficha" checked><span><b>Ficha de registro (PDF)</b><small>Gerada agora com os dados do painel</small></span></label>
-      ${docs.length ? docs.map(f => `<label class="pes on"><input type="checkbox" class="env-doc" value="${esc(f.file_id)}" data-tam="${+f.tamanho || 0}" checked>
+      <label class="pes${sel ? '' : ' on'}"><input type="checkbox" id="env_ficha"${sel ? '' : ' checked'}><span><b>Ficha de registro (PDF)</b><small>Gerada agora com os dados do painel</small></span></label>
+      ${docs.length ? docs.map(f => `<label class="pes${!sel || sel.includes(f.file_id) ? ' on' : ''}"><input type="checkbox" class="env-doc" value="${esc(f.file_id)}" data-tam="${+f.tamanho || 0}"${!sel || sel.includes(f.file_id) ? ' checked' : ''}>
         <span><b>${esc(rotuloDoc(f))}</b><small>${esc(f.arquivo)} · ${kb(f.tamanho)}</small></span></label>`).join('') : '<p class="muted" style="padding:8px 12px;margin:0">Nenhum documento anexado.</p>'}</div>
       <small id="env_tam"></small></div>
-    <div class="fld" style="margin-top:12px"><label for="env_msg">Mensagem</label><textarea id="env_msg" maxlength="2000">${esc(`Olá!\n\nSeguem em anexo a ficha de registro e os documentos de ${p.nome}${R.det.adm.cargo ? ', ' + R.det.adm.cargo : ''}${R.det.adm.data_admissao ? ', admitido(a) em ' + dataBR(R.det.adm.data_admissao) : ''}${aprendiz ? ' (jovem aprendiz)' : ''}.\n\nQualquer dúvida, estamos à disposição.\n\nRH – Posto Trevo\n${CONFIG.RH_FIXO} · ${CONFIG.RH_CELULAR}`)}</textarea></div>
+    <div class="fld" style="margin-top:12px"><label for="env_msg">Mensagem</label><textarea id="env_msg" maxlength="2000">${esc(sel ? `Olá!\n\nSeguem em anexo os holerites de ${p.nome}${R.det.adm.cargo ? ', ' + R.det.adm.cargo : ''}.\n\nQualquer dúvida, estamos à disposição.\n\nRH – Posto Trevo\n${CONFIG.RH_FIXO} · ${CONFIG.RH_CELULAR}` : `Olá!\n\nSeguem em anexo a ficha de registro e os documentos de ${p.nome}${R.det.adm.cargo ? ', ' + R.det.adm.cargo : ''}${R.det.adm.data_admissao ? ', admitido(a) em ' + dataBR(R.det.adm.data_admissao) : ''}${aprendiz ? ' (jovem aprendiz)' : ''}.\n\nQualquer dúvida, estamos à disposição.\n\nRH – Posto Trevo\n${CONFIG.RH_FIXO} · ${CONFIG.RH_CELULAR}`)}</textarea></div>
     <div class="modal-acoes"><button class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri" id="env_ok">${ic('mail')}Enviar</button></div>`, true);
   const tam = () => { const t = [...m.querySelectorAll('.env-doc:checked')].reduce((s, i) => s + +i.dataset.tam, 0);
     m.querySelector('#env_tam').textContent = `Documentos marcados: ${kb(t)}${t > 23 * 1048576 ? ' – passa do limite de 24 MB do e-mail' : ''}`; };
@@ -2825,6 +2870,9 @@ const ACOES_RH = {
   importar: () => modalImportar(),
   vcf: () => exportarVcf(),
   enviarficha: () => modalEnviarFicha(),
+  holn(b) { R.holN = b.dataset.n === 'todos' ? 'todos' : +b.dataset.n; rDet(); },
+  holjuntar: b => juntarHolerites(b),
+  holemail: () => modalEnviarFicha(holVisiveis().map(h => h.f.file_id)),
   async salvarcfg(b) {
     const d = R.form.d;
     for (const k of ['email_contab', 'email_iam']) if (!emailsOk(d[k])) { toast('E-mail inválido em ' + (k === 'email_iam' ? 'IAM' : 'contabilidade'), 'erro'); return; }
