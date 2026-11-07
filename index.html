@@ -11,6 +11,11 @@
 <meta property="og:site_name" content="Posto Trevo">
 <meta property="og:type" content="website">
 <title>Portal do RH · Posto Trevo</title>
+<script>/* ícone e "app" na tela inicial: Meu RH tem o seu, o resto usa o do Painel RH */
+(function () { var m = /^\?(meurh|app|holerites?)\b/i.test(location.search), k = m ? 'meurh' : 'painel', h = document.head;
+  function l(r, u, s) { var e = document.createElement('link'); e.rel = r; e.href = u; if (s) e.setAttribute('sizes', s); h.appendChild(e); }
+  l('manifest', 'manifest-' + k + '.json'); l('apple-touch-icon', 'icone-' + k + '-180.png', '180x180'); l('icon', 'icone-' + k + '-32.png', '32x32');
+  var t = document.createElement('meta'); t.name = 'apple-mobile-web-app-title'; t.content = m ? 'Meu RH' : 'Painel RH'; h.appendChild(t); })();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
