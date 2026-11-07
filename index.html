@@ -438,6 +438,8 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
 .hol-pag .hp.rev small{white-space:normal}
 .hol-pag select{min-height:40px;padding:6px 30px 6px 10px;font-size:14px;background-position:calc(100% - 16px) 17px,calc(100% - 11px) 17px}
 @media(max-width:600px){.hol-pag .hp{grid-template-columns:48px minmax(0,1fr)}.hol-pag .hp select{grid-column:1/-1}}
+.hol-pag .hp.app{grid-template-columns:minmax(0,1fr) auto}
+.app-cod{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:14px}.app-cod b{font-family:var(--disp);font-size:20px;letter-spacing:.06em}
 .dest-op{display:grid;gap:6px}.dest-op .pes{border:1.5px solid var(--linha);border-radius:12px}.dest-op .pes.on{border-color:var(--verde2)}
 .pes input[type=radio]{width:18px;height:18px;min-height:0;flex:none;accent-color:var(--verde2)}
 .pes.on{background:#f0f7f2}
@@ -1387,7 +1389,7 @@ function rLista() {
   app.innerHTML = shell(R.aba, `
     <div class="pg-h"><div><h1>${func ? 'Funcionários' : 'Admissões'}</h1><p>${func ? 'A equipe do posto: ativos e desligados.' : 'Novos colaboradores preenchendo a ficha pelo link.'}</p></div>
       <div class="det-acoes" style="margin:0">${func && nAnt ? `<button class="btn sec" data-act="ferantodos">Lançar férias anteriores (${nAnt})</button>` : ''}
-      ${func ? `<button class="btn sec" data-act="holerites">${ic('file')}Separar holerites</button><button class="btn sec" data-act="importar">${ic('file')}Importar lista</button><button class="btn sec" data-act="linkgrupo">${ic('send')}Link do grupo</button>` : ''}
+      ${func ? `<button class="btn sec" data-act="holerites">${ic('file')}Separar holerites</button><button class="btn sec" data-act="apptodos">${ic('send')}App Meu RH</button><button class="btn sec" data-act="importar">${ic('file')}Importar lista</button><button class="btn sec" data-act="linkgrupo">${ic('send')}Link do grupo</button>` : ''}
       ${func ? `<button class="btn ouro" data-act="cadastrar">${ic('userplus')}Cadastrar funcionário</button>` : `<button class="btn ouro" data-act="nova">${ic('send')}Nova admissão</button>`}</div></div>
     <div class="barra">
       <div class="filtros">${Object.entries(F).map(([k, v]) => `<button data-act="filtro" data-f="${k}" class="${filtroAtual() === k ? 'on' : ''}">${v.l} <span class="n">${cont(k)}</span></button>`).join('')}</div>
@@ -1811,6 +1813,7 @@ function rFunc() {
   if (a.pasta_url) ac.push(`<a class="btn sec" target="_blank" rel="noopener" href="${esc(a.pasta_url)}">${ic('folder')}Pasta no Drive</a>`);
   if (st === 'aprovado' && CONFIG.GRUPO_WHATS) ac.push(`<button class="btn sec" data-act="convite">${ic('send')}Convidar para o grupo</button>`);
   if (st === 'aprovado' && !a.atualizacao) ac.push(`<button class="btn sec" data-act="atabrir">${ic('send')}Pedir atualização</button>`);
+  ac.push(`<button class="btn sec" data-act="appfunc">${ic('send')}App Meu RH</button>`);
   ac.push(st === 'aprovado' ? `<button class="btn perigo" data-act="desligar">${ic('exit')}Desligar</button>` : `<button class="btn sec" data-act="reintegrar">${ic('userplus')}Reintegrar</button>`);
   let corpo = '';
   if (R.sub === 'docs') corpo = subDocs();
@@ -1881,7 +1884,7 @@ function cardHolerites() {
   const n = R.holN || 3, vis = n === 'todos' ? hs : hs.slice(0, n);
   return `<section class="card"><div class="card-h"><h3>Holerites (${hs.length})</h3>
       <div class="seg no-print">${[[3, 'Últimos 3'], [6, 'Últimos 6'], [12, 'Últimos 12'], ['todos', 'Todos']].map(([k, l]) => `<button data-act="holn" data-n="${k}" class="${String(n) === String(k) ? 'on' : ''}">${l}</button>`).join('')}</div></div>
-    <ul class="lista-ev">${vis.map(h => `<li><span class="dt">${esc(compTxt(h.comp))}</span><div>${linkArq(h.f)}</div><span></span></li>`).join('')}</ul>
+    <ul class="lista-ev">${vis.map(h => `<li><span class="dt">${esc(compTxt(h.comp))}</span><div>${linkArq(h.f)}<small class="muted">${h.f.visto_em ? 'Visto no app em ' + esc(h.f.visto_em) : 'Ainda não aberto no app'}</small></div><span></span></li>`).join('')}</ul>
     <div class="det-acoes no-print"><button class="btn pri" data-act="holjuntar">${ic('file')}Baixar ${vis.length > 1 ? `os ${vis.length} em um PDF` : 'o PDF'}</button>
       <button class="btn sec" data-act="holemail">${ic('mail')}Enviar por e-mail</button></div></section>`;
 }
@@ -2533,49 +2536,64 @@ async function libsPdf() {
 }
 const normTxt = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
 const LIGA = new Set(['DA', 'DE', 'DO', 'DAS', 'DOS', 'E']);
-// Descobre de quem é cada página: primeiro pelo CPF, depois pelo nome completo (aceita nome abreviado no fim)
+const cpfDV = c => { if (!/^\d{11}$/.test(c) || /^(\d)\1{10}$/.test(c)) return false;
+  const dv = n => { let s = 0; for (let i = 0; i < n; i++) s += +c[i] * (n + 1 - i); const r = (s * 10) % 11; return r === 10 ? 0 : r; };
+  return dv(9) === +c[9] && dv(10) === +c[10]; };
+const cpfsDoTexto = txt => [...new Set((String(txt).match(/(?<!\d)\d{3}\.?\d{3}\.?\d{3}-?\d{2}(?!\d)/g) || []).map(dig))].filter(cpfDV);
+// nota de 0 a 1 do quanto o nome da pessoa aparece no texto (2 = nome completo exato)
+function notaNome(x, N, pal) {
+  if (N.includes(' ' + x.n + ' ')) return 2;
+  if (!pal.has(x.t[0])) return 0;
+  const achou = x.t.filter(w => pal.has(w)).length, ultimo = x.t[x.t.length - 1];
+  const abrev = !pal.has(ultimo) && [...pal].some(w => w.length < ultimo.length && ultimo.startsWith(w)) ? .5 : 0;
+  const sc = (achou + abrev) / x.t.length;
+  return sc >= .75 ? sc : 0;
+}
+/* Descobre de quem é cada página. Regras de segurança:
+ *  - "seguro": o CPF de UM funcionário está na página E o nome dele também. Só esse caso vai sozinho.
+ *  - "confira": só o nome completo bate (página sem CPF), ou o CPF bate mas o nome não aparece.
+ *    Fica pré-selecionado, mas o RH precisa marcar "Conferi" antes de salvar.
+ *  - "manual": nome abreviado, mais de um funcionário na página, CPF que não é de ninguém do cadastro,
+ *    ou nada encontrado. Não pré-seleciona ninguém.                                                     */
 function identificarPaginas(textos, pessoas) {
   const porCpf = {}; pessoas.forEach(a => { const c = dig(a.cpf); if (c.length === 11) porCpf[c] = a; });
   const nomes = pessoas.map(a => ({ a, n: normTxt(a.nome), t: normTxt(a.nome).split(' ').filter(w => w.length > 1 && !LIGA.has(w)) })).filter(x => x.t.length >= 2);
-  const res = textos.map(txt => {
-    const N = ' ' + normTxt(txt) + ' ', pal = new Set(N.trim().split(' '));
-    const cpfs = [...new Set((txt.match(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/g) || []).map(dig))].map(c => porCpf[c]).filter(Boolean);
-    const unicos = [...new Set(cpfs)];
-    if (unicos.length === 1) return { a: unicos[0], como: 'CPF' };
-    if (unicos.length > 1) return { como: 'varios', varios: unicos };
-    const cands = nomes.map(x => {
-      if (N.includes(' ' + x.n + ' ')) return { a: x.a, sc: 2 + x.t.length / 100 };
-      if (!pal.has(x.t[0])) return null;
-      const achou = x.t.filter(w => pal.has(w)).length, ultimo = x.t[x.t.length - 1];
-      const abrev = !pal.has(ultimo) && [...pal].some(w => w.length >= 1 && w.length < ultimo.length && ultimo.startsWith(w)) ? 1 : 0;
-      const sc = (achou + abrev * .5) / x.t.length;
-      return sc >= .75 ? { a: x.a, sc } : null;
-    }).filter(Boolean).sort((p, q) => q.sc - p.sc);
-    if (!cands.length) return { como: txt.trim() ? 'nada' : 'vazia' };
-    const cheios = cands.filter(c => c.sc >= 2), cheiosDist = [...new Set(cheios.map(c => c.a))];
-    // um nome contido em outro (JOAO SILVA x JOAO SILVA SANTOS): fica o mais longo
-    const fora = cheios.filter(c => cheios.some(o => o !== c && normTxt(o.a.nome).includes(normTxt(c.a.nome)) && o.a !== c.a)).map(c => c.a);
-    const finais = cheiosDist.filter(a => !fora.includes(a));
-    if (finais.length > 1) return { como: 'varios', varios: finais };
-    if (finais.length === 1) return { a: finais[0], como: 'nome' };
-    if (cands.length > 1 && cands[0].sc === cands[1].sc) return { como: 'varios', varios: cands.slice(0, 3).map(c => c.a) };
-    return { a: cands[0].a, como: 'nome' };
+  return textos.map(txt => {
+    const N = ' ' + normTxt(txt) + ' ', pal = new Set(N.trim().split(' ').filter(Boolean));
+    if (!N.trim()) return { como: 'vazia', nivel: 'manual' };
+    const cpfs = cpfsDoTexto(txt), deFunc = [...new Set(cpfs.map(c => porCpf[c]).filter(Boolean))], estranhos = cpfs.filter(c => !porCpf[c]);
+    const notas = nomes.map(x => ({ a: x.a, sc: notaNome(x, N, pal) })).filter(x => x.sc > 0).sort((p, q) => q.sc - p.sc);
+    // nomes completos que aparecem (descarta um nome contido em outro maior: JOAO SILVA x JOAO SILVA SANTOS)
+    let cheios = notas.filter(x => x.sc === 2).map(x => x.a);
+    cheios = cheios.filter(a => !cheios.some(o => o !== a && normTxt(o.nome).includes(normTxt(a.nome))));
+    const sug = notas[0] && notas[0].a;
+    if (deFunc.length > 1) return { como: 'varios_cpf', nivel: 'manual', varios: deFunc };
+    if (deFunc.length === 1) {
+      const a = deFunc[0], outros = cheios.filter(o => o !== a);
+      if (outros.length) return { como: 'varios', nivel: 'manual', varios: [a, ...outros] };
+      if (estranhos.length) return { a, como: 'cpf_extra', nivel: 'confira' };
+      const nomeOk = notas.some(x => x.a === a);
+      return nomeOk ? { a, como: 'seguro', nivel: 'seguro' } : { a, como: 'cpf_sem_nome', nivel: 'confira' };
+    }
+    if (estranhos.length) return { como: 'cpf_desconhecido', nivel: 'manual', sug };
+    if (cheios.length > 1) return { como: 'varios', nivel: 'manual', varios: cheios };
+    if (cheios.length === 1) {
+      const fortes = notas.filter(x => x.a !== cheios[0] && x.sc >= .99 && !normTxt(cheios[0].nome).includes(normTxt(x.a.nome)));
+      return fortes.length ? { como: 'varios', nivel: 'manual', varios: [cheios[0], ...fortes.map(x => x.a)] } : { a: cheios[0], como: 'nome', nivel: 'confira' };
+    }
+    if (notas.length) return { como: 'parcial', nivel: 'manual', sug, varios: notas.slice(0, 3).map(x => x.a) };
+    return { como: 'nada', nivel: 'manual' };
   });
-  // página sem ninguém identificado logo depois de uma identificada: pode ser continuação, mas também pode ser
-  // alguém sem cadastro. Por segurança não atribui sozinho: só sugere o anterior para o RH conferir.
-  res.forEach((r, i) => { if (r.como === 'nada' && i && (res[i - 1].a || res[i - 1].sug)) r.sug = res[i - 1].a || res[i - 1].sug; });
-  return res;
 }
 function modalHolerites() {
   const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1);
   const comp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   const m = abrirModal(`<h2>Separar holerites</h2>
-    <p class="muted">Anexe o PDF com os holerites de todos que a contabilidade manda. O sistema lê cada página, encontra o funcionário pelo CPF ou pelo nome e guarda em <b>Documentos</b> de cada um só o holerite dele.</p>
+    <p class="muted">Anexe o PDF com os holerites de todos que a contabilidade manda. O sistema lê cada página, procura o CPF e o nome do funcionário e guarda em <b>Documentos</b> de cada um só o holerite dele, que também aparece no app <b>Meu RH</b>.</p>
     <div class="grid">
       <div class="fld h"><label for="hol_comp">Mês do holerite</label><input id="hol_comp" type="month" value="${comp}"></div>
       <div class="fld"><label for="hol_arq">PDF dos holerites</label><input id="hol_arq" type="file" accept="application/pdf,.pdf"></div>
     </div>
-    <div id="hol_area"></div>
     <div class="modal-acoes"><button class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri" id="hol_ler">Ler o PDF</button></div>`, true);
   m.querySelector('#hol_ler').onclick = async ev => {
     const f = m.querySelector('#hol_arq').files[0], cp = m.querySelector('#hol_comp').value;
@@ -2585,75 +2603,281 @@ function modalHolerites() {
     try {
       const { pdfjs } = await libsPdf();
       const bytes = new Uint8Array(await f.arrayBuffer());
-      const doc = await pdfjs.getDocument({ data: bytes.slice() }).promise, textos = [];
-      for (let i = 1; i <= doc.numPages; i++) {
-        b.innerHTML = `<span class="spin"></span> Lendo página ${i} de ${doc.numPages}…`;
-        const tc = await (await doc.getPage(i)).getTextContent();
-        textos.push(tc.items.map(x => x.str).join(' '));
-      }
+      const textos = await textosDoPdf(pdfjs, bytes, (i, n) => { b.innerHTML = `<span class="spin"></span> Lendo página ${i} de ${n}…`; });
       if (!textos.some(t => t.trim())) throw new Error('Este PDF é uma imagem escaneada, sem texto para ler. Peça para a contabilidade mandar o PDF gerado pelo sistema da folha.');
       const pessoas = R.itens.filter(a => a.status !== 'cancelado' && a.nome);
-      // trecho igual no começo de todas as páginas (cabeçalho da empresa) não ajuda a reconhecer: pula na prévia
       const tt = textos.map(t => t.trim()).filter(Boolean); let pref = 0;
       if (tt.length > 1) { while (pref < tt[0].length && tt.every(t => t[pref] === tt[0][pref])) pref++; pref = Math.max(0, tt[0].lastIndexOf(' ', pref)); }
-      R.hol = { comp: cp, bytes, textos, pessoas, pref, res: identificarPaginas(textos, pessoas), so: false };
+      const res = identificarPaginas(textos, pessoas);
+      R.hol = { comp: cp, bytes, textos, pessoas, pref, res, so: false };
       rHolerites(m);
     } catch (e) { b.disabled = false; b.textContent = 'Ler o PDF'; toast(e.message, 'erro'); }
   };
 }
+async function textosDoPdf(pdfjs, bytes, prog) {
+  const doc = await pdfjs.getDocument({ data: bytes.slice() }).promise, out = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    if (prog) prog(i, doc.numPages);
+    const tc = await (await doc.getPage(i)).getTextContent();
+    out.push(tc.items.map(x => x.str).join(' '));
+  }
+  return out;
+}
+const HOL_COMO = {
+  seguro: ['CPF e nome conferem', 'ok'], nome: ['Só o nome bate (página sem CPF) – confira', 'conf'], cpf_sem_nome: ['O CPF bate, mas o nome não aparece – confira', 'conf'],
+  cpf_extra: ['O CPF bate, mas há outro CPF na página – confira', 'conf'], varios: ['Mais de um funcionário nesta página – escolha', 'man'],
+  varios_cpf: ['CPF de mais de um funcionário nesta página – escolha', 'man'], cpf_desconhecido: ['Tem um CPF que não é de ninguém do cadastro – escolha ou ignore', 'man'],
+  parcial: ['Nome parecido, mas não completo – escolha', 'man'], nada: ['Ninguém do cadastro encontrado – escolha ou ignore', 'man'],
+  vazia: ['Página em branco', 'man'], manual: ['Escolhido por você', 'ok'], ignorar: ['Ignorada', 'ign']
+};
+const holPendente = r => r.a && r.nivel === 'confira' && !r.conferido;
 function rHolerites(m) {
-  const H = R.hol, rev = r => (!r.a && r.como !== 'vazia') || r.como === 'varios';
-  const pessoasOrd = [...H.pessoas].sort(nomeSort);
+  const H = R.hol, pessoasOrd = [...H.pessoas].sort(nomeSort);
   const quem = new Set(H.res.filter(r => r.a).map(r => r.a.codigo));
-  const nRev = H.res.filter(r => rev(r) && r.como !== 'ignorar').length;
-  const ativos = R.itens.filter(a => a.status === 'aprovado'), semHol = ativos.filter(a => !quem.has(a.codigo));
-  const como = { CPF: 'pelo CPF', nome: 'pelo nome', varios: 'mais de um funcionário nesta página – escolha', nada: 'ninguém do cadastro encontrado – escolha ou deixe ignorada', vazia: 'página em branco', ignorar: 'ignorada', manual: 'escolhido por você' };
+  const nConf = H.res.filter(holPendente).length, nMan = H.res.filter(r => !r.a && r.como !== 'ignorar' && r.como !== 'vazia').length;
+  const precisa = r => holPendente(r) || (!r.a && r.como !== 'ignorar' && r.como !== 'vazia');
+  const semHol = R.itens.filter(a => a.status === 'aprovado' && !quem.has(a.codigo));
   m.querySelector('.modal-c').innerHTML = `<h2>Separar holerites – ${esc(H.comp.slice(5) + '/' + H.comp.slice(0, 4))}</h2>
-    <div class="hol-res"><span><b>${H.res.length}</b> página(s)</span><span><b>${quem.size}</b> funcionário(s) identificados</span>
-      ${nRev ? `<span style="color:#7a5a00"><b>${nRev}</b> página(s) para conferir</span>` : '<span style="color:#17663a">Tudo identificado</span>'}</div>
+    <div class="hol-res"><span><b>${H.res.length}</b> página(s)</span><span><b>${quem.size}</b> funcionário(s)</span>
+      <span style="color:#17663a"><b>${H.res.filter(r => r.a && (r.nivel === 'seguro' || r.conferido || r.como === 'manual')).length}</b> página(s) confirmadas</span>
+      ${nConf ? `<span style="color:#7a5a00"><b>${nConf}</b> para conferir</span>` : ''}${nMan ? `<span style="color:#9a2a20"><b>${nMan}</b> sem dono</span>` : ''}</div>
     ${semHol.length ? `<details style="padding:0 0 8px"><summary style="font-weight:600;font-size:14px">${semHol.length} funcionário(s) ativo(s) sem holerite neste PDF</summary><p class="muted" style="font-size:14px">${semHol.map(a => esc(a.nome)).join(', ')}</p></details>` : ''}
-    <label style="display:flex;gap:8px;align-items:center;font-weight:400;font-size:14px;margin-bottom:8px"><input type="checkbox" id="hol_so" style="width:18px;height:18px;min-height:0"${H.so ? ' checked' : ''}> Mostrar só as páginas para conferir</label>
-    <div class="hol-pag">${H.res.map((r, i) => (H.so && !(rev(r) && r.como !== 'ignorar')) ? '' : `<div class="hp${rev(r) && r.como !== 'ignorar' ? ' rev' : ''}">
+    <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-bottom:8px">
+      <label style="display:flex;gap:8px;align-items:center;font-weight:400;font-size:14px"><input type="checkbox" id="hol_so" style="width:18px;height:18px;min-height:0"${H.so ? ' checked' : ''}> Mostrar só o que falta resolver</label>
+      ${nConf ? `<button class="btn sec sm" id="hol_todas">Conferi todas (${nConf})</button>` : ''}</div>
+    <div class="hol-pag">${H.res.map((r, i) => (H.so && !precisa(r)) ? '' : `<div class="hp ${precisa(r) ? 'rev' : ''}">
       <b>Pág. ${i + 1}</b>
-      <div style="min-width:0">${r.a ? `<span style="font-weight:600">${esc(r.a.nome)}</span>` : ''}<small>${esc(como[r.como] || '')}${r.sug && !r.a ? ` · se for continuação, escolha ${esc(r.sug.nome)}` : ''}</small>${!r.a && H.textos[i].trim() ? `<small>${esc(H.textos[i].trim().slice(H.pref).trim().slice(0, 110))}</small>` : ''}</div>
-      <select data-pag="${i}"><option value="">— Ignorar esta página —</option>${[...(r.varios || []), ...(r.sug && !(r.varios || []).includes(r.sug) ? [r.sug] : []), ...pessoasOrd.filter(a => !(r.varios || []).includes(a) && a !== r.sug)].map(a => `<option value="${esc(a.codigo)}"${r.a === a ? ' selected' : ''}>${esc(a.nome)}</option>`).join('')}</select></div>`).join('')}</div>
-    <p class="muted" style="font-size:13px;margin:8px 0 0">O holerite de cada funcionário fica em <b>Documentos</b>, na categoria Holerite. Se ele já tiver o holerite deste mês, o anterior é substituído.</p>
-    <div class="modal-acoes"><button class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri" id="hol_ok"${quem.size ? '' : ' disabled'}>Salvar holerites de ${quem.size} funcionário(s)</button></div>`;
+      <div style="min-width:0">${r.a ? `<span style="font-weight:600">${esc(r.a.nome)}</span>${r.a.cpf ? ` <small style="display:inline">CPF ${esc(r.a.cpf)}</small>` : ''}` : ''}
+        <small>${esc((HOL_COMO[r.como] || [''])[0])}${r.sug && !r.a ? ` · parece ser ${esc(r.sug.nome)}` : ''}</small>
+        ${!r.a && H.textos[i].trim() ? `<small>${esc(H.textos[i].trim().slice(H.pref).trim().slice(0, 110))}</small>` : ''}
+        ${r.a && r.nivel === 'confira' ? `<label style="display:flex;gap:6px;align-items:center;font-size:13px;font-weight:600;margin-top:4px"><input type="checkbox" data-conf="${i}" style="width:18px;height:18px;min-height:0"${r.conferido ? ' checked' : ''}> Conferi: esta página é de ${esc(r.a.nome)}</label>` : ''}</div>
+      <select data-pag="${i}"><option value="">— Ignorar esta página —</option>${[...new Set([...(r.varios || []), ...(r.sug ? [r.sug] : []), ...pessoasOrd])].map(a => `<option value="${esc(a.codigo)}"${r.a === a ? ' selected' : ''}>${esc(a.nome)}</option>`).join('')}</select></div>`).join('')}</div>
+    <p class="muted" style="font-size:13px;margin:8px 0 0">Antes de salvar, o sistema confere de novo cada arquivo separado: se alguma página não bater com o funcionário, nada é salvo.</p>
+    <div class="modal-acoes"><button class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri" id="hol_ok"${quem.size && !nConf ? '' : ' disabled'}>${nConf ? `Confira ${nConf} página(s) para salvar` : `Salvar holerites de ${quem.size} funcionário(s)`}</button></div>`;
   m.querySelector('#hol_so').onchange = ev => { H.so = ev.target.checked; rHolerites(m); };
+  const bt = m.querySelector('#hol_todas');
+  if (bt) bt.onclick = () => { if (confirm(`Você conferiu o nome de cada uma das ${nConf} página(s) marcadas em amarelo?`)) { H.res.forEach(r => { if (holPendente(r)) r.conferido = true; }); rHolerites(m); } };
+  m.querySelectorAll('input[data-conf]').forEach(c => c.onchange = () => { H.res[+c.dataset.conf].conferido = c.checked; rHolerites(m); });
   m.querySelectorAll('select[data-pag]').forEach(s => s.onchange = () => {
     const r = H.res[+s.dataset.pag];
-    if (!s.value) Object.assign(r, { a: null, como: 'ignorar' });
-    else Object.assign(r, { a: H.pessoas.find(a => a.codigo === s.value), como: 'manual' });
+    if (!s.value) Object.assign(r, { a: null, como: 'ignorar', nivel: 'manual', conferido: false });
+    else Object.assign(r, { a: H.pessoas.find(a => a.codigo === s.value), como: 'manual', nivel: 'manual', conferido: true });
     rHolerites(m);
   });
   m.querySelector('#hol_ok').onclick = ev => salvarHolerites(m, ev.currentTarget);
 }
 async function salvarHolerites(m, b) {
-  const H = R.hol, rev = H.res.filter(r => r.como === 'varios' || r.como === 'nada').length;
-  if (rev && !confirm(`${rev} página(s) não foram atribuídas a ninguém e serão ignoradas. Salvar assim mesmo?`)) return;
+  const H = R.hol;
+  if (H.res.some(holPendente)) { toast('Confira as páginas em amarelo antes de salvar', 'erro'); return; }
+  const sem = H.res.filter(r => !r.a && r.como !== 'vazia').length;
+  if (sem && !confirm(`${sem} página(s) ficaram sem dono e não vão para ninguém. Salvar assim mesmo?`)) return;
   b.disabled = true;
   try {
-    const { PDFLib } = await libsPdf();
+    const { PDFLib, pdfjs } = await libsPdf();
     const src = await PDFLib.PDFDocument.load(H.bytes);
     const grupos = new Map();
     H.res.forEach((r, i) => { if (r.a) { if (!grupos.has(r.a.codigo)) grupos.set(r.a.codigo, { a: r.a, pags: [] }); grupos.get(r.a.codigo).pags.push(i); } });
-    const lista = [...grupos.values()], salvos = [];
+    const lista = [...grupos.values()];
+    // 1) separa todos e confere cada arquivo ANTES de salvar qualquer um
+    for (const [k, g] of lista.entries()) {
+      b.innerHTML = `<span class="spin"></span> Separando e conferindo ${k + 1} de ${lista.length}…`;
+      const novo = await PDFLib.PDFDocument.create();
+      (await novo.copyPages(src, g.pags)).forEach(p => novo.addPage(p));
+      novo.setTitle(`Holerite ${H.comp.slice(5)}/${H.comp.slice(0, 4)} – ${g.a.nome}`);
+      g.bytes = await novo.save();
+      const prob = await conferirArquivo(pdfjs, g, H);
+      if (prob) throw new Error(`Parei sem salvar nada: ${prob} Confira o PDF ou fale com o suporte.`);
+    }
+    // 2) salva em lotes
+    const salvos = [];
     for (let i = 0; i < lista.length; i += 5) {
       const lote = [];
-      for (const g of lista.slice(i, i + 5)) {
-        b.innerHTML = `<span class="spin"></span> Separando ${Math.min(salvos.length + lote.length + 1, lista.length)} de ${lista.length}…`;
-        const novo = await PDFLib.PDFDocument.create();
-        (await novo.copyPages(src, g.pags)).forEach(p => novo.addPage(p));
-        novo.setTitle(`Holerite ${H.comp.slice(5)}/${H.comp.slice(0, 4)} – ${g.a.nome}`);
-        lote.push({ codigo: g.a.codigo, base64: await paraB64(new Blob([await novo.save()], { type: 'application/pdf' })) });
-      }
+      for (const g of lista.slice(i, i + 5)) lote.push({ codigo: g.a.codigo, base64: await paraB64(new Blob([g.bytes], { type: 'application/pdf' })) });
       b.innerHTML = `<span class="spin"></span> Salvando ${salvos.length + lote.length} de ${lista.length}…`;
       const r = await api('salvarHolerites', { senha: R.senha, competencia: H.comp, itens: lote });
       salvos.push(...r.salvos);
     }
-    fecharModal(); R.hol = null;
-    toast(`Holerites salvos para ${salvos.length} funcionário(s)`);
+    const comp = H.comp; R.hol = null;
+    resultadoHolerites(m, comp, lista.map(g => g.a), salvos);
   } catch (e) { b.disabled = false; b.textContent = 'Tentar de novo'; erroRH(e); }
+}
+// lê de novo o arquivo separado: cada página tem que ser igual à original e não pode ser de outra pessoa
+async function conferirArquivo(pdfjs, g, H) {
+  const txt = await textosDoPdf(pdfjs, g.bytes);
+  if (txt.length !== g.pags.length) return `o arquivo de ${g.a.nome} ficou com ${txt.length} página(s) em vez de ${g.pags.length}.`;
+  const outrosCpf = new Set(H.pessoas.filter(p => p !== g.a).map(p => dig(p.cpf)).filter(c => c.length === 11));
+  const nomesOutros = H.pessoas.filter(p => p !== g.a && normTxt(p.nome).split(' ').length >= 2 && !normTxt(g.a.nome).includes(normTxt(p.nome))).map(p => ' ' + normTxt(p.nome) + ' ');
+  for (let j = 0; j < txt.length; j++) {
+    if (normTxt(txt[j]) !== normTxt(H.textos[g.pags[j]])) return `a página ${g.pags[j] + 1} saiu diferente no arquivo de ${g.a.nome}.`;
+    const N = ' ' + normTxt(txt[j]) + ' ';
+    if (cpfsDoTexto(txt[j]).some(c => outrosCpf.has(c))) return `o arquivo de ${g.a.nome} tem o CPF de outro funcionário (página ${g.pags[j] + 1}).`;
+    const outro = nomesOutros.find(n => N.includes(n));
+    if (outro) return `o arquivo de ${g.a.nome} tem o nome de outro funcionário (${outro.trim()}, página ${g.pags[j] + 1}).`;
+  }
+  return '';
+}
+function resultadoHolerites(m, comp, pessoas, salvos) {
+  const mes = comp.slice(5) + '/' + comp.slice(0, 4);
+  m.querySelector('.modal-c').innerHTML = `<h2>Holerites de ${esc(mes)} salvos</h2>
+    <div class="aviso" style="background:#E7F4EC;border-color:#BFE3CC;color:#17663a;margin-bottom:10px">${salvos.length} funcionário(s) receberam o holerite. Cada arquivo foi conferido de novo antes de salvar.</div>
+    <p class="muted" style="font-size:14px">${pessoas.map(a => esc(a.nome)).join(', ')}</p>
+    <p class="muted" style="font-size:14px">Eles já podem ver no app <b>Meu RH</b>. Se notar algum erro, desfaça agora: os holerites de ${esc(mes)} desses funcionários são apagados e você pode separar de novo.</p>
+    <div class="modal-acoes"><button class="btn sec" id="hol_desf">Desfazer este envio</button><button class="btn pri" data-act="fechar">Concluir</button></div>`;
+  m.querySelector('#hol_desf').onclick = async ev => {
+    if (!confirm(`Apagar os holerites de ${mes} de ${salvos.length} funcionário(s)?`)) return;
+    ev.currentTarget.disabled = true;
+    try { const r = await api('removerHolerites', { senha: R.senha, competencia: comp, codigos: salvos }); fecharModal(); toast(`Envio desfeito: ${r.removidos} holerite(s) apagados`); }
+    catch (e) { ev.currentTarget.disabled = false; erroRH(e); }
+  };
+}
+/* ── App Meu RH (funcionário vê só os próprios holerites) ── */
+const linkMeuRH = () => location.href.split(/[?#]/)[0] + '?meurh';
+const MEU = { k: 'meurh_t' };
+const meuToken = v => { try { if (v === undefined) return localStorage.getItem(MEU.k) || ''; if (v) localStorage.setItem(MEU.k, v); else localStorage.removeItem(MEU.k); } catch (e) {} return v || ''; };
+const meuTopo = () => topo('Meu RH');
+function meuErro(e) {
+  if (/sessão expirou|bloqueado/i.test(e.message)) { meuToken(null); return telaMeuLogin(e.message); }
+  toast(e.message, 'erro');
+}
+function telaMeuLogin(msg, cpf = '') {
+  app.innerHTML = meuTopo() + `<main class="wrap estreito"><form class="card" id="fmeu" style="margin-top:24px" novalidate>
+    <h1 style="font-size:clamp(34px,9vw,44px);margin-bottom:6px">Meus holerites</h1>
+    <p class="muted">Entre com seu CPF e a senha que você criou no primeiro acesso.</p>
+    <div class="fld" style="margin-top:12px"><label for="m_cpf">CPF</label><input id="m_cpf" inputmode="numeric" autocomplete="username" maxlength="14" placeholder="000.000.000-00" value="${esc(cpf)}"></div>
+    <div class="fld" style="margin-top:12px"><label for="m_senha">Senha</label><input id="m_senha" type="password" autocomplete="current-password" maxlength="60"></div>
+    ${msg ? `<div class="aviso erro" style="margin-top:12px">${esc(msg)}</div>` : ''}
+    <button class="btn pri big" style="margin-top:16px">Entrar</button>
+    <button type="button" class="btn sec big" id="m_prim" style="margin-top:8px">Primeiro acesso ou esqueci a senha</button>
+  </form>${contatoRH()}</main>`;
+  $('#m_prim').onclick = () => telaMeuAtivar('', $('#m_cpf').value);
+  ($('#m_cpf').value ? $('#m_senha') : $('#m_cpf')).focus();
+}
+function telaMeuAtivar(msg, cpf = '') {
+  app.innerHTML = meuTopo() + `<main class="wrap estreito"><form class="card" id="fmeuat" style="margin-top:24px" novalidate>
+    <h1 style="font-size:clamp(30px,8vw,40px);margin-bottom:6px">Primeiro acesso</h1>
+    <p class="muted">Use o <b>código de 6 números</b> que o RH mandou no seu WhatsApp e crie a sua senha. Esqueceu a senha? Peça um código novo ao RH e faça este passo de novo.</p>
+    <div class="fld" style="margin-top:12px"><label for="a_cpf">CPF</label><input id="a_cpf" inputmode="numeric" autocomplete="username" maxlength="14" placeholder="000.000.000-00" value="${esc(cpf)}"></div>
+    <div class="fld" style="margin-top:12px"><label for="a_cod">Código de acesso</label><input id="a_cod" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 números"></div>
+    <div class="fld" style="margin-top:12px"><label for="a_s1">Crie uma senha</label><input id="a_s1" type="password" autocomplete="new-password" maxlength="60"><small>Pelo menos 6 caracteres. Não use sua data de nascimento.</small></div>
+    <div class="fld" style="margin-top:12px"><label for="a_s2">Repita a senha</label><input id="a_s2" type="password" autocomplete="new-password" maxlength="60"></div>
+    ${msg ? `<div class="aviso erro" style="margin-top:12px">${esc(msg)}</div>` : ''}
+    <button class="btn pri big" style="margin-top:16px">Criar senha e entrar</button>
+    <button type="button" class="btn sec big" id="a_volta" style="margin-top:8px">Já tenho senha</button>
+  </form>${contatoRH()}</main>`;
+  $('#a_volta').onclick = () => telaMeuLogin('', $('#a_cpf').value);
+  ($('#a_cpf').value ? $('#a_cod') : $('#a_cpf')).focus();
+}
+async function meuEntrar(e) {
+  e.preventDefault();
+  const cpf = $('#m_cpf').value, senha = $('#m_senha').value, b = e.target.querySelector('button.pri');
+  if (dig(cpf).length !== 11) return toast('Informe seu CPF', 'erro');
+  if (!senha) return toast('Informe sua senha', 'erro');
+  b.disabled = true; b.textContent = 'Entrando…';
+  try { const r = await api('appEntrar', { cpf, senha }); meuToken(r.token); carregarMeu(); }
+  catch (x) { telaMeuLogin(x.message, cpf); }
+}
+async function meuAtivar(e) {
+  e.preventDefault();
+  const cpf = $('#a_cpf').value, codigo = dig($('#a_cod').value), s1 = $('#a_s1').value, s2 = $('#a_s2').value, b = e.target.querySelector('button.pri');
+  const erro = dig(cpf).length !== 11 ? 'Informe seu CPF.' : codigo.length !== 6 ? 'O código tem 6 números.' : s1.length < 6 ? 'A senha precisa ter pelo menos 6 caracteres.' : s1 !== s2 ? 'As duas senhas não são iguais.' : '';
+  if (erro) return toast(erro, 'erro');
+  b.disabled = true; b.textContent = 'Criando…';
+  try { const r = await api('appAtivar', { cpf, codigo, senha: s1 }); meuToken(r.token); toast('Senha criada'); carregarMeu(); }
+  catch (x) { telaMeuAtivar(x.message, cpf); }
+}
+async function carregarMeu() {
+  app.innerHTML = meuTopo() + '<main class="wrap estreito"><div class="card" style="margin-top:24px"><span class="spin"></span> Carregando…</div></main>';
+  try { const r = await api('appHolerites', { token: meuToken() }); MEU.nome = r.nome; MEU.hs = r.holerites; rMeu(); }
+  catch (e) { meuErro(e); }
+}
+function rMeu() {
+  const hs = holeritesDe(MEU.hs.map(h => ({ ...h, file_id: h.id, origem: 'rh', categoria: 'Holerite' })));
+  const anos = {}; hs.forEach(h => { const y = h.comp.slice(0, 4) || '—'; (anos[y] = anos[y] || []).push(h); });
+  app.innerHTML = meuTopo() + `<main class="wrap estreito" style="padding-top:24px">
+    <h1 style="font-size:clamp(34px,9vw,44px)">Olá, ${esc(MEU.nome || '')}</h1>
+    <p class="muted" style="margin:4px 0 16px">Aqui ficam os seus holerites. Só você vê.</p>
+    ${hs.length ? Object.keys(anos).sort().reverse().map(y => `<section class="card"><h3 style="margin-bottom:6px">${esc(y)}</h3>
+      <ul class="lista-ev">${anos[y].map(h => `<li><span class="dt" style="min-width:96px">${esc(h.comp ? MESES[+h.comp.slice(5) - 1] : 'Holerite')}</span>
+        <div>${h.f.visto ? '' : '<span class="chip s-prog">Novo</span>'}</div>
+        <button class="btn sec sm" data-meu="${esc(h.f.id)}">${ic('file')}Abrir</button></li>`).join('')}</ul></section>`).join('')
+      : '<section class="card"><h3>Nenhum holerite ainda</h3><p class="muted">Quando o RH lançar o holerite do mês, ele aparece aqui.</p></section>'}
+    <section class="card"><p class="muted" style="margin:0 0 10px">Dica: deixe o Meu RH na tela do celular. No iPhone toque em <b>Compartilhar → Adicionar à Tela de Início</b>; no Android, no menu <b>⋮ → Adicionar à tela inicial</b>.</p>
+      <div class="det-acoes"><button class="btn sec" id="meu_senha">Trocar senha</button><button class="btn sec" id="meu_sair">Sair</button></div></section>
+    ${contatoRH()}</main>`;
+  $('#meu_sair').onclick = () => { meuToken(null); telaMeuLogin(); };
+  $('#meu_senha').onclick = meuTrocarSenha;
+  app.querySelectorAll('[data-meu]').forEach(b => b.onclick = () => meuAbrir(b));
+}
+async function meuAbrir(b) {
+  const txt = b.innerHTML; b.disabled = true; b.innerHTML = '<span class="spin"></span>';
+  try {
+    const r = await api('appBaixar', { token: meuToken(), id: b.dataset.meu });
+    const url = URL.createObjectURL(new Blob([Uint8Array.from(atob(r.base64), c => c.charCodeAt(0))], { type: 'application/pdf' }));
+    const a = document.createElement('a'); a.href = url; a.download = r.nome; a.target = '_blank'; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+    const h = MEU.hs.find(x => x.id === b.dataset.meu); if (h) h.visto = true;
+    const li = b.closest('li'); const chip = li && li.querySelector('.chip'); if (chip) chip.remove();
+    b.outerHTML = `<a class="btn sec sm" href="${url}" download="${esc(r.nome)}" target="_blank" rel="noopener">${ic('file')}Abrir de novo</a>`;
+  } catch (e) { b.disabled = false; b.innerHTML = txt; meuErro(e); }
+}
+function meuTrocarSenha() {
+  const m = abrirModal(`<h2>Trocar senha</h2>
+    <div class="fld"><label for="ts_a">Senha atual</label><input id="ts_a" type="password" autocomplete="current-password"></div>
+    <div class="fld" style="margin-top:10px"><label for="ts_n">Nova senha</label><input id="ts_n" type="password" autocomplete="new-password"><small>Pelo menos 6 caracteres.</small></div>
+    <div class="fld" style="margin-top:10px"><label for="ts_n2">Repita a nova senha</label><input id="ts_n2" type="password" autocomplete="new-password"></div>
+    <div class="modal-acoes"><button class="btn sec" id="ts_c">Cancelar</button><button class="btn pri" id="ts_ok">Trocar senha</button></div>`);
+  m.querySelector('#ts_c').onclick = fecharModal;
+  m.querySelector('#ts_ok').onclick = async ev => {
+    const a = $('#ts_a').value, n = $('#ts_n').value;
+    if (n.length < 6) return toast('A nova senha precisa ter pelo menos 6 caracteres', 'erro');
+    if (n !== $('#ts_n2').value) return toast('As duas senhas novas não são iguais', 'erro');
+    ev.currentTarget.disabled = true;
+    try { const r = await api('appSenha', { token: meuToken(), atual: a, nova: n }); meuToken(r.token); fecharModal(); toast('Senha trocada'); }
+    catch (e) { ev.currentTarget.disabled = false; meuErro(e); }
+  };
+}
+
+/* ── Painel: liberar o app para o funcionário ── */
+const APP_ST = { '': ['Não liberado', 's-desc'], codigo: ['Código enviado', 's-prog'], ativo: ['Usando o app', 's-ok'], bloqueado: ['Bloqueado', 's-cor'] };
+const chipApp = st => `<span class="chip ${(APP_ST[st] || APP_ST[''])[1]}">${(APP_ST[st] || APP_ST[''])[0]}</span>`;
+const msgApp = (a, cod, val) => `Olá, ${primeiro(a.nome)}! Agora seus holerites ficam no app *Meu RH* do Posto Trevo.\n\n1. Abra: ${linkMeuRH()}\n2. Toque em *Primeiro acesso*\n3. Informe seu CPF e o código: *${cod}*\n4. Crie sua senha.\n\nO código vale até ${val}. Não passe este código para ninguém.\n\nRH – Posto Trevo`;
+async function gerarCodigoApp(a, alvo) {
+  if (!dig(a.cpf) || dig(a.cpf).length !== 11) { toast('Cadastre o CPF de ' + primeiro(a.nome) + ' antes de liberar o app', 'erro'); return; }
+  if (a.app_status === 'ativo' && !confirm(`${primeiro(a.nome)} já usa o app. Gerar um código novo (para quem esqueceu a senha)? A senha atual deixa de valer.`)) return;
+  alvo.disabled = true; alvo.innerHTML = '<span class="spin"></span>';
+  try {
+    const r = await api('appLiberar', { senha: R.senha, codigo: a.codigo });
+    a.app_status = 'codigo';
+    const cel = dig(a.celular), msg = msgApp(a, r.codigo, r.validade);
+    alvo.outerHTML = `<div class="app-cod"><span>Código <b>${esc(r.codigo)}</b> · vale até ${esc(r.validade)}</span>
+      ${[10, 11].includes(cel.length) ? `<a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/55${cel}?text=${encodeURIComponent(msg)}">Enviar no WhatsApp</a>` : `<button class="btn sec sm" data-act="copiarmsg" data-v="${esc(msg)}">Copiar mensagem</button>`}</div>`;
+  } catch (e) { alvo.disabled = false; alvo.textContent = 'Gerar código'; erroRH(e); }
+}
+function modalAppFunc() {
+  const a = pessoa(), st = a.app_status || '';
+  const m = abrirModal(`<h2>App Meu RH</h2>
+    <p class="muted">${esc(a.nome)} vê no celular só os próprios holerites. O acesso é liberado com um código que você manda pelo WhatsApp dele; no primeiro acesso ele cria a senha.</p>
+    <div class="kv" style="margin:8px 0"><div><span>Situação</span><b>${chipApp(st)}</b></div>${a.app_ativo_em ? `<div><span>Senha criada em</span><b>${esc(a.app_ativo_em)}</b></div>` : ''}${a.app_ultimo ? `<div><span>Último acesso</span><b>${esc(a.app_ultimo)}</b></div>` : ''}</div>
+    <div class="det-acoes"><button class="btn pri" id="app_gerar">${st === 'ativo' ? 'Gerar código novo (esqueceu a senha)' : 'Gerar código de acesso'}</button>
+      ${st === 'bloqueado' ? '' : st ? '<button class="btn perigo" id="app_bloq">Bloquear acesso</button>' : ''}</div>
+    <div class="modal-acoes"><button class="btn sec" data-act="fechar">Fechar</button></div>`);
+  m.querySelector('#app_gerar').onclick = ev => gerarCodigoApp({ codigo: a.codigo, nome: a.nome, cpf: a.cpf, celular: a.celular, app_status: st }, ev.currentTarget);
+  const bq = m.querySelector('#app_bloq');
+  if (bq) bq.onclick = async () => {
+    if (!confirm(`Bloquear o acesso de ${primeiro(a.nome)} ao app? Ele sai na hora. Para voltar, gere um código novo.`)) return;
+    try { await api('appBloquear', { senha: R.senha, codigo: a.codigo }); fecharModal(); toast('Acesso bloqueado'); recarregarDet(); } catch (e) { erroRH(e); }
+  };
+}
+function modalAppTodos() {
+  const l = R.itens.filter(a => a.status === 'aprovado').sort(nomeSort);
+  const n = st => l.filter(a => (a.app_status || '') === st).length;
+  const m = abrirModal(`<h2>App Meu RH</h2>
+    <p class="muted">Cada funcionário vê só os próprios holerites. Gere o código de cada um e envie no WhatsApp dele (um clique por pessoa). Link do app: <b>${esc(linkMeuRH())}</b></p>
+    <div class="hol-res"><span><b>${n('ativo')}</b> usando</span><span><b>${n('codigo')}</b> com código enviado</span><span><b>${n('')}</b> não liberados</span></div>
+    <div class="hol-pag">${l.map(a => `<div class="hp app"><div style="min-width:0"><span style="font-weight:600">${esc(a.nome)}</span><small>${chipApp(a.app_status || '')}${dig(a.cpf).length === 11 ? '' : ' · sem CPF no cadastro'}</small></div>
+      <div>${a.app_status === 'ativo' ? '<small class="muted">Já usa o app</small>' : `<button class="btn sec sm" data-app="${esc(a.codigo)}">${a.app_status === 'codigo' ? 'Gerar código novo' : 'Gerar código'}</button>`}</div></div>`).join('')}</div>
+    <div class="modal-acoes"><button class="btn sec" data-act="copiar" data-v="${esc(linkMeuRH())}">Copiar link do app</button><button class="btn pri" data-act="fechar">Fechar</button></div>`, true);
+  m.querySelectorAll('[data-app]').forEach(b => b.onclick = () => gerarCodigoApp(R.itens.find(a => a.codigo === b.dataset.app), b));
 }
 function rotuloDoc(f) { return f.origem === 'rh' ? (f.categoria || 'Documento') : (DOC_L[f.tipo] || f.tipo); }
 async function modalEnviarFicha(sel) {
@@ -2915,6 +3139,8 @@ const ACOES_RH = {
     } catch (e) { b.disabled = false; erroRH(e); }
   },
   holerites: () => modalHolerites(),
+  apptodos: () => modalAppTodos(),
+  appfunc: () => modalAppFunc(),
   cfiltro(b) { R.cf = b.dataset.f; rCand(); },
   cand(b) { const c = R.cands.find(x => x.codigo === b.dataset.c); if (c) modalCand(c); },
   divulgar: () => modalDivulgar(),
@@ -3099,6 +3325,7 @@ const ACOES_RH = {
 const CODIGO = new URLSearchParams(location.search).get('c');
 const GRUPO = !CODIGO && new URLSearchParams(location.search).has('atualizar');
 const TRABALHE = !CODIGO && !GRUPO && /^\?(trabalhe|vagas)\b/i.test(location.search);
+const MEURH = !CODIGO && !GRUPO && /^\?(meurh|app|holerites?)\b/i.test(location.search);
 const MODO_COLAB = !!(CODIGO || GRUPO);
 const ACOES = MODO_COLAB ? ACOES_COLAB : ACOES_RH;
 
@@ -3112,6 +3339,8 @@ document.addEventListener('input', e => {
   if (MODO_COLAB && el.dataset.k) aoDigitarColab(el);
   if (el.id === 'g_cpf') el.value = mascara('000.000.000-00', el.value);
   if (el.id === 'n_cel' || el.id === 't_cel') el.value = mascara('tel', el.value);
+  if (el.id === 'm_cpf' || el.id === 'a_cpf') el.value = mascara('000.000.000-00', el.value);
+  if (el.id === 'a_cod') el.value = dig(el.value).slice(0, 6);
   if (!MODO_COLAB && R.form && el.dataset.k) { aoDigitar(el, R.form.d, R.form.mapa); R.form.aoMudar && R.form.aoMudar(el.dataset.k, R.form.d); }
   if (el.id === 'busca') { R.busca = el.value; $('#itens').innerHTML = itensHTML(); }
   if (el.id === 'cbusca') { R.cbusca = el.value; $('#citens').innerHTML = candItens(); }
@@ -3145,6 +3374,8 @@ document.addEventListener('change', e => {
 document.addEventListener('submit', e => {
   if (e.target.id === 'fgrupo') return entrarGrupo(e);
   if (e.target.id === 'ftrab') return enviarTrabalhe(e);
+  if (e.target.id === 'fmeu') return meuEntrar(e);
+  if (e.target.id === 'fmeuat') return meuAtivar(e);
   if (e.target.id !== 'flogin') return;
   entrarRH(e);
 });
@@ -3157,6 +3388,7 @@ else if (GRUPO) {
   if (c) iniciarColab(c); else telaGrupo();
 }
 else if (TRABALHE) { document.title = 'Trabalhe Conosco · Posto Trevo'; telaTrabalhe(); }
+else if (MEURH) { document.title = 'Meu RH · Posto Trevo'; meuToken() ? carregarMeu() : telaMeuLogin(); }
 else iniciarRH();
 </script>
 </body>
