@@ -641,7 +641,8 @@ const carregando = (msg, sub) => { app.innerHTML = topo(sub || 'Admissão') + `<
 const chip = s => `<span class="chip ${(STATUS[s] || {}).c || ''}">${esc((STATUS[s] || { l: s }).l)}</span>`;
 const linkDe = c => location.href.split(/[?#]/)[0] + '?c=' + c;
 const linkGrupo = () => location.href.split(/[?#]/)[0] + '?atualizar';
-const linkTrabalhe = () => location.href.split(/[?#]/)[0] + '?trabalhe';
+const pastaSite = () => location.href.split(/[?#]/)[0].replace(/[^/]*$/, '');
+const linkTrabalhe = () => pastaSite() + 'trabalhe';
 const TRAVA = new Set();
 const modoAt = () => !!(C.adm && C.adm.modo === 'atualizacao');
 const tituloColab = () => modoAt() ? 'Atualização cadastral' : 'Ficha de admissão';
@@ -2731,7 +2732,7 @@ function resultadoHolerites(m, comp, pessoas, salvos) {
   };
 }
 /* ── App Meu RH (funcionário vê só os próprios holerites) ── */
-const linkMeuRH = () => location.href.split(/[?#]/)[0] + '?meurh';
+const linkMeuRH = () => pastaSite() + 'meurh';
 const MEU = { k: 'meurh_t' };
 const meuToken = v => { try { if (v === undefined) return localStorage.getItem(MEU.k) || ''; if (v) localStorage.setItem(MEU.k, v); else localStorage.removeItem(MEU.k); } catch (e) {} return v || ''; };
 const meuTopo = () => topo('Meu RH');
