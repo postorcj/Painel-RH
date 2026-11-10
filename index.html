@@ -1820,6 +1820,7 @@ function rFunc() {
   if (st === 'aprovado' && CONFIG.GRUPO_WHATS) ac.push(`<button class="btn sec" data-act="convite">${ic('send')}Convidar para o grupo</button>`);
   if (st === 'aprovado' && !a.atualizacao) ac.push(`<button class="btn sec" data-act="atabrir">${ic('send')}Pedir atualização</button>`);
   ac.push(`<button class="btn sec" data-act="appfunc">${ic('send')}App Meu RH</button>`);
+  if (st === 'aprovado' || st === 'desligado') ac.push(`<button class="btn sec" data-act="praescala">${ic('send')}${st === 'desligado' ? 'Avisar a escala do desligamento' : 'Enviar para a escala'}</button>`);
   ac.push(st === 'aprovado' ? `<button class="btn perigo" data-act="desligar">${ic('exit')}Desligar</button>` : `<button class="btn sec" data-act="reintegrar">${ic('userplus')}Reintegrar</button>`);
   let corpo = '';
   if (R.sub === 'docs') corpo = subDocs();
@@ -2291,8 +2292,18 @@ const CFG_DEFS = [
   { k: 'ap_lider_tel', l: 'Telefone do setor / líder', w: 'h', mask: 'tel', ph: '(64) 00000-0000', max: 30 },
   { k: 'ap_salario', l: 'Salário do aprendiz (R$)', w: 'h', ph: 'Ex.: 1.731,21', max: 20 },
   { k: 'ap_horario', l: 'Horário de entrada e saída', w: 'h', ph: 'Ex.: 07:00 às 13:00', max: 60 },
-  { k: 'ap_dia_curso', l: 'Dia favorável para o curso', w: 'h', ph: 'Ex.: Quarta-feira', max: 60, hint: 'Esses dados já vêm preenchidos para cada aprendiz e podem ser trocados na ficha dele.' }
+  { k: 'ap_dia_curso', l: 'Dia favorável para o curso', w: 'h', ph: 'Ex.: Quarta-feira', max: 60, hint: 'Esses dados já vêm preenchidos para cada aprendiz e podem ser trocados na ficha dele.' },
+  { sub: 'Integração com a escala (Escala Posto Trevo)' },
+  { k: 'escala_url', l: 'Endereço da escala', ph: 'https://script.google.com/macros/s/…/exec', max: 200, hint: 'No app da escala: Nuvem → Integração com o Painel RH → Copiar endereço.' },
+  { k: 'escala_chave', l: 'Chave da escala', ph: 'Cole a chave gerada no app da escala', max: 200, hint: 'Quem for aprovado, cadastrado, reintegrado ou desligado aqui vai para "Novos do RH" no app da escala, com nome e cargo.' }
 ];
+// mostra o resultado do aviso para a escala depois de aprovar, cadastrar, desligar ou reintegrar
+function avisoEscala(r) {
+  const e = r && r.escala; if (!e || e.naoConfigurado) return '';
+  if (e.enviado) return ' Enviado para a escala.';
+  if (e.erro) setTimeout(() => toast('Não foi para a escala: ' + e.erro + ' Use "Enviar para a escala" na ficha.', 'erro'), 600);
+  return '';
+}
 const extrasCfg = cfg => { try { const l = JSON.parse(cfg.extras || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
 const novoId = () => Math.random().toString(36).slice(2, 10);
 const linhaExtra = (x = {}) => `<div class="cx-l" data-id="${esc(x.id || novoId())}">
@@ -2346,7 +2357,7 @@ function rConfig() {
     <section class="card"><h3>Outros e-mails cadastrados</h3><p class="muted">CIPA, sindicato, médico do trabalho… Eles aparecem como opção no <b>Enviar por e-mail</b>. Para mais de um e-mail no mesmo contato, separe por vírgula.</p>
       <div id="cx_lista">${extrasCfg(R.cfg).map(linhaExtra).join('')}</div>
       <button type="button" class="btn sec" data-act="cfgadd" style="margin-top:8px">+ Adicionar e-mail</button></section>
-    <div class="det-acoes"><button class="btn pri" data-act="salvarcfg">Salvar</button></div>
+    <div class="det-acoes"><button class="btn pri" data-act="salvarcfg">Salvar</button><button class="btn sec" data-act="testarescala">Testar conexão com a escala</button></div>
     ${cardUsuarios()}${cardSeguranca()}${cardMinhaSenha()}
     <section class="card"><h3>Como funciona</h3><p class="muted">Na ficha do funcionário, clique em <b>Enviar por e-mail</b>, escolha para quem (contabilidade, IAM, os outros e-mails cadastrados ou um e-mail qualquer) e quais documentos vão junto. A ficha de registro vai em PDF, e os documentos vão anexados. O envio fica registrado no histórico do funcionário.</p></section>
   </div>`);
@@ -2375,7 +2386,7 @@ function fichaHtmlPdf(p) {
     <table class="ass"><tr><td>${esc(p.nome)}</td><td class="sp"></td><td>Responsável RH</td></tr></table>
   </body></html>`;
 }
-const ACAO_L = { holerites: 'Separou holerites', holerite: 'Holerite salvo', candidato: 'Nova candidatura', candidato_contratado: 'Contratou candidato', candidato_removido: 'Excluiu candidato', link_email: 'Enviou o link da ficha por e-mail', entrar: 'Entrou no painel', senha: 'Trocou a senha', usuario: 'Usuários', backup: 'Backup', emails: 'Configurações', envio_email: 'Enviou e-mail',
+const ACAO_L = { escala_admitido: 'Enviou para a escala', escala_desligado: 'Avisou a escala do desligamento', escala_erro: 'Falha ao enviar para a escala', app_ativado: 'Ativou o app Meu RH', app_codigo: 'Gerou código do app', app_holerite: 'Abriu holerite no app', app_bloqueado: 'Bloqueou o app', holerites_desfeitos: 'Desfez envio de holerites', holerites: 'Separou holerites', holerite: 'Holerite salvo', candidato: 'Nova candidatura', candidato_contratado: 'Contratou candidato', candidato_removido: 'Excluiu candidato', link_email: 'Enviou o link da ficha por e-mail', entrar: 'Entrou no painel', senha: 'Trocou a senha', usuario: 'Usuários', backup: 'Backup', emails: 'Configurações', envio_email: 'Enviou e-mail',
   criado: 'Criou admissão', enviado: 'Colaborador enviou a ficha', cadastro_rh: 'Cadastrou funcionário', ficha_editada_rh: 'Editou a ficha', contrato: 'Alterou o contrato',
   documento_removido: 'Removeu documento', desligado: 'Desligou', reintegrado: 'Reintegrou', comunicado: 'Comunicado', importar: 'Importou lista', ferias_antigas: 'Lançou férias antigas',
   identificou: 'Colaborador entrou pelo link do grupo', atualizacao_enviada: 'Colaborador atualizou a ficha', reenvio_pedido: 'Pediu reenvio de documento', reenvio_cancelado: 'Cancelou reenvio',
@@ -3001,9 +3012,9 @@ const ACOES_RH = {
       extra: fal.length ? `<div class="aviso">Faltam documentos obrigatórios: ${esc(fal.map(x => x.l).join(', '))}.</div>` : '',
       d: { cargo: a.cargo, data_admissao: a.data_prevista || hojeISO(), exp_tipo: '45 + 45 dias' }, ok: 'Aprovar',
       async onOk(dd) {
-        await api('definirStatus', { senha: R.senha, codigo: a.codigo, status: 'aprovado' });
         await api('atualizarContrato', { senha: R.senha, codigo: a.codigo, contrato: pega(CONTRATO, dd) });
-        toast('Cadastro aprovado. Agora é funcionário ativo.'); await recarregarDet('dados');
+        const r = await api('definirStatus', { senha: R.senha, codigo: a.codigo, status: 'aprovado' });
+        toast('Cadastro aprovado. Agora é funcionário ativo.' + avisoEscala(r)); await recarregarDet('dados');
         if (CONFIG.GRUPO_WHATS) modalConvite(pessoa(), true);
       } });
   },
@@ -3038,7 +3049,7 @@ const ACOES_RH = {
         const r = await api('cadastrarFuncionario', { senha: R.senha, dados, contrato: pega(CONTRATO, d) });
         let extra = '';
         if (ferAnt) { const f = await api('lancarFeriasAntigas', { senha: R.senha, codigo: r.codigo }); if (f.total) extra = ` ${f.total} período(s) de férias anteriores lançados.`; }
-        R.form = null; toast('Funcionário cadastrado.' + extra + ' Agora anexe os documentos.');
+        R.form = null; toast('Funcionário cadastrado.' + extra + avisoEscala(r) + ' Agora anexe os documentos.');
         await abrirDet(r.codigo, 'docs');
       } else {
         await api('salvarFichaRH', { senha: R.senha, codigo: R.det.adm.codigo, dados });
@@ -3060,16 +3071,16 @@ const ACOES_RH = {
       texto: `<b>${esc(pessoa().nome)}</b> sai da lista de ativos e dos comunicados. A ficha, os documentos e o histórico continuam guardados.`,
       arquivo: 'Anexar TRCT, aviso prévio ou exame demissional (opcional)',
       async onOk(dd, fs) {
-        await api('desligar', { senha: R.senha, codigo: a.codigo, dados: pega(DESLIG, dd) });
+        const r = await api('desligar', { senha: R.senha, codigo: a.codigo, dados: pega(DESLIG, dd) });
         if (fs.length) await subirRH(a.codigo, fs, { categoria: 'TRCT / rescisão', descricao: 'Desligamento em ' + dataBR(dd.deslig_data) });
-        toast('Desligamento registrado'); await recarregarDet('dados');
+        toast('Desligamento registrado.' + avisoEscala(r)); await recarregarDet('dados');
         modalRemoverGrupo(pessoa());
       } });
   },
   async reintegrar(b) {
     if (!confirm('Reintegrar este funcionário? Ele volta para a lista de ativos. O desligamento anterior fica no histórico.')) return;
     b.disabled = true;
-    try { await api('reintegrar', { senha: R.senha, codigo: R.det.adm.codigo }); toast('Funcionário reintegrado'); await recarregarDet('dados'); if (CONFIG.GRUPO_WHATS) modalConvite(pessoa(), false); }
+    try { const r = await api('reintegrar', { senha: R.senha, codigo: R.det.adm.codigo }); toast('Funcionário reintegrado.' + avisoEscala(r)); await recarregarDet('dados'); if (CONFIG.GRUPO_WHATS) modalConvite(pessoa(), false); }
     catch (e) { b.disabled = false; erroRH(e); }
   },
   docrh() {
@@ -3146,6 +3157,18 @@ const ACOES_RH = {
   },
   holerites: () => modalHolerites(),
   apptodos: () => modalAppTodos(),
+  async praescala(b) {
+    const t = b.innerHTML; b.disabled = true; b.innerHTML = '<span class="spin"></span> Enviando…';
+    try { await api('enviarParaEscala', { senha: R.senha, codigo: R.det.adm.codigo }); toast('Enviado. Aparece em "Novos do RH" no app da escala.'); }
+    catch (e) { erroRH(e); }
+    b.disabled = false; b.innerHTML = t;
+  },
+  async testarescala(b) {
+    const t = b.textContent; b.disabled = true; b.textContent = 'Testando…';
+    try { await api('testarEscala', { senha: R.senha }); toast('Conexão com a escala funcionando'); }
+    catch (e) { toast(e.message, 'erro'); }
+    b.disabled = false; b.textContent = t;
+  },
   appfunc: () => modalAppFunc(),
   cfiltro(b) { R.cf = b.dataset.f; rCand(); },
   cand(b) { const c = R.cands.find(x => x.codigo === b.dataset.c); if (c) modalCand(c); },
