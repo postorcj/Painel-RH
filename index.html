@@ -444,6 +444,16 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
 .hol-pag select{min-height:40px;padding:6px 30px 6px 10px;font-size:14px;background-position:calc(100% - 16px) 17px,calc(100% - 11px) 17px}
 @media(max-width:600px){.hol-pag .hp{grid-template-columns:48px minmax(0,1fr)}.hol-pag .hp select{grid-column:1/-1}}
 .hol-pag .hp.app{grid-template-columns:minmax(0,1fr) auto}
+.meu-abas{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;margin:0 0 12px}
+.meu-abas button{border:1px solid var(--linha);background:#fff;border-radius:999px;padding:9px 14px;font:600 15px/1 inherit;font-family:inherit;color:var(--verde);cursor:pointer;min-height:40px}
+.meu-abas button.on{background:var(--verde);color:#fff;border-color:var(--verde)}
+.meu-filtro{display:flex;align-items:center;gap:10px}.meu-filtro label{font-weight:600;white-space:nowrap}.meu-filtro select{flex:1}
+.meu-dest{background:var(--verde);color:#fff;border:0}.meu-dest h3{color:var(--ouro)}.meu-dest small{opacity:.85}
+.meu-mes{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.meu-mes h3{margin:0}
+.meu-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.mc-h{text-align:center;font-size:12px;font-weight:700;color:var(--cinza)}.mc-h.dom{color:var(--verm)}
+.mc-d{border:0;font-family:inherit;cursor:pointer;border-radius:8px;padding:5px 0;text-align:center;line-height:1.1;background:#E7F4EC;color:#17663a}.mc-d.sel{outline:3px solid var(--verde2);outline-offset:1px}.mc-d b{display:block;font-size:14px}.mc-d span{font-size:11px;font-weight:700}
+.mc-d.F{background:#FBECEA;color:#9a2a20}.mc-d.V{background:#FFF1C2;color:#7a5a00}.mc-d.hj{outline:3px solid var(--ouro);outline-offset:1px}
 .app-cod{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:14px}.app-cod b{font-family:var(--disp);font-size:20px;letter-spacing:.06em}
 .dest-op{display:grid;gap:6px}.dest-op .pes{border:1.5px solid var(--linha);border-radius:12px}.dest-op .pes.on{border-color:var(--verde2)}
 .pes input[type=radio]{width:18px;height:18px;min-height:0;flex:none;accent-color:var(--verde2)}
@@ -1204,7 +1214,12 @@ const DESLIG = [
 ];
 const OCORRENCIAS = ['Advertência', 'Suspensão', 'Atestado médico', 'Falta', 'Atraso', 'Elogio', 'Outro'];
 const CATEG_RH = ['Ficha de registro', 'Contrato de trabalho', 'Contrato de experiência', 'ASO / exame', 'Holerite', 'Recibo de férias',
-  'Advertência / suspensão', 'Atestado', 'TRCT / rescisão', 'Exame demissional', 'Outros'];
+  'Informe de rendimentos (IR)', 'Recibo de 13º salário', 'Advertência / suspensão', 'Atestado', 'TRCT / rescisão', 'Exame demissional', 'Outros'];
+const APP_CAT_PADRAO = ['Holerite', 'Recibo de férias', 'Informe de rendimentos (IR)', 'Recibo de 13º salário'];
+const catsAppCfg = cfg => { try { const l = JSON.parse(cfg.app_categorias || 'null'); return Array.isArray(l) ? l : APP_CAT_PADRAO; } catch (e) { return APP_CAT_PADRAO; } };
+const cardAppCats = () => `<section class="card"><h3>App Meu RH: o que o funcionário vê</h3>
+  <p class="muted">Documentos do RH dessas categorias aparecem no app para o próprio funcionário. Os outros (advertência, atestado, rescisão…) ficam só aqui no painel.</p>
+  <div class="grid">${CATEG_RH.filter(c => c !== 'Outros').map(c => `<label class="fld h" style="flex-direction:row;align-items:center;gap:8px;font-weight:500"><input type="checkbox" class="appcat" value="${esc(c)}" style="width:18px;height:18px;min-height:0"${c === 'Holerite' ? ' checked disabled' : catsAppCfg(R.cfg).includes(c) ? ' checked' : ''}> ${esc(c)}</label>`).join('')}</div></section>`;
 const mapaDe = defs => Object.fromEntries(defs.filter(f => f.k).map(f => [f.k, f]));
 const sairBtn = '<button class="lnk no-print" data-act="sair">Sair</button>';
 const nomeSort = (a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR');
@@ -2358,7 +2373,7 @@ function rConfig() {
       <div id="cx_lista">${extrasCfg(R.cfg).map(linhaExtra).join('')}</div>
       <button type="button" class="btn sec" data-act="cfgadd" style="margin-top:8px">+ Adicionar e-mail</button></section>
     <div class="det-acoes"><button class="btn pri" data-act="salvarcfg">Salvar</button><button class="btn sec" data-act="testarescala">Testar conexão com a escala</button></div>
-    ${cardUsuarios()}${cardSeguranca()}${cardMinhaSenha()}
+    ${cardAppCats()}${cardUsuarios()}${cardSeguranca()}${cardMinhaSenha()}
     <section class="card"><h3>Como funciona</h3><p class="muted">Na ficha do funcionário, clique em <b>Enviar por e-mail</b>, escolha para quem (contabilidade, IAM, os outros e-mails cadastrados ou um e-mail qualquer) e quais documentos vão junto. A ficha de registro vai em PDF, e os documentos vão anexados. O envio fica registrado no histórico do funcionário.</p></section>
   </div>`);
 }
@@ -2386,7 +2401,7 @@ function fichaHtmlPdf(p) {
     <table class="ass"><tr><td>${esc(p.nome)}</td><td class="sp"></td><td>Responsável RH</td></tr></table>
   </body></html>`;
 }
-const ACAO_L = { escala_admitido: 'Enviou para a escala', escala_desligado: 'Avisou a escala do desligamento', escala_erro: 'Falha ao enviar para a escala', app_ativado: 'Ativou o app Meu RH', app_codigo: 'Gerou código do app', app_holerite: 'Abriu holerite no app', app_bloqueado: 'Bloqueou o app', holerites_desfeitos: 'Desfez envio de holerites', holerites: 'Separou holerites', holerite: 'Holerite salvo', candidato: 'Nova candidatura', candidato_contratado: 'Contratou candidato', candidato_removido: 'Excluiu candidato', link_email: 'Enviou o link da ficha por e-mail', entrar: 'Entrou no painel', senha: 'Trocou a senha', usuario: 'Usuários', backup: 'Backup', emails: 'Configurações', envio_email: 'Enviou e-mail',
+const ACAO_L = { holerites_aviso: 'Avisou holerites por e-mail', app_esqueci: 'Pediu nova senha do app', escala_admitido: 'Enviou para a escala', escala_desligado: 'Avisou a escala do desligamento', escala_erro: 'Falha ao enviar para a escala', app_ativado: 'Ativou o app Meu RH', app_codigo: 'Gerou código do app', app_holerite: 'Abriu holerite no app', app_bloqueado: 'Bloqueou o app', holerites_desfeitos: 'Desfez envio de holerites', holerites: 'Separou holerites', holerite: 'Holerite salvo', candidato: 'Nova candidatura', candidato_contratado: 'Contratou candidato', candidato_removido: 'Excluiu candidato', link_email: 'Enviou o link da ficha por e-mail', entrar: 'Entrou no painel', senha: 'Trocou a senha', usuario: 'Usuários', backup: 'Backup', emails: 'Configurações', envio_email: 'Enviou e-mail',
   criado: 'Criou admissão', enviado: 'Colaborador enviou a ficha', cadastro_rh: 'Cadastrou funcionário', ficha_editada_rh: 'Editou a ficha', contrato: 'Alterou o contrato',
   documento_removido: 'Removeu documento', desligado: 'Desligou', reintegrado: 'Reintegrou', comunicado: 'Comunicado', importar: 'Importou lista', ferias_antigas: 'Lançou férias antigas',
   identificou: 'Colaborador entrou pelo link do grupo', atualizacao_enviada: 'Colaborador atualizou a ficha', reenvio_pedido: 'Pediu reenvio de documento', reenvio_cancelado: 'Cancelou reenvio',
@@ -2733,13 +2748,27 @@ async function conferirArquivo(pdfjs, g, H) {
   }
   return '';
 }
+const msgHolNovo = (a, mes) => `Olá, ${primeiro(a.nome)}! Seu holerite de ${mes} já está no app *Meu RH* do Posto Trevo:\n${linkMeuRH()}\n\nEntre com seu CPF e sua senha.${a.app_status === 'ativo' ? '' : ' Ainda não tem acesso? Me avise que eu mando o seu código.'}\n\nRH – Posto Trevo`;
 function resultadoHolerites(m, comp, pessoas, salvos) {
   const mes = comp.slice(5) + '/' + comp.slice(0, 4);
   m.querySelector('.modal-c').innerHTML = `<h2>Holerites de ${esc(mes)} salvos</h2>
     <div class="aviso" style="background:#E7F4EC;border-color:#BFE3CC;color:#17663a;margin-bottom:10px">${salvos.length} funcionário(s) receberam o holerite. Cada arquivo foi conferido de novo antes de salvar.</div>
     <p class="muted" style="font-size:14px">${pessoas.map(a => esc(a.nome)).join(', ')}</p>
-    <p class="muted" style="font-size:14px">Eles já podem ver no app <b>Meu RH</b>. Se notar algum erro, desfaça agora: os holerites de ${esc(mes)} desses funcionários são apagados e você pode separar de novo.</p>
+    <p class="muted" style="font-size:14px">Se notar algum erro, desfaça agora: os holerites de ${esc(mes)} desses funcionários são apagados e você pode separar de novo.</p>
+    <h3 style="margin:14px 0 6px">Avisar os funcionários</h3>
+    <div class="det-acoes" style="margin-top:0"><button class="btn pri" id="hol_email">${ic('mail')}Avisar por e-mail quem tem e-mail</button></div>
+    <div class="hol-pag" style="max-height:34vh;margin-top:8px">${pessoas.map(a => { const p = R.itens.find(x => x.codigo === a.codigo) || a, cel = dig(p.celular), msg = msgHolNovo(p, mes);
+      return `<div class="hp app"><div style="min-width:0"><span style="font-weight:600">${esc(p.nome)}</span><small>${chipApp(p.app_status || '')}${p.email ? ' · ' + esc(p.email) : ' · sem e-mail'}</small></div>
+        <div>${[10, 11].includes(cel.length) ? `<a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/55${cel}?text=${encodeURIComponent(msg)}">WhatsApp</a>` : '<small class="muted">sem celular</small>'}</div></div>`; }).join('')}</div>
     <div class="modal-acoes"><button class="btn sec" id="hol_desf">Desfazer este envio</button><button class="btn pri" data-act="fechar">Concluir</button></div>`;
+  m.querySelector('#hol_email').onclick = async ev => {
+    const b = ev.currentTarget; b.disabled = true; b.innerHTML = '<span class="spin"></span> Enviando…';
+    try {
+      const r = await api('avisarHolerites', { senha: R.senha, competencia: comp, codigos: salvos, link: linkMeuRH() });
+      b.innerHTML = `${ic('mail')}${r.enviados.length} e-mail(s) enviados`;
+      toast(`${r.enviados.length} aviso(s) por e-mail enviados${r.semEmail.length ? ` · ${r.semEmail.length} sem e-mail: avise pelo WhatsApp` : ''}`);
+    } catch (e) { b.disabled = false; b.innerHTML = `${ic('mail')}Avisar por e-mail quem tem e-mail`; erroRH(e); }
+  };
   m.querySelector('#hol_desf').onclick = async ev => {
     if (!confirm(`Apagar os holerites de ${mes} de ${salvos.length} funcionário(s)?`)) return;
     ev.currentTarget.disabled = true;
@@ -2747,9 +2776,9 @@ function resultadoHolerites(m, comp, pessoas, salvos) {
     catch (e) { ev.currentTarget.disabled = false; erroRH(e); }
   };
 }
-/* ── App Meu RH (funcionário vê só os próprios holerites) ── */
+/* ── App Meu RH (funcionário vê só os próprios holerites, documentos, escala e férias) ── */
 const linkMeuRH = () => pastaSite() + 'meurh';
-const MEU = { k: 'meurh_t' };
+const MEU = { k: 'meurh_t', aba: 'hol', filtro: '3' };
 const meuToken = v => { try { if (v === undefined) return localStorage.getItem(MEU.k) || ''; if (v) localStorage.setItem(MEU.k, v); else localStorage.removeItem(MEU.k); } catch (e) {} return v || ''; };
 const meuTopo = () => topo('Meu RH');
 function meuErro(e) {
@@ -2758,23 +2787,46 @@ function meuErro(e) {
 }
 function telaMeuLogin(msg, cpf = '') {
   app.innerHTML = meuTopo() + `<main class="wrap estreito"><form class="card" id="fmeu" style="margin-top:24px" novalidate>
-    <h1 style="font-size:clamp(34px,9vw,44px);margin-bottom:6px">Meus holerites</h1>
-    <p class="muted">Entre com seu CPF e a senha que você criou no primeiro acesso.</p>
+    <h1 style="font-size:clamp(34px,9vw,44px);margin-bottom:6px">Meu RH</h1>
+    <p class="muted">Seus holerites, documentos, escala e férias. Entre com seu CPF e a sua senha.</p>
     <div class="fld" style="margin-top:12px"><label for="m_cpf">CPF</label><input id="m_cpf" inputmode="numeric" autocomplete="username" maxlength="14" placeholder="000.000.000-00" value="${esc(cpf)}"></div>
     <div class="fld" style="margin-top:12px"><label for="m_senha">Senha</label><input id="m_senha" type="password" autocomplete="current-password" maxlength="60"></div>
     ${msg ? `<div class="aviso erro" style="margin-top:12px">${esc(msg)}</div>` : ''}
     <button class="btn pri big" style="margin-top:16px">Entrar</button>
-    <button type="button" class="btn sec big" id="m_prim" style="margin-top:8px">Primeiro acesso ou esqueci a senha</button>
+    <button type="button" class="btn sec big" id="m_prim" style="margin-top:8px">Primeiro acesso (tenho o código do RH)</button>
+    <button type="button" class="lnk2" id="m_esq" style="margin:12px auto 0;display:block">Esqueci minha senha</button>
   </form>${contatoRH()}</main>`;
   $('#m_prim').onclick = () => telaMeuAtivar('', $('#m_cpf').value);
+  $('#m_esq').onclick = () => telaMeuEsqueci('', $('#m_cpf').value);
   ($('#m_cpf').value ? $('#m_senha') : $('#m_cpf')).focus();
 }
-function telaMeuAtivar(msg, cpf = '') {
+function telaMeuEsqueci(msg, cpf = '') {
+  app.innerHTML = meuTopo() + `<main class="wrap estreito"><form class="card" id="fmeuesq" style="margin-top:24px" novalidate>
+    <h1 style="font-size:clamp(30px,8vw,40px);margin-bottom:6px">Esqueci minha senha</h1>
+    <p class="muted">Informe seu CPF. Mandamos um código de 6 números para o <b>e-mail da sua ficha</b>. Com ele você cria uma senha nova.</p>
+    <div class="fld" style="margin-top:12px"><label for="e_cpf">CPF</label><input id="e_cpf" inputmode="numeric" autocomplete="username" maxlength="14" placeholder="000.000.000-00" value="${esc(cpf)}"></div>
+    ${msg ? `<div class="aviso erro" style="margin-top:12px">${esc(msg)}</div>` : ''}
+    <button class="btn pri big" style="margin-top:16px">Enviar código para o meu e-mail</button>
+    <button type="button" class="btn sec big" id="e_volta" style="margin-top:8px">Voltar</button>
+  </form>${contatoRH()}</main>`;
+  $('#e_volta').onclick = () => telaMeuLogin('', $('#e_cpf').value);
+  $('#e_cpf').focus();
+}
+async function meuEsqueci(e) {
+  e.preventDefault();
+  const cpf = $('#e_cpf').value, b = e.target.querySelector('button.pri');
+  if (dig(cpf).length !== 11) return toast('Informe seu CPF', 'erro');
+  b.disabled = true; b.textContent = 'Enviando…';
+  try { const r = await api('appEsqueci', { cpf }); telaMeuAtivar('', cpf, r.msg); }
+  catch (x) { telaMeuEsqueci(x.message, cpf); }
+}
+function telaMeuAtivar(msg, cpf = '', info = '') {
   app.innerHTML = meuTopo() + `<main class="wrap estreito"><form class="card" id="fmeuat" style="margin-top:24px" novalidate>
-    <h1 style="font-size:clamp(30px,8vw,40px);margin-bottom:6px">Primeiro acesso</h1>
-    <p class="muted">Use o <b>código de 6 números</b> que o RH mandou no seu WhatsApp e crie a sua senha. Esqueceu a senha? Peça um código novo ao RH e faça este passo de novo.</p>
+    <h1 style="font-size:clamp(30px,8vw,40px);margin-bottom:6px">Criar senha</h1>
+    <p class="muted">Use o <b>código de 6 números</b> que você recebeu (do RH pelo WhatsApp ou no seu e-mail) e crie a sua senha.</p>
+    ${info ? `<div class="aviso" style="margin-top:8px">${esc(info)}</div>` : ''}
     <div class="fld" style="margin-top:12px"><label for="a_cpf">CPF</label><input id="a_cpf" inputmode="numeric" autocomplete="username" maxlength="14" placeholder="000.000.000-00" value="${esc(cpf)}"></div>
-    <div class="fld" style="margin-top:12px"><label for="a_cod">Código de acesso</label><input id="a_cod" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 números"></div>
+    <div class="fld" style="margin-top:12px"><label for="a_cod">Código</label><input id="a_cod" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 números"></div>
     <div class="fld" style="margin-top:12px"><label for="a_s1">Crie uma senha</label><input id="a_s1" type="password" autocomplete="new-password" maxlength="60"><small>Pelo menos 6 caracteres. Não use sua data de nascimento.</small></div>
     <div class="fld" style="margin-top:12px"><label for="a_s2">Repita a senha</label><input id="a_s2" type="password" autocomplete="new-password" maxlength="60"></div>
     ${msg ? `<div class="aviso erro" style="margin-top:12px">${esc(msg)}</div>` : ''}
@@ -2804,35 +2856,161 @@ async function meuAtivar(e) {
 }
 async function carregarMeu() {
   app.innerHTML = meuTopo() + '<main class="wrap estreito"><div class="card" style="margin-top:24px"><span class="spin"></span> Carregando…</div></main>';
-  try { const r = await api('appHolerites', { token: meuToken() }); MEU.nome = r.nome; MEU.hs = r.holerites; rMeu(); }
-  catch (e) { meuErro(e); }
+  try {
+    const r = await api('appHolerites', { token: meuToken() });
+    Object.assign(MEU, { nome: r.nome, hs: r.holerites || [], docs: r.docs || [], ferias: r.ferias || null, temEscala: !!r.temEscala, esc: null });
+    rMeu();
+  } catch (e) { meuErro(e); }
+}
+const meuHols = () => holeritesDe(MEU.hs.map(h => ({ ...h, file_id: h.id, origem: 'rh', categoria: 'Holerite' })));
+function meuFiltrados() {
+  const hs = meuHols(), f = MEU.filtro;
+  if (/^\d$|^\d\d$/.test(f)) return hs.slice(0, +f);
+  if (/^\d{4}$/.test(f)) return hs.filter(h => h.comp.slice(0, 4) === f);
+  return hs;
 }
 function rMeu() {
-  const hs = holeritesDe(MEU.hs.map(h => ({ ...h, file_id: h.id, origem: 'rh', categoria: 'Holerite' })));
-  const anos = {}; hs.forEach(h => { const y = h.comp.slice(0, 4) || '—'; (anos[y] = anos[y] || []).push(h); });
-  app.innerHTML = meuTopo() + `<main class="wrap estreito" style="padding-top:24px">
-    <h1 style="font-size:clamp(34px,9vw,44px)">Olá, ${esc(MEU.nome || '')}</h1>
-    <p class="muted" style="margin:4px 0 16px">Aqui ficam os seus holerites. Só você vê.</p>
-    ${hs.length ? Object.keys(anos).sort().reverse().map(y => `<section class="card"><h3 style="margin-bottom:6px">${esc(y)}</h3>
-      <ul class="lista-ev">${anos[y].map(h => `<li><span class="dt" style="min-width:96px">${esc(h.comp ? MESES[+h.comp.slice(5) - 1] : 'Holerite')}</span>
-        <div>${h.f.visto ? '' : '<span class="chip s-prog">Novo</span>'}</div>
-        <button class="btn sec sm" data-meu="${esc(h.f.id)}">${ic('file')}Abrir</button></li>`).join('')}</ul></section>`).join('')
-      : '<section class="card"><h3>Nenhum holerite ainda</h3><p class="muted">Quando o RH lançar o holerite do mês, ele aparece aqui.</p></section>'}
+  const abas = [['hol', 'Holerites'], ...(MEU.docs.length ? [['docs', 'Documentos']] : []), ...(MEU.temEscala ? [['escala', 'Minha escala']] : []),
+    ...(MEU.ferias && MEU.ferias.data_admissao ? [['ferias', 'Férias']] : [])];
+  if (!abas.some(a => a[0] === MEU.aba)) MEU.aba = 'hol';
+  const corpo = MEU.aba === 'docs' ? meuDocs() : MEU.aba === 'escala' ? '<section class="card" id="meu_esc"><span class="spin"></span> Buscando a sua escala…</section>' : MEU.aba === 'ferias' ? meuFerias() : meuHolerites();
+  app.innerHTML = meuTopo() + `<main class="wrap estreito" style="padding-top:20px">
+    <h1 style="font-size:clamp(32px,9vw,42px)">Olá, ${esc(MEU.nome || '')}</h1>
+    <p class="muted" style="margin:4px 0 12px">Só você vê estas informações.</p>
+    ${abas.length > 1 ? `<div class="meu-abas" role="tablist">${abas.map(([k, l]) => `<button role="tab" aria-selected="${MEU.aba === k}" class="${MEU.aba === k ? 'on' : ''}" data-meuaba="${k}">${l}</button>`).join('')}</div>` : ''}
+    ${corpo}
     <section class="card"><p class="muted" style="margin:0 0 10px">Dica: deixe o Meu RH na tela do celular. No iPhone toque em <b>Compartilhar → Adicionar à Tela de Início</b>; no Android, no menu <b>⋮ → Adicionar à tela inicial</b>.</p>
       <div class="det-acoes"><button class="btn sec" id="meu_senha">Trocar senha</button><button class="btn sec" id="meu_sair">Sair</button></div></section>
     ${contatoRH()}</main>`;
   $('#meu_sair').onclick = () => { meuToken(null); telaMeuLogin(); };
   $('#meu_senha').onclick = meuTrocarSenha;
+  app.querySelectorAll('[data-meuaba]').forEach(b => b.onclick = () => { MEU.aba = b.dataset.meuaba; rMeu(); });
   app.querySelectorAll('[data-meu]').forEach(b => b.onclick = () => meuAbrir(b));
+  const f = $('#meu_filtro'); if (f) f.onchange = () => { MEU.filtro = f.value; rMeu(); };
+  const j = $('#meu_juntar'); if (j) j.onclick = () => meuJuntar(j);
+  if (MEU.aba === 'escala') meuEscala(MEU.escMes || '');
+}
+function meuHolerites() {
+  const hs = meuHols();
+  if (!hs.length) return '<section class="card"><h3>Nenhum holerite ainda</h3><p class="muted">Quando o RH lançar o holerite do mês, ele aparece aqui.</p></section>';
+  const anos = [...new Set(hs.map(h => h.comp.slice(0, 4)).filter(Boolean))];
+  const vis = meuFiltrados();
+  const op = [['3', 'Últimos 3'], ['6', 'Últimos 6'], ['12', 'Últimos 12'], ...anos.map(y => [y, 'Ano de ' + y]), ['todos', 'Todos']];
+  const porAno = {}; vis.forEach(h => { const y = h.comp.slice(0, 4) || '—'; (porAno[y] = porAno[y] || []).push(h); });
+  return `<section class="card">
+      <div class="meu-filtro"><label for="meu_filtro">Mostrar</label><select id="meu_filtro">${op.map(([k, l]) => `<option value="${k}"${MEU.filtro === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+      ${vis.length > 1 ? `<button class="btn pri big" id="meu_juntar" style="margin-top:10px">${ic('file')}Baixar os ${vis.length} em um PDF</button>
+        <p class="muted" style="font-size:13px;margin:6px 0 0">Bom para banco, crediário ou aluguel: junta os holerites deste filtro num arquivo só, do mais antigo para o mais novo.</p>` : ''}
+    </section>
+    ${Object.keys(porAno).sort().reverse().map(y => `<section class="card"><h3 style="margin-bottom:6px">${esc(y)}</h3>
+      <ul class="lista-ev">${porAno[y].map(h => `<li><span class="dt" style="min-width:96px">${esc(h.comp ? MESES[+h.comp.slice(5) - 1] : 'Holerite')}</span>
+        <div>${h.f.visto ? '' : '<span class="chip s-prog">Novo</span>'}</div>
+        <button class="btn sec sm" data-meu="${esc(h.f.id)}">${ic('file')}Abrir</button></li>`).join('')}</ul></section>`).join('')}`;
+}
+function meuDocs() {
+  const grupos = {}; MEU.docs.forEach(d => { (grupos[d.categoria] = grupos[d.categoria] || []).push(d); });
+  return Object.keys(grupos).sort().map(c => `<section class="card"><h3 style="margin-bottom:6px">${esc(c)}</h3>
+    <ul class="lista-ev">${grupos[c].sort((x, y) => String(y.enviado_em).localeCompare(String(x.enviado_em))).map(d => `<li><span class="dt" style="min-width:96px">${esc(String(d.enviado_em || '').slice(0, 10))}</span>
+      <div>${esc(d.descricao || d.arquivo || c)} ${d.visto ? '' : '<span class="chip s-prog">Novo</span>'}</div>
+      <button class="btn sec sm" data-meu="${esc(d.id)}">${ic('file')}Abrir</button></li>`).join('')}</ul></section>`).join('');
+}
+function meuFerias() {
+  const F = MEU.ferias, evs = (F.eventos || []).map(e => ({ ...e, codigo: 'eu', tipo: 'ferias' }));
+  const ps = periodosFerias({ codigo: 'eu', data_admissao: F.data_admissao, status: F.status, deslig_data: F.deslig_data }, evs).reverse();
+  const hj = hoje0(), proximas = evs.filter(e => data(e.data) && data(e.data) >= hj).sort((x, y) => String(x.data).localeCompare(String(y.data)));
+  const emCurso = evs.find(e => data(e.data) && data(e.data) <= hj && data(e.data_fim) && data(e.data_fim) >= hj);
+  const SIT = { gozada: ['Já tiradas', 's-ok'], aquisicao: ['Em aquisição', 's-desc'], pendente: ['Para tirar', 's-prog'], vencida: ['Vencidas – fale com o RH', 's-cor'] };
+  return `${emCurso ? `<section class="card meu-dest"><h3>Você está de férias</h3><p>De <b>${dataBR(emCurso.data)}</b> a <b>${dataBR(emCurso.data_fim)}</b>. Bom descanso!</p></section>`
+      : proximas.length ? `<section class="card meu-dest"><h3>Próximas férias</h3><p>De <b>${dataBR(proximas[0].data)}</b> a <b>${dataBR(proximas[0].data_fim)}</b> (${esc(proximas[0].dias || '')} dias).</p></section>` : ''}
+    <section class="card"><h3 style="margin-bottom:4px">Seus períodos de férias</h3>
+      <p class="muted" style="font-size:13px;margin:0 0 8px">A cada 12 meses de trabalho você ganha 30 dias de férias, que precisam ser tiradas nos 12 meses seguintes. Admissão: ${dataBR(F.data_admissao)}.</p>
+      <ul class="lista-ev">${ps.map(p => `<li><span class="dt" style="min-width:84px">${fmtP(p)}</span>
+        <div>${chipCor(p.sit === 'gozada' && p.gozos.some(g => data(g.data) && data(g.data) > hj) ? ['Marcadas', 's-prog'] : SIT[p.sit])} <small class="muted" style="display:block;margin-top:4px">${p.sit === 'aquisicao' ? `Completa em ${dataBR(iso(p.fimAq))}` : p.sit === 'gozada' ? p.gozos.map(g => `${dataBR(g.data)} a ${dataBR(g.data_fim)}`).join(' · ') : `Tirar até ${dataBR(iso(p.limite))}${p.diasG ? ` · já tirou ${p.diasG} dias` : ''}`}</small></div><span></span></li>`).join('')}</ul>
+      <p class="muted" style="font-size:13px;margin:8px 0 0">Para combinar suas férias, fale com o RH.</p></section>`;
+}
+const chipCor = x => `<span class="chip ${x[1]}">${esc(x[0])}</span>`;
+async function meuEscala(mes) {
+  const box = $('#meu_esc'); if (!box) return;
+  try {
+    const r = await api('appEscala', { token: meuToken(), mes });
+    if (MEU.aba !== 'escala' || !$('#meu_esc')) return;
+    if (r.semEscala || !r.mes || !r.dados) { box.innerHTML = '<h3>Escala ainda não publicada</h3><p class="muted">Quando a gerência publicar a escala do mês, ela aparece aqui.</p>'; return; }
+    MEU.escMes = r.mes;
+    const d = r.dados, dias = d.dias, [y, m] = r.mes.split('-').map(Number), hoje = new Date();
+    const noMes = hoje.getFullYear() === y && hoje.getMonth() + 1 === m, nHoje = hoje.getDate();
+    const trab = s => ['T', 'D', 'N', 'C'].includes(s), cod = s => s === 'V' ? 'FÉ' : s === 'F' ? 'F' : 'T';
+    const DS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'], DN = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+    let hojeTxt = '';
+    if (noMes) {
+      const h = dias.find(x => x.d === nHoje), prox = dias.filter(x => x.d > nHoje);
+      const pf = prox.find(x => x.s === 'F'), pt = prox.find(x => trab(x.s));
+      hojeTxt = `<div class="meu-dest" style="border-radius:12px;padding:12px 14px;margin-bottom:10px"><small>Hoje, ${DN[hoje.getDay()]} ${nHoje}</small>
+        <div style="font-family:var(--disp);font-size:26px;font-weight:700">${esc(h ? h.txt : '—')}${h && h.h ? ' · ' + esc(h.h) : ''}</div>
+        ${h && trab(h.s) && pf ? `<small>Próxima folga: <b>${DN[pf.w]}, ${pf.d}</b></small>` : !h || !trab(h.s) ? (pt ? `<small>Volta a trabalhar: <b>${DN[pt.w]}, ${pt.d}</b>${pt.h ? ' · ' + esc(pt.h) : ''}</small>` : '') : ''}</div>`;
+    }
+    let cal = DS.map((l, i) => `<div class="mc-h${i === 0 ? ' dom' : ''}">${l}</div>`).join('');
+    for (let i = 0; i < dias[0].w; i++) cal += '<div></div>';
+    dias.forEach(x => { cal += `<button type="button" class="mc-d ${x.s}${noMes && x.d === nHoje ? ' hj' : ''}" data-escdia="${x.d}" aria-label="${DN[x.w]}, ${x.d}: ${esc(x.txt + (x.h ? ', ' + x.h : ''))}"><b>${x.d}</b><span>${cod(x.s)}</span></button>`; });
+    const i = r.meses.indexOf(r.mes);
+    box.innerHTML = `<div class="meu-mes"><button class="btn sec sm" id="esc_ant"${i > 0 ? '' : ' disabled'} aria-label="Mês anterior">‹</button>
+        <h3>${esc(MESES[m - 1])} de ${y}</h3><button class="btn sec sm" id="esc_prox"${i >= 0 && i < r.meses.length - 1 ? '' : ' disabled'} aria-label="Próximo mês">›</button></div>
+      ${hojeTxt}
+      <p style="margin:0 0 8px;font-size:14px">Horário: <b>${esc(d.horario || '')}</b>${d.intervalo ? ` · Intervalo: <b>${esc(d.intervalo)}</b>` : ''}<br>
+        <span class="muted">${dias.filter(x => trab(x.s)).length} dias de trabalho · ${dias.filter(x => x.s === 'F').length} folgas · ${esc(d.domingosFolga)} domingo(s) de folga</span></p>
+      <div class="meu-cal">${cal}</div>
+      <div id="esc_det" class="aviso" style="margin-top:8px" hidden></div>
+      <p class="muted" style="font-size:12.5px;margin:8px 0 0">T = trabalha · F = folga · FÉ = férias. Toque num dia para ver o horário. Dúvidas sobre a escala, fale com a gerência.</p>`;
+    box.querySelectorAll('[data-escdia]').forEach(el => el.onclick = () => {
+      const x = dias.find(z => z.d === +el.dataset.escdia), det = $('#esc_det');
+      box.querySelectorAll('.mc-d.sel').forEach(z => z.classList.remove('sel')); el.classList.add('sel');
+      det.hidden = false; det.innerHTML = `<b>${DN[x.w][0].toUpperCase() + DN[x.w].slice(1)}, ${x.d}:</b> ${esc(x.txt)}${x.h ? ` · <b>${esc(x.h)}</b>` : ''}${x.i ? ` · intervalo ${esc(x.i)}` : ''}`;
+    });
+    const nav = k => () => { box.innerHTML = '<span class="spin"></span> Buscando…'; meuEscala(r.meses[i + k]); };
+    $('#esc_ant').onclick = nav(-1); $('#esc_prox').onclick = nav(1);
+  } catch (e) { box.innerHTML = `<h3>Não consegui buscar a escala</h3><p class="muted">${esc(e.message)}</p>`; if (/sessão expirou/i.test(e.message)) meuErro(e); }
+}
+async function libPdfLib() {
+  if (window.PDFLib) return window.PDFLib;
+  for (const u of LIBS_PDF.pdflib) {
+    try { await new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = u; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); }); if (window.PDFLib) return window.PDFLib; } catch (e) {}
+  }
+  throw new Error('Não consegui preparar o PDF. Confira a internet e tente de novo.');
+}
+const b64bytes = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+function baixarBlob(blob, nome) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = nome; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 120000);
+  return url;
+}
+async function meuJuntar(b) {
+  const vis = meuFiltrados(); if (!vis.length) return;
+  const txt = b.innerHTML; b.disabled = true; b.innerHTML = '<span class="spin"></span> Juntando os holerites…';
+  try {
+    const PDFLib = await libPdfLib();
+    const r = await api('appBaixarVarios', { token: meuToken(), ids: vis.map(h => h.f.id) });
+    const porId = Object.fromEntries(r.arquivos.map(a => [a.id, a]));
+    const out = await PDFLib.PDFDocument.create();
+    for (const h of [...vis].reverse()) {
+      const a = porId[h.f.id]; if (!a) continue;
+      const src = await PDFLib.PDFDocument.load(b64bytes(a.base64));
+      (await out.copyPages(src, src.getPageIndices())).forEach(p => out.addPage(p));
+    }
+    const ini = vis[vis.length - 1].comp, fim = vis[0].comp;
+    const nome = `Holerites ${MEU.nome || ''} ${ini.slice(5)}-${ini.slice(0, 4)} a ${fim.slice(5)}-${fim.slice(0, 4)}.pdf`;
+    baixarBlob(new Blob([await out.save()], { type: 'application/pdf' }), nome);
+    vis.forEach(h => { const x = MEU.hs.find(y => y.id === h.f.id); if (x) x.visto = true; });
+    toast('PDF pronto: ' + vis.length + ' holerites');
+    rMeu();
+  } catch (e) { b.disabled = false; b.innerHTML = txt; meuErro(e); }
 }
 async function meuAbrir(b) {
   const txt = b.innerHTML; b.disabled = true; b.innerHTML = '<span class="spin"></span>';
   try {
     const r = await api('appBaixar', { token: meuToken(), id: b.dataset.meu });
-    const url = URL.createObjectURL(new Blob([Uint8Array.from(atob(r.base64), c => c.charCodeAt(0))], { type: 'application/pdf' }));
-    const a = document.createElement('a'); a.href = url; a.download = r.nome; a.target = '_blank'; a.rel = 'noopener';
-    document.body.appendChild(a); a.click(); a.remove();
-    const h = MEU.hs.find(x => x.id === b.dataset.meu); if (h) h.visto = true;
+    const url = baixarBlob(new Blob([b64bytes(r.base64)], { type: r.mime || 'application/pdf' }), r.nome);
+    [...MEU.hs, ...MEU.docs].forEach(x => { if (x.id === b.dataset.meu) x.visto = true; });
     const li = b.closest('li'); const chip = li && li.querySelector('.chip'); if (chip) chip.remove();
     b.outerHTML = `<a class="btn sec sm" href="${url}" download="${esc(r.nome)}" target="_blank" rel="noopener">${ic('file')}Abrir de novo</a>`;
   } catch (e) { b.disabled = false; b.innerHTML = txt; meuErro(e); }
@@ -3124,7 +3302,7 @@ const ACOES_RH = {
       if (!x.email || !emailsOk(x.email)) { toast('E-mail inválido em ' + x.nome, 'erro'); return; }
     }
     b.disabled = true; b.textContent = 'Salvando…';
-    try { R.cfg = (await api('setConfig', { senha: R.senha, config: { ...pega(CFG_DEFS, d), extras: JSON.stringify(extras) } })).config; toast('Configurações salvas'); rConfig(); }
+    try { R.cfg = (await api('setConfig', { senha: R.senha, config: { ...pega(CFG_DEFS, d), extras: JSON.stringify(extras), app_categorias: JSON.stringify(['Holerite', ...[...document.querySelectorAll('.appcat:checked:not(:disabled)')].map(c => c.value)]) } })).config; toast('Configurações salvas'); rConfig(); }
     catch (e) { b.disabled = false; b.textContent = 'Salvar'; erroRH(e); }
   },
   usrnovo() { modalUsuario(null); },
@@ -3368,7 +3546,7 @@ document.addEventListener('input', e => {
   if (MODO_COLAB && el.dataset.k) aoDigitarColab(el);
   if (el.id === 'g_cpf') el.value = mascara('000.000.000-00', el.value);
   if (el.id === 'n_cel' || el.id === 't_cel') el.value = mascara('tel', el.value);
-  if (el.id === 'm_cpf' || el.id === 'a_cpf') el.value = mascara('000.000.000-00', el.value);
+  if (el.id === 'm_cpf' || el.id === 'a_cpf' || el.id === 'e_cpf') el.value = mascara('000.000.000-00', el.value);
   if (el.id === 'a_cod') el.value = dig(el.value).slice(0, 6);
   if (!MODO_COLAB && R.form && el.dataset.k) { aoDigitar(el, R.form.d, R.form.mapa); R.form.aoMudar && R.form.aoMudar(el.dataset.k, R.form.d); }
   if (el.id === 'busca') { R.busca = el.value; $('#itens').innerHTML = itensHTML(); }
@@ -3405,6 +3583,7 @@ document.addEventListener('submit', e => {
   if (e.target.id === 'ftrab') return enviarTrabalhe(e);
   if (e.target.id === 'fmeu') return meuEntrar(e);
   if (e.target.id === 'fmeuat') return meuAtivar(e);
+  if (e.target.id === 'fmeuesq') return meuEsqueci(e);
   if (e.target.id !== 'flogin') return;
   entrarRH(e);
 });
