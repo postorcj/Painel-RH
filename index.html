@@ -1218,6 +1218,9 @@ const CATEG_RH = ['Ficha de registro', 'Contrato de trabalho', 'Contrato de expe
 const APP_CAT_PADRAO = ['Holerite', 'Recibo de férias', 'Informe de rendimentos (IR)', 'Recibo de 13º salário'];
 const catsAppCfg = cfg => { try { const l = JSON.parse(cfg.app_categorias || 'null'); return Array.isArray(l) ? l : APP_CAT_PADRAO; } catch (e) { return APP_CAT_PADRAO; } };
 const cardAppCats = () => `<section class="card"><h3>App Meu RH: o que o funcionário vê</h3>
+  <p class="muted" style="margin-bottom:6px">Link do app para todos: <b>${esc(linkMeuRH())}</b> <button type="button" class="btn sec sm" data-act="copiar" data-v="${esc(linkMeuRH())}">Copiar</button></p>
+  <label style="display:flex;gap:8px;align-items:flex-start;font-weight:500;margin:6px 0 12px"><input type="checkbox" id="app_nasc" style="width:18px;height:18px;min-height:0;margin-top:2px"${R.cfg.app_nasc === 'nao' ? '' : ' checked'}>
+    <span>Primeiro acesso com CPF + data de nascimento (um link só para todos). Vale só para quem ainda não criou senha. Desmarcado, o primeiro acesso é só com o código que você gera.</span></label>
   <p class="muted">Documentos do RH dessas categorias aparecem no app para o próprio funcionário. Os outros (advertência, atestado, rescisão…) ficam só aqui no painel.</p>
   <div class="grid">${CATEG_RH.filter(c => c !== 'Outros').map(c => `<label class="fld h" style="flex-direction:row;align-items:center;gap:8px;font-weight:500"><input type="checkbox" class="appcat" value="${esc(c)}" style="width:18px;height:18px;min-height:0"${c === 'Holerite' ? ' checked disabled' : catsAppCfg(R.cfg).includes(c) ? ' checked' : ''}> ${esc(c)}</label>`).join('')}</div></section>`;
 const mapaDe = defs => Object.fromEntries(defs.filter(f => f.k).map(f => [f.k, f]));
@@ -2137,6 +2140,7 @@ const MODELOS = {
   reuniao: () => ({ t: 'Reunião com a equipe', m: 'Olá, {nome}! Teremos uma reunião com toda a equipe no dia __/__, às __h, no posto.\nSua presença é muito importante.' + ASSIN }),
   ferias: () => ({ t: 'Aviso de férias', m: 'Olá, {nome}! Passe no escritório do RH até o dia __/__ para conferir e assinar o aviso de férias.' + ASSIN }),
   grupo: () => ({ t: 'Grupo de avisos', m: msgConvite() }),
+  meurh: () => ({ t: 'App Meu RH', m: `Olá, Pessoal! Agora os holerites, documentos, a escala e as férias de cada um ficam no app *Meu RH* do Posto Trevo.\n\n1. Abra: ${linkMeuRH()}\n2. Toque em *Primeiro acesso: criar minha senha*\n3. Informe seu CPF e sua data de nascimento\n4. Crie sua senha (não conte para ninguém)\n\nDepois é só entrar com CPF e senha. Dica: salve o app na tela do celular.` + ASSIN }),
   livre: () => ({ t: '', m: 'Olá, {nome}! ' + ASSIN })
 };
 const telWhats = r => r.celular_whats !== 'Não' && [10, 11].includes(dig(r.celular).length);
@@ -2190,6 +2194,7 @@ function rCom() {
         <button class="btn sec sm" data-act="commodelo" data-m="reuniao">Reunião</button>
         <button class="btn sec sm" data-act="commodelo" data-m="ferias">Férias</button>
         <button class="btn sec sm" data-act="commodelo" data-m="grupo">Convite do grupo</button>
+        <button class="btn sec sm" data-act="commodelo" data-m="meurh">App Meu RH</button>
         <button class="btn sec sm" data-act="commodelo" data-m="livre">Em branco</button></div>
       <div class="grid">
         <div class="fld"><label for="com_tit">Título <span class="req">*</span></label><input id="com_tit" maxlength="100" value="${esc(f.t)}" placeholder="Ex.: Assinatura de holerites"></div>
@@ -2793,12 +2798,39 @@ function telaMeuLogin(msg, cpf = '') {
     <div class="fld" style="margin-top:12px"><label for="m_senha">Senha</label><input id="m_senha" type="password" autocomplete="current-password" maxlength="60"></div>
     ${msg ? `<div class="aviso erro" style="margin-top:12px">${esc(msg)}</div>` : ''}
     <button class="btn pri big" style="margin-top:16px">Entrar</button>
-    <button type="button" class="btn sec big" id="m_prim" style="margin-top:8px">Primeiro acesso (tenho o código do RH)</button>
+    <button type="button" class="btn sec big" id="m_prim" style="margin-top:8px">Primeiro acesso: criar minha senha</button>
     <button type="button" class="lnk2" id="m_esq" style="margin:12px auto 0;display:block">Esqueci minha senha</button>
   </form>${contatoRH()}</main>`;
-  $('#m_prim').onclick = () => telaMeuAtivar('', $('#m_cpf').value);
+  $('#m_prim').onclick = () => telaMeuPrimeiro('', $('#m_cpf').value);
   $('#m_esq').onclick = () => telaMeuEsqueci('', $('#m_cpf').value);
   ($('#m_cpf').value ? $('#m_senha') : $('#m_cpf')).focus();
+}
+function telaMeuPrimeiro(msg, cpf = '') {
+  app.innerHTML = meuTopo() + `<main class="wrap estreito"><form class="card" id="fmeupri" style="margin-top:24px" novalidate>
+    <h1 style="font-size:clamp(30px,8vw,40px);margin-bottom:6px">Primeiro acesso</h1>
+    <p class="muted">Confirme seu CPF e sua data de nascimento, iguais aos da sua ficha no RH, e crie a sua senha. Depois você entra só com CPF e senha.</p>
+    <div class="fld" style="margin-top:12px"><label for="p_cpf">CPF</label><input id="p_cpf" inputmode="numeric" autocomplete="username" maxlength="14" placeholder="000.000.000-00" value="${esc(cpf)}"></div>
+    <div class="fld" style="margin-top:12px"><label for="p_nasc">Data de nascimento</label><input id="p_nasc" type="date"></div>
+    <div class="fld" style="margin-top:12px"><label for="p_s1">Crie uma senha</label><input id="p_s1" type="password" autocomplete="new-password" maxlength="60"><small>Pelo menos 6 caracteres. Não use sua data de nascimento e não conte para ninguém.</small></div>
+    <div class="fld" style="margin-top:12px"><label for="p_s2">Repita a senha</label><input id="p_s2" type="password" autocomplete="new-password" maxlength="60"></div>
+    ${msg ? `<div class="aviso erro" style="margin-top:12px">${esc(msg)}</div>` : ''}
+    <button class="btn pri big" style="margin-top:16px">Criar senha e entrar</button>
+    <button type="button" class="btn sec big" id="p_cod" style="margin-top:8px">Recebi um código do RH ou por e-mail</button>
+    <button type="button" class="lnk2" id="p_volta" style="margin:12px auto 0;display:block">Já tenho senha</button>
+  </form>${contatoRH()}</main>`;
+  $('#p_cod').onclick = () => telaMeuAtivar('', $('#p_cpf').value);
+  $('#p_volta').onclick = () => telaMeuLogin('', $('#p_cpf').value);
+  ($('#p_cpf').value ? $('#p_nasc') : $('#p_cpf')).focus();
+}
+async function meuPrimeiro(e) {
+  e.preventDefault();
+  const cpf = $('#p_cpf').value, nascimento = $('#p_nasc').value, s1 = $('#p_s1').value, s2 = $('#p_s2').value, b = e.target.querySelector('button.pri');
+  const erro = dig(cpf).length !== 11 ? 'Informe seu CPF.' : !nascimento ? 'Informe sua data de nascimento.' : s1.length < 6 ? 'A senha precisa ter pelo menos 6 caracteres.' : s1 !== s2 ? 'As duas senhas não são iguais.'
+    : dig(s1) === dig(nascimento) || s1.replace(/\D/g, '') === nascimento.split('-').reverse().join('') ? 'Não use sua data de nascimento como senha.' : '';
+  if (erro) return toast(erro, 'erro');
+  b.disabled = true; b.textContent = 'Criando…';
+  try { const r = await api('appPrimeiro', { cpf, nascimento, senha: s1 }); meuToken(r.token); toast('Senha criada. Bem-vindo(a)!'); carregarMeu(); }
+  catch (x) { telaMeuPrimeiro(x.message, cpf); }
 }
 function telaMeuEsqueci(msg, cpf = '') {
   app.innerHTML = meuTopo() + `<main class="wrap estreito"><form class="card" id="fmeuesq" style="margin-top:24px" novalidate>
@@ -3302,7 +3334,7 @@ const ACOES_RH = {
       if (!x.email || !emailsOk(x.email)) { toast('E-mail inválido em ' + x.nome, 'erro'); return; }
     }
     b.disabled = true; b.textContent = 'Salvando…';
-    try { R.cfg = (await api('setConfig', { senha: R.senha, config: { ...pega(CFG_DEFS, d), extras: JSON.stringify(extras), app_categorias: JSON.stringify(['Holerite', ...[...document.querySelectorAll('.appcat:checked:not(:disabled)')].map(c => c.value)]) } })).config; toast('Configurações salvas'); rConfig(); }
+    try { R.cfg = (await api('setConfig', { senha: R.senha, config: { ...pega(CFG_DEFS, d), extras: JSON.stringify(extras), app_nasc: $('#app_nasc') && !$('#app_nasc').checked ? 'nao' : 'sim', app_categorias: JSON.stringify(['Holerite', ...[...document.querySelectorAll('.appcat:checked:not(:disabled)')].map(c => c.value)]) } })).config; toast('Configurações salvas'); rConfig(); }
     catch (e) { b.disabled = false; b.textContent = 'Salvar'; erroRH(e); }
   },
   usrnovo() { modalUsuario(null); },
@@ -3546,7 +3578,7 @@ document.addEventListener('input', e => {
   if (MODO_COLAB && el.dataset.k) aoDigitarColab(el);
   if (el.id === 'g_cpf') el.value = mascara('000.000.000-00', el.value);
   if (el.id === 'n_cel' || el.id === 't_cel') el.value = mascara('tel', el.value);
-  if (el.id === 'm_cpf' || el.id === 'a_cpf' || el.id === 'e_cpf') el.value = mascara('000.000.000-00', el.value);
+  if (el.id === 'm_cpf' || el.id === 'a_cpf' || el.id === 'e_cpf' || el.id === 'p_cpf') el.value = mascara('000.000.000-00', el.value);
   if (el.id === 'a_cod') el.value = dig(el.value).slice(0, 6);
   if (!MODO_COLAB && R.form && el.dataset.k) { aoDigitar(el, R.form.d, R.form.mapa); R.form.aoMudar && R.form.aoMudar(el.dataset.k, R.form.d); }
   if (el.id === 'busca') { R.busca = el.value; $('#itens').innerHTML = itensHTML(); }
@@ -3584,6 +3616,7 @@ document.addEventListener('submit', e => {
   if (e.target.id === 'fmeu') return meuEntrar(e);
   if (e.target.id === 'fmeuat') return meuAtivar(e);
   if (e.target.id === 'fmeuesq') return meuEsqueci(e);
+  if (e.target.id === 'fmeupri') return meuPrimeiro(e);
   if (e.target.id !== 'flogin') return;
   entrarRH(e);
 });
