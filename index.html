@@ -470,6 +470,9 @@ details.pasta[open]>summary::before{transform:rotate(45deg)}
 .doc-t small{display:block;color:var(--cinza);font-size:12.5px}
 .doc-sub{background:var(--creme);border-radius:10px;padding:10px 12px;margin-bottom:8px}.doc-sub .doc-l{border-color:#D5DDD7}
 .doc-subh{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:4px}
+.vis-app{flex:none;border:1px solid var(--linha);background:#fff;color:var(--cinza);border-radius:999px;padding:5px 10px;font:600 12.5px/1 inherit;font-family:inherit;cursor:pointer;min-height:30px}
+.vis-app.on{background:#E7F4EC;border-color:#BFE3CC;color:#17663a}
+.vis-app:hover{border-color:var(--verde2)}
 .app-cod{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:14px}.app-cod b{font-family:var(--disp);font-size:20px;letter-spacing:.06em}
 .dest-op{display:grid;gap:6px}.dest-op .pes{border:1.5px solid var(--linha);border-radius:12px}.dest-op .pes.on{border-color:var(--verde2)}
 .pes input[type=radio]{width:18px;height:18px;min-height:0;flex:none;accent-color:var(--verde2)}
@@ -1966,18 +1969,22 @@ const PASTAS_DOC = [
   { k: 'deslig', l: 'Desligamento', ic: 'file', cats: ['TRCT / rescisão', 'Exame demissional'] },
   { k: 'outros', l: 'Outros', ic: 'file', cats: [] }
 ];
+// o documento aparece no app? (app_vis do documento manda; vazio = segue o tipo em Configurações)
+const visApp = f => f.app_vis === 'sim' || (f.app_vis !== 'nao' && catsAppCfg(R.cfg || {}).includes(f.categoria));
 const pastaDoc = cat => PASTAS_DOC.find(p => p.cats.includes(cat)) || PASTAS_DOC[PASTAS_DOC.length - 1];
 const tituloDoc = f => f.descricao || f.categoria || f.arquivo || 'Documento';
-function linhaDocRH(f, noApp) {
+function linhaDocRH(f) {
+  const v = visApp(f);
   return `<li class="doc-l"><div class="doc-t"><a ${f.url ? `href="${esc(f.url)}" target="_blank" rel="noopener"` : ''}><b>${esc(tituloDoc(f))}</b></a>
-      <small>${esc(f.categoria || '')}${f.descricao && f.descricao !== f.categoria ? '' : ''} · ${esc(String(f.enviado_em || '').slice(0, 10))} · ${kb(f.tamanho)}${noApp ? ` · ${f.visto_em ? 'visto no app em ' + esc(String(f.visto_em).slice(0, 10)) : 'no app, ainda não aberto'}` : ''}</small></div>
+      <small>${esc(f.categoria || '')} · ${esc(String(f.enviado_em || '').slice(0, 10))} · ${kb(f.tamanho)}${v ? ` · ${f.visto_em ? 'visto no app em ' + esc(String(f.visto_em).slice(0, 10)) : 'ainda não aberto no app'}` : ''}</small></div>
+    <button class="vis-app no-print ${v ? 'on' : ''}" data-act="docvis" data-id="${esc(f.file_id)}" title="${v ? 'Aparece no app Meu RH. Clique para esconder.' : 'Não aparece no app Meu RH. Clique para mostrar.'}">${v ? 'No app' : 'Só no painel'}</button>
     <button class="x no-print" data-act="rmdocrh" data-id="${esc(f.file_id)}" aria-label="Remover ${esc(tituloDoc(f))}">×</button></li>`;
 }
 function blocoHolerites(hs, noApp) {
   const n = R.holN || 3, vis = n === 'todos' ? hs : hs.slice(0, n);
   return `<div class="doc-sub"><div class="doc-subh"><b>Holerites (${hs.length})</b>
       <div class="seg no-print">${[[3, 'Últimos 3'], [6, 'Últimos 6'], [12, 'Últimos 12'], ['todos', 'Todos']].map(([k, l]) => `<button data-act="holn" data-n="${k}" class="${String(n) === String(k) ? 'on' : ''}">${l}</button>`).join('')}</div></div>
-    <ul class="doc-lista">${vis.map(h => linhaDocRH({ ...h.f, descricao: 'Holerite ' + compTxt(h.comp) }, noApp)).join('')}</ul>
+    <ul class="doc-lista">${vis.map(h => linhaDocRH({ ...h.f, descricao: 'Holerite ' + compTxt(h.comp) })).join('')}</ul>
     <div class="det-acoes no-print" style="margin-top:6px"><button class="btn pri sm" data-act="holjuntar">${ic('file')}Baixar ${vis.length > 1 ? `os ${vis.length} em um PDF` : 'o PDF'}</button>
       <button class="btn sec sm" data-act="holemail">${ic('mail')}Enviar por e-mail</button></div></div>`;
 }
@@ -1994,9 +2001,9 @@ function subDocs() {
     const hol = p.k === 'pagamento' ? holeritesDe(p.itens) : [], resto = p.k === 'pagamento' ? p.itens.filter(f => f.categoria !== 'Holerite') : p.itens;
     const abre = q || R.docAbertas[p.k];
     return `<details class="pasta" data-pasta="${p.k}"${abre ? ' open' : ''}><summary><span class="pasta-n">${esc(p.l)}</span><span class="pasta-c">${p.itens.length}</span>
-        ${p.cats.some(c => app.includes(c)) ? '<span class="chip s-ok pasta-app" title="Aparece para o funcionário no app Meu RH">no app</span>' : ''}</summary>
-      <div class="pasta-b">${hol.length ? blocoHolerites(hol, app.includes('Holerite')) : ''}
-        ${resto.length ? `<ul class="doc-lista">${resto.map(f => linhaDocRH(f, app.includes(f.categoria))).join('')}</ul>` : ''}
+        ${p.itens.some(visApp) ? `<span class="chip s-ok pasta-app" title="Documentos desta pasta que aparecem no app Meu RH">${p.itens.filter(visApp).length} no app</span>` : ''}</summary>
+      <div class="pasta-b">${hol.length ? blocoHolerites(hol) : ''}
+        ${resto.length ? `<ul class="doc-lista">${resto.map(f => linhaDocRH(f)).join('')}</ul>` : ''}
         <button class="lnk2 no-print" data-act="docrh" data-cat="${esc(p.cats[0] || 'Outros')}">+ Anexar em ${esc(p.l)}</button></div></details>`;
   };
   const okAdm = adm.length;
@@ -2462,7 +2469,7 @@ function fichaHtmlPdf(p) {
     <table class="ass"><tr><td>${esc(p.nome)}</td><td class="sp"></td><td>Responsável RH</td></tr></table>
   </body></html>`;
 }
-const ACAO_L = { docs_separados: 'Separou documentos', docs_desfeitos: 'Desfez envio de documentos', docs_aviso: 'Avisou documentos por e-mail', doc_separado: 'Documento separado recebido', holerites_aviso: 'Avisou holerites por e-mail', app_esqueci: 'Pediu nova senha do app', escala_admitido: 'Enviou para a escala', escala_desligado: 'Avisou a escala do desligamento', escala_erro: 'Falha ao enviar para a escala', app_ativado: 'Ativou o app Meu RH', app_codigo: 'Gerou código do app', app_holerite: 'Abriu holerite no app', app_bloqueado: 'Bloqueou o app', holerites_desfeitos: 'Desfez envio de holerites', holerites: 'Separou holerites', holerite: 'Holerite salvo', candidato: 'Nova candidatura', candidato_contratado: 'Contratou candidato', candidato_removido: 'Excluiu candidato', link_email: 'Enviou o link da ficha por e-mail', entrar: 'Entrou no painel', senha: 'Trocou a senha', usuario: 'Usuários', backup: 'Backup', emails: 'Configurações', envio_email: 'Enviou e-mail',
+const ACAO_L = { app_mostrar: 'Mostrou documento no app', app_esconder: 'Escondeu documento do app', docs_separados: 'Separou documentos', docs_desfeitos: 'Desfez envio de documentos', docs_aviso: 'Avisou documentos por e-mail', doc_separado: 'Documento separado recebido', holerites_aviso: 'Avisou holerites por e-mail', app_esqueci: 'Pediu nova senha do app', escala_admitido: 'Enviou para a escala', escala_desligado: 'Avisou a escala do desligamento', escala_erro: 'Falha ao enviar para a escala', app_ativado: 'Ativou o app Meu RH', app_codigo: 'Gerou código do app', app_holerite: 'Abriu holerite no app', app_bloqueado: 'Bloqueou o app', holerites_desfeitos: 'Desfez envio de holerites', holerites: 'Separou holerites', holerite: 'Holerite salvo', candidato: 'Nova candidatura', candidato_contratado: 'Contratou candidato', candidato_removido: 'Excluiu candidato', link_email: 'Enviou o link da ficha por e-mail', entrar: 'Entrou no painel', senha: 'Trocou a senha', usuario: 'Usuários', backup: 'Backup', emails: 'Configurações', envio_email: 'Enviou e-mail',
   criado: 'Criou admissão', enviado: 'Colaborador enviou a ficha', cadastro_rh: 'Cadastrou funcionário', ficha_editada_rh: 'Editou a ficha', contrato: 'Alterou o contrato',
   documento_removido: 'Removeu documento', desligado: 'Desligou', reintegrado: 'Reintegrou', comunicado: 'Comunicado', importar: 'Importou lista', ferias_antigas: 'Lançou férias antigas',
   identificou: 'Colaborador entrou pelo link do grupo', atualizacao_enviada: 'Colaborador atualizou a ficha', reenvio_pedido: 'Pediu reenvio de documento', reenvio_cancelado: 'Cancelou reenvio',
@@ -2692,13 +2699,19 @@ function modalHolerites() {
       <div class="fld h" id="hol_wmes"><label for="hol_comp">Mês do holerite</label><input id="hol_comp" type="month" value="${comp}"></div>
       <div class="fld h" id="hol_wref" hidden><label for="hol_ref">Nome do documento</label><input id="hol_ref" maxlength="120" placeholder="Ex.: Informe de rendimentos – ano-base 2025"><small>É o nome que aparece na ficha e no app.</small></div>
       <div class="fld"><label for="hol_arq">PDF</label><input id="hol_arq" type="file" accept="application/pdf,.pdf"></div>
+      <label class="fld" style="flex-direction:row;align-items:flex-start;gap:10px;font-weight:500"><input type="checkbox" id="hol_vis" style="width:20px;height:20px;min-height:0;margin-top:2px;flex:none">
+        <span>Mostrar no app Meu RH <small class="muted" id="hol_visinfo" style="display:block;font-weight:400"></small></span></label>
     </div>
     <div class="modal-acoes"><button class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri" id="hol_ler">Ler o PDF</button></div>`, true);
   const troca = () => { const c = m.querySelector('#hol_cat').value, h = c === 'Holerite';
     m.querySelector('#hol_wmes').hidden = !h; m.querySelector('#hol_wref').hidden = h;
-    if (!h) m.querySelector('#hol_ref').value = refPadrao(c); };
+    if (!h) m.querySelector('#hol_ref').value = refPadrao(c);
+    const pad = c === 'Holerite' || catsAppCfg(R.cfg || {}).includes(c);
+    m.querySelector('#hol_vis').checked = pad;
+    m.querySelector('#hol_visinfo').textContent = pad ? 'Este tipo aparece no app. Desmarque para deixar este envio só no painel.' : 'Este tipo fica só no painel. Marque para mostrar este envio no app.'; };
+  troca();
   m.querySelector('#hol_cat').onchange = troca;
-  pegarConfig().catch(() => {});
+  pegarConfig().then(troca).catch(() => {});
   m.querySelector('#hol_ler').onclick = async ev => {
     const f = m.querySelector('#hol_arq').files[0], cp = m.querySelector('#hol_comp').value, cat = m.querySelector('#hol_cat').value;
     const ref = m.querySelector('#hol_ref').value.trim().replace(/[–-]\s*$/, '').trim();
@@ -2706,6 +2719,8 @@ function modalHolerites() {
     if (cat !== 'Holerite' && ref.length < 3) { toast('Dê um nome ao documento (ex.: ano-base)', 'erro'); return; }
     if (!f) { toast('Escolha o PDF', 'erro'); return; }
     const doc = cat === 'Holerite' ? { cat, desc: `Holerite ${cp.slice(5)}/${cp.slice(0, 4)}`, arq: `${cp.slice(5)}-${cp.slice(0, 4)}`, comp: cp } : { cat, desc: ref, arq: ref, comp: '' };
+    const quer = m.querySelector('#hol_vis').checked, padrao = cat === 'Holerite' || catsAppCfg(R.cfg || {}).includes(cat);
+    doc.vis = quer === padrao ? '' : quer ? 'sim' : 'nao'; doc.noApp = quer;
     const b = ev.currentTarget; b.disabled = true; b.innerHTML = '<span class="spin"></span> Lendo o PDF…';
     try {
       const { pdfjs } = await libsPdf();
@@ -2801,10 +2816,10 @@ async function salvarHolerites(m, b) {
       const lote = [];
       for (const g of lista.slice(i, i + 5)) lote.push({ codigo: g.a.codigo, base64: await paraB64(new Blob([g.bytes], { type: 'application/pdf' })) });
       b.innerHTML = `<span class="spin"></span> Salvando ${salvos.length + lote.length} de ${lista.length}…`;
-      const r = await api('salvarSeparados', { senha: R.senha, categoria: H.cat, descricao: H.desc, nomeArquivo: H.arq, itens: lote });
+      const r = await api('salvarSeparados', { senha: R.senha, categoria: H.cat, descricao: H.desc, nomeArquivo: H.arq, appVis: H.vis, itens: lote });
       salvos.push(...r.salvos);
     }
-    const doc = { cat: H.cat, desc: H.desc }; R.hol = null;
+    const doc = { cat: H.cat, desc: H.desc, vis: H.vis, noApp: H.noApp }; R.hol = null;
     resultadoHolerites(m, doc, lista.map(g => g.a), salvos);
   } catch (e) { b.disabled = false; b.textContent = 'Tentar de novo'; erroRH(e); }
 }
@@ -2825,12 +2840,12 @@ async function conferirArquivo(pdfjs, g, H) {
 }
 const msgHolNovo = (a, doc) => `Olá, ${primeiro(a.nome)}! ${doc.cat === 'Holerite' ? 'Seu holerite de ' + doc.desc.replace('Holerite ', '') : 'Seu documento "' + doc.desc + '"'} já está no app *Meu RH* do Posto Trevo:\n${linkMeuRH()}\n\nEntre com seu CPF e sua senha.${a.app_status === 'ativo' ? '' : ' Ainda não tem acesso? Me avise que eu mando o seu código.'}\n\nRH – Posto Trevo`;
 function resultadoHolerites(m, doc, pessoas, salvos) {
-  const mes = doc.desc, noApp = catsAppCfg(R.cfg || {}).includes(doc.cat) || doc.cat === 'Holerite';
+  const mes = doc.desc, noApp = doc.noApp;
   m.querySelector('.modal-c').innerHTML = `<h2>${esc(mes)}: salvo</h2>
     <div class="aviso" style="background:#E7F4EC;border-color:#BFE3CC;color:#17663a;margin-bottom:10px">${salvos.length} funcionário(s) receberam o documento. Cada arquivo foi conferido de novo antes de salvar.</div>
     <p class="muted" style="font-size:14px">${pessoas.map(a => esc(a.nome)).join(', ')}</p>
     <p class="muted" style="font-size:14px">Se notar algum erro, desfaça agora: "${esc(mes)}" desses funcionários é apagado e você pode separar de novo.</p>
-    ${noApp ? '' : `<div class="aviso" style="margin-top:10px">"${esc(doc.cat)}" não aparece no app Meu RH, então ficou só aqui no painel. Para liberar, marque em Configurações → App Meu RH.</div>`}
+    ${noApp ? '' : `<div class="aviso" style="margin-top:10px">Este envio ficou só aqui no painel e não aparece no app Meu RH. Para mostrar depois, abra a aba Documentos do funcionário e clique em "Só no painel".</div>`}
     <div${noApp ? '' : ' hidden'}><h3 style="margin:14px 0 6px">Avisar os funcionários</h3>
     <div class="det-acoes" style="margin-top:0"><button class="btn pri" id="hol_email">${ic('mail')}Avisar por e-mail quem tem e-mail</button></div>
     <div class="hol-pag" style="max-height:34vh;margin-top:8px">${pessoas.map(a => { const p = R.itens.find(x => x.codigo === a.codigo) || a, cel = dig(p.celular), msg = msgHolNovo(p, doc);
@@ -2840,7 +2855,7 @@ function resultadoHolerites(m, doc, pessoas, salvos) {
   m.querySelector('#hol_email').onclick = async ev => {
     const b = ev.currentTarget; b.disabled = true; b.innerHTML = '<span class="spin"></span> Enviando…';
     try {
-      const r = await api('avisarDocs', { senha: R.senha, categoria: doc.cat, descricao: doc.desc, codigos: salvos, link: linkMeuRH() });
+      const r = await api('avisarDocs', { senha: R.senha, categoria: doc.cat, descricao: doc.desc, appVis: doc.vis, codigos: salvos, link: linkMeuRH() });
       b.innerHTML = `${ic('mail')}${r.enviados.length} e-mail(s) enviados`;
       toast(`${r.enviados.length} aviso(s) por e-mail enviados${r.semEmail.length ? ` · ${r.semEmail.length} sem e-mail: avise pelo WhatsApp` : ''}`);
     } catch (e) { b.disabled = false; b.innerHTML = `${ic('mail')}Avisar por e-mail quem tem e-mail`; erroRH(e); }
@@ -3392,6 +3407,14 @@ const ACOES_RH = {
   importar: () => modalImportar(),
   vcf: () => exportarVcf(),
   enviarficha: () => modalEnviarFicha(),
+  async docvis(b) {
+    const f = R.det.docs.find(x => x.file_id === b.dataset.id); if (!f) return;
+    const quer = !visApp(f), padrao = catsAppCfg(R.cfg || {}).includes(f.categoria);
+    const vis = quer === padrao ? '' : quer ? 'sim' : 'nao';
+    b.disabled = true;
+    try { await api('docAppVis', { senha: R.senha, file_id: f.file_id, vis }); f.app_vis = vis; toast(quer ? 'Agora aparece no app Meu RH' : 'Escondido do app Meu RH'); rDet(); }
+    catch (e) { b.disabled = false; erroRH(e); }
+  },
   holn(b) { R.holN = b.dataset.n === 'todos' ? 'todos' : +b.dataset.n; rDet(); },
   holjuntar: b => juntarHolerites(b),
   holemail: () => modalEnviarFicha(holVisiveis().map(h => h.f.file_id)),
