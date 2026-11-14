@@ -1413,7 +1413,7 @@ function rLista() {
   app.innerHTML = shell(R.aba, `
     <div class="pg-h"><div><h1>${func ? 'Funcionários' : 'Admissões'}</h1><p>${func ? 'A equipe do posto: ativos e desligados.' : 'Novos colaboradores preenchendo a ficha pelo link.'}</p></div>
       <div class="det-acoes" style="margin:0">${func && nAnt ? `<button class="btn sec" data-act="ferantodos">Lançar férias anteriores (${nAnt})</button>` : ''}
-      ${func ? `<button class="btn sec" data-act="holerites">${ic('file')}Separar holerites</button><button class="btn sec" data-act="apptodos">${ic('send')}App Meu RH</button><button class="btn sec" data-act="importar">${ic('file')}Importar lista</button><button class="btn sec" data-act="linkgrupo">${ic('send')}Link do grupo</button>` : ''}
+      ${func ? `<button class="btn sec" data-act="holerites">${ic('file')}Separar documentos</button><button class="btn sec" data-act="apptodos">${ic('send')}App Meu RH</button><button class="btn sec" data-act="importar">${ic('file')}Importar lista</button><button class="btn sec" data-act="linkgrupo">${ic('send')}Link do grupo</button>` : ''}
       ${func ? `<button class="btn ouro" data-act="cadastrar">${ic('userplus')}Cadastrar funcionário</button>` : `<button class="btn ouro" data-act="nova">${ic('send')}Nova admissão</button>`}</div></div>
     <div class="barra">
       <div class="filtros">${Object.entries(F).map(([k, v]) => `<button data-act="filtro" data-f="${k}" class="${filtroAtual() === k ? 'on' : ''}">${v.l} <span class="n">${cont(k)}</span></button>`).join('')}</div>
@@ -2406,7 +2406,7 @@ function fichaHtmlPdf(p) {
     <table class="ass"><tr><td>${esc(p.nome)}</td><td class="sp"></td><td>Responsável RH</td></tr></table>
   </body></html>`;
 }
-const ACAO_L = { holerites_aviso: 'Avisou holerites por e-mail', app_esqueci: 'Pediu nova senha do app', escala_admitido: 'Enviou para a escala', escala_desligado: 'Avisou a escala do desligamento', escala_erro: 'Falha ao enviar para a escala', app_ativado: 'Ativou o app Meu RH', app_codigo: 'Gerou código do app', app_holerite: 'Abriu holerite no app', app_bloqueado: 'Bloqueou o app', holerites_desfeitos: 'Desfez envio de holerites', holerites: 'Separou holerites', holerite: 'Holerite salvo', candidato: 'Nova candidatura', candidato_contratado: 'Contratou candidato', candidato_removido: 'Excluiu candidato', link_email: 'Enviou o link da ficha por e-mail', entrar: 'Entrou no painel', senha: 'Trocou a senha', usuario: 'Usuários', backup: 'Backup', emails: 'Configurações', envio_email: 'Enviou e-mail',
+const ACAO_L = { docs_separados: 'Separou documentos', docs_desfeitos: 'Desfez envio de documentos', docs_aviso: 'Avisou documentos por e-mail', doc_separado: 'Documento separado recebido', holerites_aviso: 'Avisou holerites por e-mail', app_esqueci: 'Pediu nova senha do app', escala_admitido: 'Enviou para a escala', escala_desligado: 'Avisou a escala do desligamento', escala_erro: 'Falha ao enviar para a escala', app_ativado: 'Ativou o app Meu RH', app_codigo: 'Gerou código do app', app_holerite: 'Abriu holerite no app', app_bloqueado: 'Bloqueou o app', holerites_desfeitos: 'Desfez envio de holerites', holerites: 'Separou holerites', holerite: 'Holerite salvo', candidato: 'Nova candidatura', candidato_contratado: 'Contratou candidato', candidato_removido: 'Excluiu candidato', link_email: 'Enviou o link da ficha por e-mail', entrar: 'Entrou no painel', senha: 'Trocou a senha', usuario: 'Usuários', backup: 'Backup', emails: 'Configurações', envio_email: 'Enviou e-mail',
   criado: 'Criou admissão', enviado: 'Colaborador enviou a ficha', cadastro_rh: 'Cadastrou funcionário', ficha_editada_rh: 'Editou a ficha', contrato: 'Alterou o contrato',
   documento_removido: 'Removeu documento', desligado: 'Desligou', reintegrado: 'Reintegrou', comunicado: 'Comunicado', importar: 'Importou lista', ferias_antigas: 'Lançou férias antigas',
   identificou: 'Colaborador entrou pelo link do grupo', atualizacao_enviada: 'Colaborador atualizou a ficha', reenvio_pedido: 'Pediu reenvio de documento', reenvio_cancelado: 'Cancelou reenvio',
@@ -2622,20 +2622,34 @@ function identificarPaginas(textos, pessoas) {
     return { como: 'nada', nivel: 'manual' };
   });
 }
+// referência sugerida para cada tipo de documento
+const refPadrao = cat => { const y = new Date().getFullYear(), mm = new Date().getMonth();
+  return /informe/i.test(cat) ? `Informe de rendimentos – ano-base ${mm < 6 ? y - 1 : y}` : /13/.test(cat) ? `13º salário ${y}` : /férias/i.test(cat) ? 'Recibo de férias ' : `${cat} – `; };
 function modalHolerites() {
   const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1);
   const comp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-  const m = abrirModal(`<h2>Separar holerites</h2>
-    <p class="muted">Anexe o PDF com os holerites de todos que a contabilidade manda. O sistema lê cada página, procura o CPF e o nome do funcionário e guarda em <b>Documentos</b> de cada um só o holerite dele, que também aparece no app <b>Meu RH</b>.</p>
+  const cats = CATEG_RH.filter(c => !['Ficha de registro', 'Outros'].includes(c));
+  const m = abrirModal(`<h2>Separar documentos</h2>
+    <p class="muted">Anexe o PDF único que a contabilidade manda (holerites, informes de rendimentos, recibos de 13º…). O sistema lê cada página, procura o CPF e o nome do funcionário e guarda em <b>Documentos</b> de cada um só a parte dele${''}.</p>
     <div class="grid">
-      <div class="fld h"><label for="hol_comp">Mês do holerite</label><input id="hol_comp" type="month" value="${comp}"></div>
-      <div class="fld"><label for="hol_arq">PDF dos holerites</label><input id="hol_arq" type="file" accept="application/pdf,.pdf"></div>
+      <div class="fld h"><label for="hol_cat">Tipo de documento</label><select id="hol_cat">${cats.map(c => `<option${c === 'Holerite' ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select></div>
+      <div class="fld h" id="hol_wmes"><label for="hol_comp">Mês do holerite</label><input id="hol_comp" type="month" value="${comp}"></div>
+      <div class="fld h" id="hol_wref" hidden><label for="hol_ref">Nome do documento</label><input id="hol_ref" maxlength="120" placeholder="Ex.: Informe de rendimentos – ano-base 2025"><small>É o nome que aparece na ficha e no app.</small></div>
+      <div class="fld"><label for="hol_arq">PDF</label><input id="hol_arq" type="file" accept="application/pdf,.pdf"></div>
     </div>
     <div class="modal-acoes"><button class="btn sec" data-act="fechar">Cancelar</button><button class="btn pri" id="hol_ler">Ler o PDF</button></div>`, true);
+  const troca = () => { const c = m.querySelector('#hol_cat').value, h = c === 'Holerite';
+    m.querySelector('#hol_wmes').hidden = !h; m.querySelector('#hol_wref').hidden = h;
+    if (!h) m.querySelector('#hol_ref').value = refPadrao(c); };
+  m.querySelector('#hol_cat').onchange = troca;
+  pegarConfig().catch(() => {});
   m.querySelector('#hol_ler').onclick = async ev => {
-    const f = m.querySelector('#hol_arq').files[0], cp = m.querySelector('#hol_comp').value;
-    if (!/^\d{4}-\d{2}$/.test(cp)) { toast('Escolha o mês do holerite', 'erro'); return; }
-    if (!f) { toast('Escolha o PDF dos holerites', 'erro'); return; }
+    const f = m.querySelector('#hol_arq').files[0], cp = m.querySelector('#hol_comp').value, cat = m.querySelector('#hol_cat').value;
+    const ref = m.querySelector('#hol_ref').value.trim().replace(/[–-]\s*$/, '').trim();
+    if (cat === 'Holerite' && !/^\d{4}-\d{2}$/.test(cp)) { toast('Escolha o mês do holerite', 'erro'); return; }
+    if (cat !== 'Holerite' && ref.length < 3) { toast('Dê um nome ao documento (ex.: ano-base)', 'erro'); return; }
+    if (!f) { toast('Escolha o PDF', 'erro'); return; }
+    const doc = cat === 'Holerite' ? { cat, desc: `Holerite ${cp.slice(5)}/${cp.slice(0, 4)}`, arq: `${cp.slice(5)}-${cp.slice(0, 4)}`, comp: cp } : { cat, desc: ref, arq: ref, comp: '' };
     const b = ev.currentTarget; b.disabled = true; b.innerHTML = '<span class="spin"></span> Lendo o PDF…';
     try {
       const { pdfjs } = await libsPdf();
@@ -2646,7 +2660,7 @@ function modalHolerites() {
       const tt = textos.map(t => t.trim()).filter(Boolean); let pref = 0;
       if (tt.length > 1) { while (pref < tt[0].length && tt.every(t => t[pref] === tt[0][pref])) pref++; pref = Math.max(0, tt[0].lastIndexOf(' ', pref)); }
       const res = identificarPaginas(textos, pessoas);
-      R.hol = { comp: cp, bytes, textos, pessoas, pref, res, so: false };
+      R.hol = { ...doc, bytes, textos, pessoas, pref, res, so: false };
       rHolerites(m);
     } catch (e) { b.disabled = false; b.textContent = 'Ler o PDF'; toast(e.message, 'erro'); }
   };
@@ -2674,11 +2688,11 @@ function rHolerites(m) {
   const nConf = H.res.filter(holPendente).length, nMan = H.res.filter(r => !r.a && r.como !== 'ignorar' && r.como !== 'vazia').length;
   const precisa = r => holPendente(r) || (!r.a && r.como !== 'ignorar' && r.como !== 'vazia');
   const semHol = R.itens.filter(a => a.status === 'aprovado' && !quem.has(a.codigo));
-  m.querySelector('.modal-c').innerHTML = `<h2>Separar holerites – ${esc(H.comp.slice(5) + '/' + H.comp.slice(0, 4))}</h2>
+  m.querySelector('.modal-c').innerHTML = `<h2>Separar: ${esc(H.desc)}</h2>
     <div class="hol-res"><span><b>${H.res.length}</b> página(s)</span><span><b>${quem.size}</b> funcionário(s)</span>
       <span style="color:#17663a"><b>${H.res.filter(r => r.a && (r.nivel === 'seguro' || r.conferido || r.como === 'manual')).length}</b> página(s) confirmadas</span>
       ${nConf ? `<span style="color:#7a5a00"><b>${nConf}</b> para conferir</span>` : ''}${nMan ? `<span style="color:#9a2a20"><b>${nMan}</b> sem dono</span>` : ''}</div>
-    ${semHol.length ? `<details style="padding:0 0 8px"><summary style="font-weight:600;font-size:14px">${semHol.length} funcionário(s) ativo(s) sem holerite neste PDF</summary><p class="muted" style="font-size:14px">${semHol.map(a => esc(a.nome)).join(', ')}</p></details>` : ''}
+    ${semHol.length ? `<details style="padding:0 0 8px"><summary style="font-weight:600;font-size:14px">${semHol.length} funcionário(s) ativo(s) sem ${H.cat === 'Holerite' ? 'holerite' : 'documento'} neste PDF</summary><p class="muted" style="font-size:14px">${semHol.map(a => esc(a.nome)).join(', ')}</p></details>` : ''}
     <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-bottom:8px">
       <label style="display:flex;gap:8px;align-items:center;font-weight:400;font-size:14px"><input type="checkbox" id="hol_so" style="width:18px;height:18px;min-height:0"${H.so ? ' checked' : ''}> Mostrar só o que falta resolver</label>
       ${nConf ? `<button class="btn sec sm" id="hol_todas">Conferi todas (${nConf})</button>` : ''}</div>
@@ -2720,7 +2734,7 @@ async function salvarHolerites(m, b) {
       b.innerHTML = `<span class="spin"></span> Separando e conferindo ${k + 1} de ${lista.length}…`;
       const novo = await PDFLib.PDFDocument.create();
       (await novo.copyPages(src, g.pags)).forEach(p => novo.addPage(p));
-      novo.setTitle(`Holerite ${H.comp.slice(5)}/${H.comp.slice(0, 4)} – ${g.a.nome}`);
+      novo.setTitle(`${H.desc} – ${g.a.nome}`);
       g.bytes = await novo.save();
       const prob = await conferirArquivo(pdfjs, g, H);
       if (prob) throw new Error(`Parei sem salvar nada: ${prob} Confira o PDF ou fale com o suporte.`);
@@ -2731,11 +2745,11 @@ async function salvarHolerites(m, b) {
       const lote = [];
       for (const g of lista.slice(i, i + 5)) lote.push({ codigo: g.a.codigo, base64: await paraB64(new Blob([g.bytes], { type: 'application/pdf' })) });
       b.innerHTML = `<span class="spin"></span> Salvando ${salvos.length + lote.length} de ${lista.length}…`;
-      const r = await api('salvarHolerites', { senha: R.senha, competencia: H.comp, itens: lote });
+      const r = await api('salvarSeparados', { senha: R.senha, categoria: H.cat, descricao: H.desc, nomeArquivo: H.arq, itens: lote });
       salvos.push(...r.salvos);
     }
-    const comp = H.comp; R.hol = null;
-    resultadoHolerites(m, comp, lista.map(g => g.a), salvos);
+    const doc = { cat: H.cat, desc: H.desc }; R.hol = null;
+    resultadoHolerites(m, doc, lista.map(g => g.a), salvos);
   } catch (e) { b.disabled = false; b.textContent = 'Tentar de novo'; erroRH(e); }
 }
 // lê de novo o arquivo separado: cada página tem que ser igual à original e não pode ser de outra pessoa
@@ -2753,31 +2767,32 @@ async function conferirArquivo(pdfjs, g, H) {
   }
   return '';
 }
-const msgHolNovo = (a, mes) => `Olá, ${primeiro(a.nome)}! Seu holerite de ${mes} já está no app *Meu RH* do Posto Trevo:\n${linkMeuRH()}\n\nEntre com seu CPF e sua senha.${a.app_status === 'ativo' ? '' : ' Ainda não tem acesso? Me avise que eu mando o seu código.'}\n\nRH – Posto Trevo`;
-function resultadoHolerites(m, comp, pessoas, salvos) {
-  const mes = comp.slice(5) + '/' + comp.slice(0, 4);
-  m.querySelector('.modal-c').innerHTML = `<h2>Holerites de ${esc(mes)} salvos</h2>
-    <div class="aviso" style="background:#E7F4EC;border-color:#BFE3CC;color:#17663a;margin-bottom:10px">${salvos.length} funcionário(s) receberam o holerite. Cada arquivo foi conferido de novo antes de salvar.</div>
+const msgHolNovo = (a, doc) => `Olá, ${primeiro(a.nome)}! ${doc.cat === 'Holerite' ? 'Seu holerite de ' + doc.desc.replace('Holerite ', '') : 'Seu documento "' + doc.desc + '"'} já está no app *Meu RH* do Posto Trevo:\n${linkMeuRH()}\n\nEntre com seu CPF e sua senha.${a.app_status === 'ativo' ? '' : ' Ainda não tem acesso? Me avise que eu mando o seu código.'}\n\nRH – Posto Trevo`;
+function resultadoHolerites(m, doc, pessoas, salvos) {
+  const mes = doc.desc, noApp = catsAppCfg(R.cfg || {}).includes(doc.cat) || doc.cat === 'Holerite';
+  m.querySelector('.modal-c').innerHTML = `<h2>${esc(mes)}: salvo</h2>
+    <div class="aviso" style="background:#E7F4EC;border-color:#BFE3CC;color:#17663a;margin-bottom:10px">${salvos.length} funcionário(s) receberam o documento. Cada arquivo foi conferido de novo antes de salvar.</div>
     <p class="muted" style="font-size:14px">${pessoas.map(a => esc(a.nome)).join(', ')}</p>
-    <p class="muted" style="font-size:14px">Se notar algum erro, desfaça agora: os holerites de ${esc(mes)} desses funcionários são apagados e você pode separar de novo.</p>
-    <h3 style="margin:14px 0 6px">Avisar os funcionários</h3>
+    <p class="muted" style="font-size:14px">Se notar algum erro, desfaça agora: "${esc(mes)}" desses funcionários é apagado e você pode separar de novo.</p>
+    ${noApp ? '' : `<div class="aviso" style="margin-top:10px">"${esc(doc.cat)}" não aparece no app Meu RH, então ficou só aqui no painel. Para liberar, marque em Configurações → App Meu RH.</div>`}
+    <div${noApp ? '' : ' hidden'}><h3 style="margin:14px 0 6px">Avisar os funcionários</h3>
     <div class="det-acoes" style="margin-top:0"><button class="btn pri" id="hol_email">${ic('mail')}Avisar por e-mail quem tem e-mail</button></div>
-    <div class="hol-pag" style="max-height:34vh;margin-top:8px">${pessoas.map(a => { const p = R.itens.find(x => x.codigo === a.codigo) || a, cel = dig(p.celular), msg = msgHolNovo(p, mes);
+    <div class="hol-pag" style="max-height:34vh;margin-top:8px">${pessoas.map(a => { const p = R.itens.find(x => x.codigo === a.codigo) || a, cel = dig(p.celular), msg = msgHolNovo(p, doc);
       return `<div class="hp app"><div style="min-width:0"><span style="font-weight:600">${esc(p.nome)}</span><small>${chipApp(p.app_status || '')}${p.email ? ' · ' + esc(p.email) : ' · sem e-mail'}</small></div>
-        <div>${[10, 11].includes(cel.length) ? `<a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/55${cel}?text=${encodeURIComponent(msg)}">WhatsApp</a>` : '<small class="muted">sem celular</small>'}</div></div>`; }).join('')}</div>
+        <div>${[10, 11].includes(cel.length) ? `<a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/55${cel}?text=${encodeURIComponent(msg)}">WhatsApp</a>` : '<small class="muted">sem celular</small>'}</div></div>`; }).join('')}</div></div>
     <div class="modal-acoes"><button class="btn sec" id="hol_desf">Desfazer este envio</button><button class="btn pri" data-act="fechar">Concluir</button></div>`;
   m.querySelector('#hol_email').onclick = async ev => {
     const b = ev.currentTarget; b.disabled = true; b.innerHTML = '<span class="spin"></span> Enviando…';
     try {
-      const r = await api('avisarHolerites', { senha: R.senha, competencia: comp, codigos: salvos, link: linkMeuRH() });
+      const r = await api('avisarDocs', { senha: R.senha, categoria: doc.cat, descricao: doc.desc, codigos: salvos, link: linkMeuRH() });
       b.innerHTML = `${ic('mail')}${r.enviados.length} e-mail(s) enviados`;
       toast(`${r.enviados.length} aviso(s) por e-mail enviados${r.semEmail.length ? ` · ${r.semEmail.length} sem e-mail: avise pelo WhatsApp` : ''}`);
     } catch (e) { b.disabled = false; b.innerHTML = `${ic('mail')}Avisar por e-mail quem tem e-mail`; erroRH(e); }
   };
   m.querySelector('#hol_desf').onclick = async ev => {
-    if (!confirm(`Apagar os holerites de ${mes} de ${salvos.length} funcionário(s)?`)) return;
+    if (!confirm(`Apagar "${mes}" de ${salvos.length} funcionário(s)?`)) return;
     ev.currentTarget.disabled = true;
-    try { const r = await api('removerHolerites', { senha: R.senha, competencia: comp, codigos: salvos }); fecharModal(); toast(`Envio desfeito: ${r.removidos} holerite(s) apagados`); }
+    try { const r = await api('removerSeparados', { senha: R.senha, categoria: doc.cat, descricao: doc.desc, codigos: salvos }); fecharModal(); toast(`Envio desfeito: ${r.removidos} documento(s) apagados`); }
     catch (e) { ev.currentTarget.disabled = false; erroRH(e); }
   };
 }
