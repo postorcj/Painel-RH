@@ -454,6 +454,22 @@ dl.kv dd{margin:0;font-weight:600;word-break:break-word}
 .mc-h{text-align:center;font-size:12px;font-weight:700;color:var(--cinza)}.mc-h.dom{color:var(--verm)}
 .mc-d{border:0;font-family:inherit;cursor:pointer;border-radius:8px;padding:5px 0;text-align:center;line-height:1.1;background:#E7F4EC;color:#17663a}.mc-d.sel{outline:3px solid var(--verde2);outline-offset:1px}.mc-d b{display:block;font-size:14px}.mc-d span{font-size:11px;font-weight:700}
 .mc-d.F{background:#FBECEA;color:#9a2a20}.mc-d.V{background:#FFF1C2;color:#7a5a00}.mc-d.hj{outline:3px solid var(--ouro);outline-offset:1px}
+details.pasta{border:1px solid var(--linha);border-radius:12px;margin-top:8px;background:#fff}
+details.pasta>summary{list-style:none;display:flex;align-items:center;justify-content:flex-start;gap:10px;padding:12px 14px;cursor:pointer;font-weight:600;text-align:left}
+details.pasta>summary::after{content:none!important;display:none!important}
+details.pasta>summary>*{flex:none}
+details.pasta>summary::-webkit-details-marker{display:none}
+details.pasta>summary::before{content:'';width:8px;height:8px;border-right:2px solid var(--cinza);border-bottom:2px solid var(--cinza);transform:rotate(-45deg);transition:transform .15s;flex:none}
+details.pasta[open]>summary::before{transform:rotate(45deg)}
+.pasta-n{font-family:var(--disp);font-size:19px}.pasta-c{background:var(--creme);border-radius:999px;padding:1px 9px;font-size:13px;color:var(--cinza)}
+.pasta-app{margin-left:auto}.pasta-x{margin-left:auto;font-weight:400}
+.pasta-b{padding:0 14px 12px}
+.doc-lista{list-style:none;margin:0;padding:0}
+.doc-l{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--linha)}.doc-l:first-child{border-top:0}
+.doc-t{flex:1;min-width:0}.doc-t a{color:var(--tinta);text-decoration:none}.doc-t a[href]:hover b{color:var(--verde2);text-decoration:underline}
+.doc-t small{display:block;color:var(--cinza);font-size:12.5px}
+.doc-sub{background:var(--creme);border-radius:10px;padding:10px 12px;margin-bottom:8px}.doc-sub .doc-l{border-color:#D5DDD7}
+.doc-subh{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:4px}
 .app-cod{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:14px}.app-cod b{font-family:var(--disp);font-size:20px;letter-spacing:.06em}
 .dest-op{display:grid;gap:6px}.dest-op .pes{border:1.5px solid var(--linha);border-radius:12px}.dest-op .pes.on{border-color:var(--verde2)}
 .pes input[type=radio]{width:18px;height:18px;min-height:0;flex:none;accent-color:var(--verde2)}
@@ -1940,18 +1956,58 @@ async function juntarHolerites(b) {
   } catch (e) { erroRH(e); }
   b.disabled = false; b.innerHTML = txt;
 }
+/* Documentos do funcionário organizados em pastas */
+const PASTAS_DOC = [
+  { k: 'contrato', l: 'Contrato e admissão', ic: 'file', cats: ['Ficha de registro', 'Contrato de trabalho', 'Contrato de experiência'] },
+  { k: 'pagamento', l: 'Pagamentos', ic: 'file', cats: ['Holerite', 'Recibo de 13º salário', 'Informe de rendimentos (IR)'] },
+  { k: 'ferias', l: 'Férias', ic: 'file', cats: ['Recibo de férias'] },
+  { k: 'saude', l: 'Saúde e segurança', ic: 'file', cats: ['ASO / exame', 'Atestado'] },
+  { k: 'ocorr', l: 'Ocorrências', ic: 'file', cats: ['Advertência / suspensão'] },
+  { k: 'deslig', l: 'Desligamento', ic: 'file', cats: ['TRCT / rescisão', 'Exame demissional'] },
+  { k: 'outros', l: 'Outros', ic: 'file', cats: [] }
+];
+const pastaDoc = cat => PASTAS_DOC.find(p => p.cats.includes(cat)) || PASTAS_DOC[PASTAS_DOC.length - 1];
+const tituloDoc = f => f.descricao || f.categoria || f.arquivo || 'Documento';
+function linhaDocRH(f, noApp) {
+  return `<li class="doc-l"><div class="doc-t"><a ${f.url ? `href="${esc(f.url)}" target="_blank" rel="noopener"` : ''}><b>${esc(tituloDoc(f))}</b></a>
+      <small>${esc(f.categoria || '')}${f.descricao && f.descricao !== f.categoria ? '' : ''} · ${esc(String(f.enviado_em || '').slice(0, 10))} · ${kb(f.tamanho)}${noApp ? ` · ${f.visto_em ? 'visto no app em ' + esc(String(f.visto_em).slice(0, 10)) : 'no app, ainda não aberto'}` : ''}</small></div>
+    <button class="x no-print" data-act="rmdocrh" data-id="${esc(f.file_id)}" aria-label="Remover ${esc(tituloDoc(f))}">×</button></li>`;
+}
+function blocoHolerites(hs, noApp) {
+  const n = R.holN || 3, vis = n === 'todos' ? hs : hs.slice(0, n);
+  return `<div class="doc-sub"><div class="doc-subh"><b>Holerites (${hs.length})</b>
+      <div class="seg no-print">${[[3, 'Últimos 3'], [6, 'Últimos 6'], [12, 'Últimos 12'], ['todos', 'Todos']].map(([k, l]) => `<button data-act="holn" data-n="${k}" class="${String(n) === String(k) ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+    <ul class="doc-lista">${vis.map(h => linhaDocRH({ ...h.f, descricao: 'Holerite ' + compTxt(h.comp) }, noApp)).join('')}</ul>
+    <div class="det-acoes no-print" style="margin-top:6px"><button class="btn pri sm" data-act="holjuntar">${ic('file')}Baixar ${vis.length > 1 ? `os ${vis.length} em um PDF` : 'o PDF'}</button>
+      <button class="btn sec sm" data-act="holemail">${ic('mail')}Enviar por e-mail</button></div></div>`;
+}
 function subDocs() {
-  const { ficha: d, docs, eventos } = R.det;
-  const rh = docs.filter(f => f.origem === 'rh').sort((x, y) => String(y.enviado_em).localeCompare(String(x.enviado_em)));
+  const { ficha: d, docs } = R.det, q = normTxt(R.docBusca || '');
+  const casa = f => !q || (' ' + normTxt([f.categoria, f.descricao, f.arquivo].join(' '))).includes(' ' + q);
+  const rh = docs.filter(f => f.origem === 'rh' && casa(f)).sort((x, y) => String(y.enviado_em).localeCompare(String(x.enviado_em)));
   const adm = docs.filter(f => f.origem !== 'rh');
-  return `${cardHolerites()}<section class="card"><div class="card-h"><h3>Documentos do RH (${rh.length})</h3><button class="btn ouro sm no-print" data-act="docrh">+ Anexar documento</button></div>
-      ${rh.length ? `<ul class="lista-ev">${rh.map(f => `<li><span class="dt">${esc(String(f.enviado_em || '').slice(0, 10))}</span>
-        <div><b>${esc(f.categoria || 'Documento')}</b>${f.descricao ? `<small>${esc(f.descricao)}</small>` : ''}${linkArq(f)}</div>
-        <button class="x no-print" data-act="rmdocrh" data-id="${esc(f.file_id)}" aria-label="Remover">×</button></li>`).join('')}</ul>`
-        : '<p class="muted">Nenhum documento ainda. Anexe aqui ficha de registro, contrato, holerites, ASO, recibos de férias, TRCT e o que mais precisar guardar.</p>'}
-    </section>
-    <section class="card"><div class="card-h"><h3>Enviados pelo funcionário (${adm.length})</h3>${R.det.adm.status === 'aprovado' ? '<button class="btn sec sm no-print" data-act="pedirreenvio">Pedir reenvio</button>' : ''}</div>
-      <ul class="chk">${listaDocsAdm(d, adm, R.det.adm.status === 'aprovado')}</ul></section>`;
+  const app = catsAppCfg(R.cfg || {});
+  R.docAbertas = R.docAbertas || { pessoais: false, pagamento: true, contrato: true };
+  const pastas = PASTAS_DOC.map(p => ({ ...p, itens: rh.filter(f => pastaDoc(f.categoria).k === p.k) })).filter(p => p.itens.length);
+  const total = docs.filter(f => f.origem === 'rh').length;
+  const pasta = p => {
+    const hol = p.k === 'pagamento' ? holeritesDe(p.itens) : [], resto = p.k === 'pagamento' ? p.itens.filter(f => f.categoria !== 'Holerite') : p.itens;
+    const abre = q || R.docAbertas[p.k];
+    return `<details class="pasta" data-pasta="${p.k}"${abre ? ' open' : ''}><summary><span class="pasta-n">${esc(p.l)}</span><span class="pasta-c">${p.itens.length}</span>
+        ${p.cats.some(c => app.includes(c)) ? '<span class="chip s-ok pasta-app" title="Aparece para o funcionário no app Meu RH">no app</span>' : ''}</summary>
+      <div class="pasta-b">${hol.length ? blocoHolerites(hol, app.includes('Holerite')) : ''}
+        ${resto.length ? `<ul class="doc-lista">${resto.map(f => linhaDocRH(f, app.includes(f.categoria))).join('')}</ul>` : ''}
+        <button class="lnk2 no-print" data-act="docrh" data-cat="${esc(p.cats[0] || 'Outros')}">+ Anexar em ${esc(p.l)}</button></div></details>`;
+  };
+  const okAdm = adm.length;
+  return `<section class="card"><div class="card-h"><h3>Documentos</h3><button class="btn ouro sm no-print" data-act="docrh">+ Anexar documento</button></div>
+      ${total > 4 ? `<input class="busca no-print" id="docbusca" type="search" placeholder="Buscar documento: holerite, contrato, ASO, 2025…" value="${esc(R.docBusca || '')}" style="margin-bottom:10px">` : ''}
+      <details class="pasta" data-pasta="pessoais"${R.docAbertas.pessoais ? ' open' : ''}><summary><span class="pasta-n">Documentos pessoais</span><span class="pasta-c">${okAdm}</span>
+        <small class="muted pasta-x">enviados pelo funcionário</small></summary>
+        <div class="pasta-b"><ul class="chk">${listaDocsAdm(d, adm, R.det.adm.status === 'aprovado')}</ul>
+          ${R.det.adm.status === 'aprovado' ? '<button class="lnk2 no-print" data-act="pedirreenvio">Pedir reenvio de documento</button>' : ''}</div></details>
+      ${pastas.map(pasta).join('') || (q ? '<p class="muted">Nenhum documento encontrado.</p>' : '<p class="muted" style="margin-top:10px">Nenhum documento do RH ainda. Anexe aqui contrato, ASO, recibos e o que mais precisar guardar; holerites e informes chegam pelo botão Separar documentos.</p>')}
+    </section>`;
 }
 function subFerias() {
   const p = pessoa(), per = periodosFerias(p, R.det.eventos);
@@ -3308,11 +3364,11 @@ const ACOES_RH = {
     try { const r = await api('reintegrar', { senha: R.senha, codigo: R.det.adm.codigo }); toast('Funcionário reintegrado.' + avisoEscala(r)); await recarregarDet('dados'); if (CONFIG.GRUPO_WHATS) modalConvite(pessoa(), false); }
     catch (e) { b.disabled = false; erroRH(e); }
   },
-  docrh() {
-    const a = R.det.adm;
+  docrh(b) {
+    const a = R.det.adm, cat = b && b.dataset && b.dataset.cat;
     modalForm({ titulo: 'Anexar documento', ok: 'Anexar', arquivo: 'Arquivo(s) *',
       defs: [{ k: 'doc_cat', l: 'Tipo de documento', t: 'select', op: CATEG_RH, req: 1 }, { k: 'doc_desc', l: 'Descrição', ph: 'Ex.: Holerite de setembro/2026', max: 200 }],
-      d: {}, async onOk(dd, fs) {
+      d: cat ? { doc_cat: cat } : {}, async onOk(dd, fs) {
         if (!fs.length) throw new Error('Escolha pelo menos um arquivo.');
         const n = await subirRH(a.codigo, fs, { categoria: dd.doc_cat, descricao: dd.doc_desc || '' });
         if (n) toast(`${n} arquivo(s) anexado(s)`);
@@ -3598,6 +3654,7 @@ document.addEventListener('input', e => {
   if (!MODO_COLAB && R.form && el.dataset.k) { aoDigitar(el, R.form.d, R.form.mapa); R.form.aoMudar && R.form.aoMudar(el.dataset.k, R.form.d); }
   if (el.id === 'busca') { R.busca = el.value; $('#itens').innerHTML = itensHTML(); }
   if (el.id === 'cbusca') { R.cbusca = el.value; $('#citens').innerHTML = candItens(); }
+  if (el.id === 'docbusca') { R.docBusca = el.value; const pos = el.selectionStart; rDet(); const n = $('#docbusca'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }
   if (el.id === 'com_tit') R.com.form.t = el.value;
   if (el.id === 'com_busca_p') { R.com.form.buscaP = el.value; $('#com_pes').innerHTML = listaPessoasCom(); }
   if (el.id === 'com_msg') { R.com.form.m = el.value; atualizarPrevia(); }
@@ -3637,6 +3694,7 @@ document.addEventListener('submit', e => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
 
+document.addEventListener('toggle', ev => { const d = ev.target; if (d.classList && d.classList.contains('pasta')) { R.docAbertas = R.docAbertas || {}; R.docAbertas[d.dataset.pasta] = d.open; } }, true);
 if (CODIGO) { document.title = 'Ficha de admissão · Posto Trevo'; iniciarColab(CODIGO); }
 else if (GRUPO) {
   document.title = 'Atualização cadastral · Posto Trevo';
