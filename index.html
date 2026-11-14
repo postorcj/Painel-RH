@@ -473,6 +473,11 @@ details.pasta[open]>summary::before{transform:rotate(45deg)}
 .vis-app{flex:none;border:1px solid var(--linha);background:#fff;color:var(--cinza);border-radius:999px;padding:5px 10px;font:600 12.5px/1 inherit;font-family:inherit;cursor:pointer;min-height:30px}
 .vis-app.on{background:#E7F4EC;border-color:#BFE3CC;color:#17663a}
 .vis-app:hover{border-color:var(--verde2)}
+.cfg-abas{margin-bottom:6px}.card>.grid:first-child{margin-top:0}.card>.grid>.sub:first-child{border-top:0;padding-top:0;margin-top:0}
+@media(max-width:640px){.cfg-abas{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:0}.cfg-abas>button:not(.btn){font-size:14px;padding:10px 4px;border-bottom:2px solid var(--linha);margin:0}.cfg-abas>button.on{border-bottom:3px solid var(--ouro)}}.cfg-desc{margin:0 0 14px}
+.cfg-salvar{margin:4px 0 18px}
+.cfg-link{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.cfg-link code{background:var(--creme);border-radius:8px;padding:8px 10px;font-size:14px;word-break:break-all}
+.cfg-passos{margin:10px 0 0;padding-left:20px;font-size:14px}.cfg-passos li{margin:3px 0}
 .app-cod{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:14px}.app-cod b{font-family:var(--disp);font-size:20px;letter-spacing:.06em}
 .dest-op{display:grid;gap:6px}.dest-op .pes{border:1.5px solid var(--linha);border-radius:12px}.dest-op .pes.on{border-color:var(--verde2)}
 .pes input[type=radio]{width:18px;height:18px;min-height:0;flex:none;accent-color:var(--verde2)}
@@ -1236,11 +1241,14 @@ const CATEG_RH = ['Ficha de registro', 'Contrato de trabalho', 'Contrato de expe
   'Informe de rendimentos (IR)', 'Recibo de 13º salário', 'Advertência / suspensão', 'Atestado', 'TRCT / rescisão', 'Exame demissional', 'Outros'];
 const APP_CAT_PADRAO = ['Holerite', 'Recibo de férias', 'Informe de rendimentos (IR)', 'Recibo de 13º salário'];
 const catsAppCfg = cfg => { try { const l = JSON.parse(cfg.app_categorias || 'null'); return Array.isArray(l) ? l : APP_CAT_PADRAO; } catch (e) { return APP_CAT_PADRAO; } };
-const cardAppCats = () => `<section class="card"><h3>App Meu RH: o que o funcionário vê</h3>
-  <p class="muted" style="margin-bottom:6px">Link do app para todos: <b>${esc(linkMeuRH())}</b> <button type="button" class="btn sec sm" data-act="copiar" data-v="${esc(linkMeuRH())}">Copiar</button></p>
-  <label style="display:flex;gap:8px;align-items:flex-start;font-weight:500;margin:6px 0 12px"><input type="checkbox" id="app_nasc" style="width:18px;height:18px;min-height:0;margin-top:2px"${R.cfg.app_nasc === 'nao' ? '' : ' checked'}>
-    <span>Primeiro acesso com CPF + data de nascimento (um link só para todos). Vale só para quem ainda não criou senha. Desmarcado, o primeiro acesso é só com o código que você gera.</span></label>
-  <p class="muted">Documentos do RH dessas categorias aparecem no app para o próprio funcionário. Os outros (advertência, atestado, rescisão…) ficam só aqui no painel.</p>
+const cardAppCats = () => `<section class="card"><h3>Link do app</h3>
+  <div class="cfg-link"><code>${esc(linkMeuRH())}</code><button type="button" class="btn sec sm" data-act="copiar" data-v="${esc(linkMeuRH())}">Copiar</button></div>
+  <p class="muted" style="margin:6px 0 0">O mesmo link para todos. Para divulgar, use o modelo <b>App Meu RH</b> em Comunicados.</p></section>
+  <section class="card"><h3>Primeiro acesso</h3>
+  <label style="display:flex;gap:8px;align-items:flex-start;font-weight:500"><input type="checkbox" id="app_nasc" style="width:18px;height:18px;min-height:0;margin-top:2px"${R.cfg.app_nasc === 'nao' ? '' : ' checked'}>
+    <span>Permitir criar a senha com CPF + data de nascimento<small class="muted" style="display:block;font-weight:400">Vale só para quem ainda não tem senha. Desmarcado, o primeiro acesso é só com o código que você gera na ficha do funcionário.</small></span></label></section>
+  <section class="card"><h3>Documentos que aparecem no app</h3>
+  <p class="muted">Padrão de cada tipo. Dá para mostrar ou esconder um documento específico na aba Documentos da ficha.</p>
   <div class="grid">${CATEG_RH.filter(c => c !== 'Outros').map(c => `<label class="fld h" style="flex-direction:row;align-items:center;gap:8px;font-weight:500"><input type="checkbox" class="appcat" value="${esc(c)}" style="width:18px;height:18px;min-height:0"${c === 'Holerite' ? ' checked disabled' : catsAppCfg(R.cfg).includes(c) ? ' checked' : ''}> ${esc(c)}</label>`).join('')}</div></section>`;
 const mapaDe = defs => Object.fromEntries(defs.filter(f => f.k).map(f => [f.k, f]));
 const sairBtn = '<button class="lnk no-print" data-act="sair">Sair</button>';
@@ -2427,22 +2435,43 @@ function cardSeguranca() {
     <div class="usr-l"><div class="t"><b>Registro de atividades</b><small>Quem entrou, cadastrou, alterou, enviou e-mail ou mudou configurações.</small></div>
       <button class="btn sec" data-act="atividades">Ver registro</button></div></section>`;
 }
+const CFG_SECOES = [
+  ['emails', 'E-mails', 'Para quem vão a ficha e os documentos no botão Enviar por e-mail da ficha do funcionário.'],
+  ['aprendiz', 'Jovem aprendiz', 'Dados que já vêm preenchidos para cada aprendiz e vão no e-mail do IAM.'],
+  ['app', 'App Meu RH', 'Como os funcionários entram no app e o que eles veem lá.'],
+  ['escala', 'Escala', 'Ligação com o app da escala: quem você aprova aqui vai para lá com nome e cargo.'],
+  ['usuarios', 'Usuários', 'Quem usa este painel, cada um com o próprio usuário e senha.'],
+  ['seguranca', 'Segurança', 'Backup da planilha, registro de atividades e a sua senha.']
+];
+const cfgDefs = ks => CFG_DEFS.filter(f => !f.k || ks.includes(f.k)).filter((f, i, l) => f.k || (l[i + 1] && l[i + 1].k));
+const botaoSalvarCfg = (extra = '') => `<div class="det-acoes cfg-salvar"><button class="btn pri" data-act="salvarcfg">Salvar</button>${extra}</div>`;
+function secaoConfig(k) {
+  if (k === 'emails') return `<section class="card">${formHTML(cfgDefs(['nome_contab', 'email_contab', 'nome_iam', 'email_iam']), R.form.d)}</section>
+    <section class="card"><h3>Outros e-mails</h3><p class="muted">CIPA, sindicato, médico do trabalho… Também aparecem como opção no Enviar por e-mail. Para mais de um e-mail no mesmo contato, separe por vírgula.</p>
+      <div id="cx_lista">${extrasCfg(R.cfg).map(linhaExtra).join('')}</div>
+      <button type="button" class="btn sec" data-act="cfgadd" style="margin-top:8px">+ Adicionar e-mail</button></section>${botaoSalvarCfg()}`;
+  if (k === 'aprendiz') return `<section class="card">${formHTML(cfgDefs(['ap_lider', 'ap_lider_tel', 'ap_salario', 'ap_horario', 'ap_dia_curso']), R.form.d)}</section>${botaoSalvarCfg()}`;
+  if (k === 'app') return `${cardAppCats()}${botaoSalvarCfg()}`;
+  if (k === 'escala') return `<section class="card">${formHTML(cfgDefs(['escala_url', 'escala_chave']), R.form.d)}
+      <ol class="muted cfg-passos"><li>No app da escala, abra <b>Nuvem → Integração com o Painel RH</b>.</li><li>Copie o endereço e a chave e cole aqui.</li><li>Clique em <b>Salvar</b> e depois em <b>Testar conexão</b>.</li></ol></section>
+    ${botaoSalvarCfg('<button class="btn sec" data-act="testarescala">Testar conexão</button>')}`;
+  if (k === 'usuarios') return cardUsuarios();
+  return `${cardSeguranca()}${cardMinhaSenha()}`;
+}
 function rConfig() {
   if (!ehAdmin()) {
     R.form = null;
     app.innerHTML = shell('config', `<div class="estreito-f"><div class="pg-h"><div><h1>Configurações</h1><p>Só o administrador altera e-mails, usuários e backups.</p></div></div>${cardMinhaSenha()}</div>`);
     return;
   }
+  R.cfgAba = R.cfgAba || 'emails';
+  const sec = CFG_SECOES.find(x => x[0] === R.cfgAba) || CFG_SECOES[0];
   R.form = { d: { ...R.cfg }, mapa: mapaDe(CFG_DEFS) };
   app.innerHTML = shell('config', `<div class="estreito-f">
-    <div class="pg-h"><div><h1>Configurações</h1><p>E-mails usados no botão <b>Enviar por e-mail</b> e dados padrão do jovem aprendiz.</p></div></div>
-    <section class="card">${formHTML(CFG_DEFS, R.form.d)}</section>
-    <section class="card"><h3>Outros e-mails cadastrados</h3><p class="muted">CIPA, sindicato, médico do trabalho… Eles aparecem como opção no <b>Enviar por e-mail</b>. Para mais de um e-mail no mesmo contato, separe por vírgula.</p>
-      <div id="cx_lista">${extrasCfg(R.cfg).map(linhaExtra).join('')}</div>
-      <button type="button" class="btn sec" data-act="cfgadd" style="margin-top:8px">+ Adicionar e-mail</button></section>
-    <div class="det-acoes"><button class="btn pri" data-act="salvarcfg">Salvar</button><button class="btn sec" data-act="testarescala">Testar conexão com a escala</button></div>
-    ${cardAppCats()}${cardUsuarios()}${cardSeguranca()}${cardMinhaSenha()}
-    <section class="card"><h3>Como funciona</h3><p class="muted">Na ficha do funcionário, clique em <b>Enviar por e-mail</b>, escolha para quem (contabilidade, IAM, os outros e-mails cadastrados ou um e-mail qualquer) e quais documentos vão junto. A ficha de registro vai em PDF, e os documentos vão anexados. O envio fica registrado no histórico do funcionário.</p></section>
+    <div class="pg-h"><div><h1>Configurações</h1></div></div>
+    <div class="abas no-print cfg-abas" role="tablist">${CFG_SECOES.map(([k, l]) => `<button role="tab" aria-selected="${k === sec[0]}" data-act="cfgaba" data-s="${k}" class="${k === sec[0] ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <p class="muted cfg-desc">${esc(sec[2])}</p>
+    ${secaoConfig(sec[0])}
   </div>`);
 }
 function fichaHtmlPdf(p) {
@@ -3428,7 +3457,13 @@ const ACOES_RH = {
       if (!x.email || !emailsOk(x.email)) { toast('E-mail inválido em ' + x.nome, 'erro'); return; }
     }
     b.disabled = true; b.textContent = 'Salvando…';
-    try { R.cfg = (await api('setConfig', { senha: R.senha, config: { ...pega(CFG_DEFS, d), extras: JSON.stringify(extras), app_nasc: $('#app_nasc') && !$('#app_nasc').checked ? 'nao' : 'sim', app_categorias: JSON.stringify(['Holerite', ...[...document.querySelectorAll('.appcat:checked:not(:disabled)')].map(c => c.value)]) } })).config; toast('Configurações salvas'); rConfig(); }
+    // só a seção aberta está na tela: o resto vai como já estava salvo
+    const temCx = !!$('#cx_lista'), temCats = !!document.querySelector('.appcat');
+    const config = { ...pega(CFG_DEFS, d),
+      extras: temCx ? JSON.stringify(extras) : (R.cfg.extras || '[]'),
+      app_nasc: $('#app_nasc') ? ($('#app_nasc').checked ? 'sim' : 'nao') : (R.cfg.app_nasc || 'sim'),
+      app_categorias: temCats ? JSON.stringify(['Holerite', ...[...document.querySelectorAll('.appcat:checked:not(:disabled)')].map(c => c.value)]) : (R.cfg.app_categorias || JSON.stringify(APP_CAT_PADRAO)) };
+    try { R.cfg = (await api('setConfig', { senha: R.senha, config })).config; toast('Configurações salvas'); rConfig(); }
     catch (e) { b.disabled = false; b.textContent = 'Salvar'; erroRH(e); }
   },
   usrnovo() { modalUsuario(null); },
@@ -3477,6 +3512,7 @@ const ACOES_RH = {
   cfiltro(b) { R.cf = b.dataset.f; rCand(); },
   cand(b) { const c = R.cands.find(x => x.codigo === b.dataset.c); if (c) modalCand(c); },
   divulgar: () => modalDivulgar(),
+  cfgaba(b) { R.cfgAba = b.dataset.s; rConfig(); window.scrollTo(0, 0); },
   cfgadd() { $('#cx_lista').insertAdjacentHTML('beforeend', linhaExtra()); const l = [...document.querySelectorAll('.cx-l .cx-nome')].pop(); if (l) l.focus(); },
   cfgdel(b) { b.closest('.cx-l').remove(); },
   convite: () => modalConvite(pessoa(), false),
