@@ -473,6 +473,8 @@ details.pasta[open]>summary::before{transform:rotate(45deg)}
 .vis-app{flex:none;border:1px solid var(--linha);background:#fff;color:var(--cinza);border-radius:999px;padding:5px 10px;font:600 12.5px/1 inherit;font-family:inherit;cursor:pointer;min-height:30px}
 .vis-app.on{background:#E7F4EC;border-color:#BFE3CC;color:#17663a}
 .vis-app:hover{border-color:var(--verde2)}
+.grupo-box{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:16px;padding:14px 16px;border:1px dashed #1f9d55;border-radius:12px;background:#F1F8F3}
+.grupo-box>div:first-child{flex:1 1 300px}.grupo-box small{display:block;color:var(--cinza);margin-top:2px}
 .cfg-abas{margin-bottom:6px}.card>.grid:first-child{margin-top:0}.card>.grid>.sub:first-child{border-top:0;padding-top:0;margin-top:0}
 @media(max-width:640px){.cfg-abas{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:0}.cfg-abas>button:not(.btn){font-size:14px;padding:10px 4px;border-bottom:2px solid var(--linha);margin:0}.cfg-abas>button.on{border-bottom:3px solid var(--ouro)}}.cfg-desc{margin:0 0 14px}
 .cfg-salvar{margin:4px 0 18px}
@@ -2283,6 +2285,7 @@ function rCom() {
         <div class="fld"><label>Prévia${prev ? ' – como ' + esc(primeiro(prev.nome)) + ' vai receber' : ''}</label><div class="bolha" id="com_prev">${esc(personaliza(f.m, prev ? prev.nome : ''))}</div></div>
       </div>
       <div class="det-acoes"><button class="btn pri" data-act="comcriar"${!ap.length ? ' disabled' : ''}>Criar comunicado e começar o envio</button></div>
+      ${caixaGrupo()}
     </section>
     <section class="card"><h2>Comunicados anteriores</h2>
       ${R.com.lista.length ? `<div class="itens" style="margin-top:12px">${R.com.lista.map(c => {
@@ -2312,7 +2315,7 @@ function rEnvio() {
       <div class="barra-prog"><i style="width:${comW.length ? Math.round(feitos / comW.length * 100) : 100}%"></i></div>
       <p><b>${feitos} de ${comW.length}</b> enviados no WhatsApp${em.size ? ` · e-mail enviado para <b>${em.size}</b>` : ''}</p>
       <div class="det-acoes">${prox ? `<button class="btn wa" data-act="waproximo">Enviar para ${esc(primeiro(prox.nome))} no WhatsApp</button>` : '<span class="chip s-ok">WhatsApp concluído</span>'}
-        <button class="btn sec" data-act="comcopiar">Copiar mensagem (para grupo)</button></div>
+        <button class="btn wa" data-act="comgrupo">${ic('users')}Enviar no grupo</button></div>
     </section>
     <section class="card"><h3>Destinatários (${dest.length})</h3><div style="margin-top:6px">${dest.map(r => {
       const ok = env.has(r.codigo);
@@ -2334,6 +2337,19 @@ function abrirWa(codigo) {
 }
 
 /* ── grupo de avisos no WhatsApp ── */
+// O WhatsApp não deixa um link colocar mensagem direto num grupo: abre com a mensagem pronta e você escolhe o grupo.
+const caixaGrupo = () => `<div class="grupo-box">
+  <div><b>Ou mande de uma vez no grupo de avisos</b><small>Abre o WhatsApp com a mensagem pronta: escolha o grupo <b>Avisos Posto Trevo</b> e envie. No grupo, {nome} vira "pessoal".</small></div>
+  <div class="det-acoes" style="margin:0"><button type="button" class="btn wa" data-act="comgrupo">${ic('users')}Enviar no grupo</button>
+    ${CONFIG.GRUPO_WHATS ? '<button type="button" class="lnk2" data-act="comgrupoabrir">copiar e abrir o grupo</button>' : ''}</div></div>`;
+const msgParaGrupo = () => { const c = R.com.atual ? comAtual() : null; return personaliza(c ? c.mensagem : R.com.form.m, '').trim(); };
+function enviarGrupo(abrirGrupo) {
+  const m = msgParaGrupo();
+  if (!m || m === personaliza(MODELOS.livre().m, '').trim()) { toast('Escreva a mensagem primeiro', 'erro'); return; }
+  if (/__/.test(m) && !confirm('A mensagem ainda tem "__" para preencher. Enviar mesmo assim?')) return;
+  copiar(m, abrirGrupo ? 'Mensagem copiada. No grupo, toque e segure no campo de texto e cole.' : 'Mensagem copiada também, se precisar colar');
+  window.open(abrirGrupo ? CONFIG.GRUPO_WHATS : 'https://wa.me/?text=' + encodeURIComponent(m), '_blank', 'noopener');
+}
 const msgConvite = () => `Olá, {nome}! Entre no grupo *Avisos Posto Trevo* no WhatsApp. É por lá que o RH manda os avisos da equipe.\nÉ só tocar no link:\n${CONFIG.GRUPO_WHATS}` + ASSIN;
 function modalConvite(p, aposAprovar) {
   const msg = personaliza(msgConvite(), p.nome), cel = dig(p.celular), ok = [10, 11].includes(cel.length);
@@ -3687,7 +3703,9 @@ const ACOES_RH = {
     const p = dest.find(r => telWhats(r) && !env.has(r.codigo)); if (p) abrirWa(p.codigo);
   },
   wadesfaz: b => marcar(b.dataset.c, false),
-  comcopiar: () => { copiar(personaliza(comAtual().mensagem, '')); }
+  comcopiar: () => { copiar(personaliza(comAtual().mensagem, '')); },
+  comgrupo: () => enviarGrupo(false),
+  comgrupoabrir: () => enviarGrupo(true)
 };
 
 /* ═══════════ EVENTOS ═══════════ */
