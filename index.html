@@ -473,6 +473,14 @@ details.pasta[open]>summary::before{transform:rotate(45deg)}
 .vis-app{flex:none;border:1px solid var(--linha);background:#fff;color:var(--cinza);border-radius:999px;padding:5px 10px;font:600 12.5px/1 inherit;font-family:inherit;cursor:pointer;min-height:30px}
 .vis-app.on{background:#E7F4EC;border-color:#BFE3CC;color:#17663a}
 .vis-app:hover{border-color:var(--verde2)}
+.ger{border:1px solid var(--linha);border-radius:12px;padding:12px 14px;margin:10px 0}
+.ger-h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:6px}.ger-h small{display:block;color:var(--cinza);font-size:13px}
+details.ger-d{border:0;padding:4px 0 0}.ger-l{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}.ger-l h4{margin:0 0 4px;font-size:14px}
+@media(max-width:640px){.ger-l{grid-template-columns:1fr}}
+.ger-p{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--linha);font-size:14px}.ger-p small{color:var(--cinza)}
+.lei-doc{display:grid;gap:10px;margin:12px 0}.lei-pag{display:block;width:100%;height:auto;background:#fff;border-radius:6px;box-shadow:0 1px 6px rgba(0,0,0,.16)}
+.lei-marca{text-align:center;color:var(--cinza);font-size:13px;margin:4px 0}
+.lei-st{margin:0 0 12px;font-weight:600;color:var(--cinza)}.lei-st.ok{color:var(--verde2)}
 .grupo-box{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:16px;padding:14px 16px;border:1px dashed #1f9d55;border-radius:12px;background:#F1F8F3}
 .grupo-box>div:first-child{flex:1 1 300px}.grupo-box small{display:block;color:var(--cinza);margin-top:2px}
 .cfg-abas{margin-bottom:6px}.card>.grid:first-child{margin-top:0}.card>.grid>.sub:first-child{border-top:0;padding-top:0;margin-top:0}
@@ -1442,7 +1450,7 @@ function rLista() {
   app.innerHTML = shell(R.aba, `
     <div class="pg-h"><div><h1>${func ? 'Funcionários' : 'Admissões'}</h1><p>${func ? 'A equipe do posto: ativos e desligados.' : 'Novos colaboradores preenchendo a ficha pelo link.'}</p></div>
       <div class="det-acoes" style="margin:0">${func && nAnt ? `<button class="btn sec" data-act="ferantodos">Lançar férias anteriores (${nAnt})</button>` : ''}
-      ${func ? `<button class="btn sec" data-act="holerites">${ic('file')}Separar documentos</button><button class="btn sec" data-act="apptodos">${ic('send')}App Meu RH</button><button class="btn sec" data-act="importar">${ic('file')}Importar lista</button><button class="btn sec" data-act="linkgrupo">${ic('send')}Link do grupo</button>` : ''}
+      ${func ? `<button class="btn sec" data-act="holerites">${ic('file')}Separar documentos</button><button class="btn sec" data-act="gerais">${ic('file')}Documentos para todos</button><button class="btn sec" data-act="apptodos">${ic('send')}App Meu RH</button><button class="btn sec" data-act="importar">${ic('file')}Importar lista</button><button class="btn sec" data-act="linkgrupo">${ic('send')}Link do grupo</button>` : ''}
       ${func ? `<button class="btn ouro" data-act="cadastrar">${ic('userplus')}Cadastrar funcionário</button>` : `<button class="btn ouro" data-act="nova">${ic('send')}Nova admissão</button>`}</div></div>
     <div class="barra">
       <div class="filtros">${Object.entries(F).map(([k, v]) => `<button data-act="filtro" data-f="${k}" class="${filtroAtual() === k ? 'on' : ''}">${v.l} <span class="n">${cont(k)}</span></button>`).join('')}</div>
@@ -2023,6 +2031,11 @@ function subDocs() {
         <small class="muted pasta-x">enviados pelo funcionário</small></summary>
         <div class="pasta-b"><ul class="chk">${listaDocsAdm(d, adm, R.det.adm.status === 'aprovado')}</ul>
           ${R.det.adm.status === 'aprovado' ? '<button class="lnk2 no-print" data-act="pedirreenvio">Pedir reenvio de documento</button>' : ''}</div></details>
+      ${(R.det.gerais || []).length ? `<details class="pasta" data-pasta="gerais"${R.docAbertas.gerais ? ' open' : ''}><summary><span class="pasta-n">Documentos para todos</span><span class="pasta-c">${R.det.gerais.length}</span>
+        ${R.det.gerais.some(g => g.obrigatorio && !g.lido_em) ? '<span class="chip s-cor pasta-app">Falta ler</span>' : ''}<small class="muted pasta-x">manual de conduta e outros</small></summary>
+        <div class="pasta-b">${R.det.gerais.map(g => `<div class="ger-p"><span><b>${esc(g.titulo)}</b> <small>versão ${esc(g.versao)}</small></span>
+          ${!g.obrigatorio ? '<span class="chip s-desc">Só consulta</span>' : g.lido_em ? `<span class="chip s-ok">Leu em ${esc(g.lido_em)}</span>` : '<span class="chip s-cor">Ainda não leu</span>'}</div>`).join('')}
+          <button class="lnk2 no-print" data-act="gerais">Gerenciar documentos para todos</button></div></details>` : ''}
       ${pastas.map(pasta).join('') || (q ? '<p class="muted">Nenhum documento encontrado.</p>' : '<p class="muted" style="margin-top:10px">Nenhum documento do RH ainda. Anexe aqui contrato, ASO, recibos e o que mais precisar guardar; holerites e informes chegam pelo botão Separar documentos.</p>')}
     </section>`;
 }
@@ -2664,13 +2677,7 @@ const LIBS_PDF = {
   pdflib: ['https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js', 'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js']
 };
 async function libsPdf() {
-  if (!window.__pdfjs) {
-    let erro;
-    for (const u of LIBS_PDF.pdfjs) {
-      try { const m = await import(u); m.GlobalWorkerOptions.workerSrc = u.replace('pdf.min.mjs', 'pdf.worker.min.mjs'); window.__pdfjs = m; break; } catch (e) { erro = e; }
-    }
-    if (!window.__pdfjs) throw new Error('Não foi possível carregar o leitor de PDF. Verifique a internet e tente de novo.');
-  }
+  await libPdfJs();
   if (!window.PDFLib) {
     for (const u of LIBS_PDF.pdflib) {
       try { await new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = u; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); }); if (window.PDFLib) break; } catch (e) {}
@@ -2678,6 +2685,16 @@ async function libsPdf() {
     if (!window.PDFLib) throw new Error('Não foi possível carregar o separador de PDF. Verifique a internet e tente de novo.');
   }
   return { pdfjs: window.__pdfjs, PDFLib: window.PDFLib };
+}
+async function libPdfJs() {
+  if (!window.__pdfjs) {
+    let erro;
+    for (const u of LIBS_PDF.pdfjs) {
+      try { const m = await import(u); m.GlobalWorkerOptions.workerSrc = u.replace('pdf.min.mjs', 'pdf.worker.min.mjs'); window.__pdfjs = m; break; } catch (e) { erro = e; }
+    }
+    if (!window.__pdfjs) throw new Error('Não foi possível carregar o leitor de PDF. Verifique a internet e tente de novo.');
+  }
+  return window.__pdfjs;
 }
 const normTxt = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
 const LIGA = new Set(['DA', 'DE', 'DO', 'DAS', 'DOS', 'E']);
@@ -3021,7 +3038,8 @@ async function carregarMeu() {
   app.innerHTML = meuTopo() + '<main class="wrap estreito"><div class="card" style="margin-top:24px"><span class="spin"></span> Carregando…</div></main>';
   try {
     const r = await api('appHolerites', { token: meuToken() });
-    Object.assign(MEU, { nome: r.nome, hs: r.holerites || [], docs: r.docs || [], ferias: r.ferias || null, temEscala: !!r.temEscala, esc: null });
+    if (r.pendentes && r.pendentes.length) return telaMeuLeitura(r.pendentes[0], r.nome, r.pendentes.length);
+    Object.assign(MEU, { nome: r.nome, hs: r.holerites || [], docs: r.docs || [], gerais: r.gerais || [], ferias: r.ferias || null, temEscala: !!r.temEscala, esc: null });
     rMeu();
   } catch (e) { meuErro(e); }
 }
@@ -3033,7 +3051,7 @@ function meuFiltrados() {
   return hs;
 }
 function rMeu() {
-  const abas = [['hol', 'Holerites'], ...(MEU.docs.length ? [['docs', 'Documentos']] : []), ...(MEU.temEscala ? [['escala', 'Minha escala']] : []),
+  const abas = [['hol', 'Holerites'], ...(MEU.docs.length || (MEU.gerais || []).length ? [['docs', 'Documentos']] : []), ...(MEU.temEscala ? [['escala', 'Minha escala']] : []),
     ...(MEU.ferias && MEU.ferias.data_admissao ? [['ferias', 'Férias']] : [])];
   if (!abas.some(a => a[0] === MEU.aba)) MEU.aba = 'hol';
   const corpo = MEU.aba === 'docs' ? meuDocs() : MEU.aba === 'escala' ? '<section class="card" id="meu_esc"><span class="spin"></span> Buscando a sua escala…</section>' : MEU.aba === 'ferias' ? meuFerias() : meuHolerites();
@@ -3072,10 +3090,75 @@ function meuHolerites() {
 }
 function meuDocs() {
   const grupos = {}; MEU.docs.forEach(d => { (grupos[d.categoria] = grupos[d.categoria] || []).push(d); });
-  return Object.keys(grupos).sort().map(c => `<section class="card"><h3 style="margin-bottom:6px">${esc(c)}</h3>
+  const ger = (MEU.gerais || []).length ? `<section class="card"><h3 style="margin-bottom:6px">Para todos do Posto Trevo</h3>
+    <ul class="lista-ev">${MEU.gerais.map(g => `<li><span class="dt" style="min-width:96px">${esc(String(g.atualizado_em || '').slice(0, 10))}</span>
+      <div>${esc(g.titulo)}${g.lido_em ? `<small class="muted" style="display:block">Você leu em ${esc(g.lido_em)}</small>` : ''}</div>
+      <button class="btn sec sm" data-meu="${esc(g.id)}">${ic('file')}Abrir</button></li>`).join('')}</ul></section>` : '';
+  return ger + Object.keys(grupos).sort().map(c => `<section class="card"><h3 style="margin-bottom:6px">${esc(c)}</h3>
     <ul class="lista-ev">${grupos[c].sort((x, y) => String(y.enviado_em).localeCompare(String(x.enviado_em))).map(d => `<li><span class="dt" style="min-width:96px">${esc(String(d.enviado_em || '').slice(0, 10))}</span>
       <div>${esc(d.descricao || d.arquivo || c)} ${d.visto ? '' : '<span class="chip s-prog">Novo</span>'}</div>
       <button class="btn sec sm" data-meu="${esc(d.id)}">${ic('file')}Abrir</button></li>`).join('')}</ul></section>`).join('');
+}
+// Leitura obrigatória (ex.: Manual de Conduta): mostra o documento inteiro e só libera depois de ler até o fim
+async function telaMeuLeitura(g, nome, n) {
+  clearInterval(MEU.leiT);
+  app.innerHTML = meuTopo() + `<main class="wrap estreito" style="padding-top:20px">
+    <section class="card meu-dest"><small>${n > 1 ? `Antes de começar · ${n} documentos para ler` : 'Antes de começar'}</small>
+      <h2 style="color:#fff;margin:4px 0 6px;font-size:clamp(24px,7vw,32px)">Olá, ${esc(nome || '')}! Leia o ${esc(g.titulo)}</h2>
+      <p style="margin:0">${+g.versao > 1 ? 'O RH atualizou este documento. ' : ''}Para usar o Meu RH, leia com atenção até o fim e confirme lá embaixo.</p></section>
+    <div id="lei_doc" class="lei-doc"><section class="card"><span class="spin"></span> Abrindo o documento…</section></div>
+    <section class="card" id="lei_fim">
+      <p class="lei-st" id="lei_st">Role até o fim do documento.</p>
+      <label class="aceite lei-ac" style="margin:0"><input type="checkbox" id="lei_ok" disabled><span>Li e entendi o <b>${esc(g.titulo)}</b> e me comprometo a cumprir o que está nele.</span></label>
+      <button class="btn pri big" id="lei_conf" style="margin-top:12px" disabled>Confirmar leitura</button>
+      <div class="det-acoes" style="margin-top:10px"><button class="btn sec sm" id="lei_baixar" hidden>${ic('file')}Baixar o PDF</button><button class="btn sec sm" id="meu_sair">Sair</button></div>
+    </section>${contatoRH()}</main>`;
+  $('#meu_sair').onclick = () => { clearInterval(MEU.leiT); meuToken(null); telaMeuLogin(); };
+  let r;
+  try { r = await api('appBaixar', { token: meuToken(), id: g.id }); }
+  catch (e) {
+    if (/sessão expirou|bloqueado/i.test(e.message)) return meuErro(e);
+    $('#lei_doc').innerHTML = `<section class="card"><h3>Não consegui abrir o documento</h3><p class="muted">${esc(e.message)}</p><button class="btn sec" id="lei_tenta">Tentar de novo</button></section>`;
+    $('#lei_tenta').onclick = () => telaMeuLeitura(g, nome, n); return;
+  }
+  const bytes = b64bytes(r.base64), inicio = Date.now(), box = $('#lei_doc');
+  let paginas = 0, fim = false;
+  const bx = $('#lei_baixar'); bx.hidden = false;
+  bx.onclick = () => { baixarBlob(new Blob([bytes], { type: 'application/pdf' }), r.nome); if (!paginas) fim = true; };
+  try {
+    const pdfjs = await libPdfJs(), doc = await pdfjs.getDocument({ data: bytes.slice() }).promise;
+    paginas = doc.numPages; box.innerHTML = '';
+    const larg = Math.min(box.clientWidth || 360, 860), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    for (let i = 1; i <= paginas; i++) {
+      if (!$('#lei_doc')) return;
+      $('#lei_st').textContent = `Abrindo a página ${i} de ${paginas}…`;
+      const p = await doc.getPage(i), v = p.getViewport({ scale: larg / p.getViewport({ scale: 1 }).width * dpr });
+      const c = document.createElement('canvas'); c.width = Math.floor(v.width); c.height = Math.floor(v.height);
+      c.className = 'lei-pag'; c.setAttribute('role', 'img'); c.setAttribute('aria-label', `Página ${i} de ${paginas}`);
+      box.appendChild(c);
+      await p.render({ canvasContext: c.getContext('2d'), viewport: v }).promise;
+    }
+    const marca = document.createElement('p'); marca.className = 'lei-marca'; marca.textContent = `Fim do documento · ${paginas} página${paginas > 1 ? 's' : ''}`; box.appendChild(marca);
+    new IntersectionObserver((es, ob) => { if (es.some(x => x.isIntersecting)) { fim = true; ob.disconnect(); } }).observe(marca);
+  } catch (e) {
+    paginas = 0;
+    box.innerHTML = '<section class="card"><p style="margin:0">Não consegui mostrar o documento aqui. Toque em <b>Baixar o PDF</b> lá embaixo, leia com calma e volte aqui para confirmar.</p></section>';
+  }
+  const minS = Math.max(20, Math.min(120, (paginas || 6) * 6)), ok = $('#lei_ok'), conf = $('#lei_conf');
+  const passo = () => {
+    const st = $('#lei_st'); if (!st) return clearInterval(MEU.leiT);
+    const falta = Math.ceil(minS - (Date.now() - inicio) / 1000);
+    if (!fim) st.textContent = paginas ? `Role até o fim do documento (${paginas} página${paginas > 1 ? 's' : ''}).` : 'Baixe o PDF e leia o documento.';
+    else if (falta > 0) st.textContent = `Leia com calma. Você poderá confirmar em ${falta}s.`;
+    else { st.textContent = 'Pronto. Marque a confirmação abaixo.'; st.classList.add('ok'); ok.disabled = false; clearInterval(MEU.leiT); }
+  };
+  MEU.leiT = setInterval(passo, 1000); passo();
+  ok.onchange = () => { conf.disabled = !ok.checked; };
+  conf.onclick = async () => {
+    conf.disabled = true; conf.textContent = 'Confirmando…';
+    try { await api('appAceitar', { token: meuToken(), id: g.gid, versao: g.versao }); toast('Leitura confirmada. Obrigado!'); window.scrollTo(0, 0); carregarMeu(); }
+    catch (e) { conf.disabled = false; conf.textContent = 'Confirmar leitura'; meuErro(e); }
+  };
 }
 function meuFerias() {
   const F = MEU.ferias, evs = (F.eventos || []).map(e => ({ ...e, codigo: 'eu', tipo: 'ferias' }));
@@ -3236,6 +3319,60 @@ function modalAppTodos() {
       <div>${a.app_status === 'ativo' ? '<small class="muted">Já usa o app</small>' : `<button class="btn sec sm" data-app="${esc(a.codigo)}">${a.app_status === 'codigo' ? 'Gerar código novo' : 'Gerar código'}</button>`}</div></div>`).join('')}</div>
     <div class="modal-acoes"><button class="btn sec" data-act="copiar" data-v="${esc(linkMeuRH())}">Copiar link do app</button><button class="btn pri" data-act="fechar">Fechar</button></div>`, true);
   m.querySelectorAll('[data-app]').forEach(b => b.onclick = () => gerarCodigoApp(R.itens.find(a => a.codigo === b.dataset.app), b));
+}
+/* ── Documentos para todos (Manual de Conduta etc.) ── */
+async function modalGerais() {
+  abrirModal('<h2>Documentos para todos</h2><p><span class="spin"></span> Carregando…</p>', true);
+  let r; try { r = await api('gerais', { senha: R.senha }); } catch (e) { fecharModal(); return erroRH(e); }
+  R.gerais = r.itens || [];
+  const lista = (l, vazio, f) => l.length ? l.map(p => `<div class="ger-p"><span>${esc(p.nome)}</span><small>${esc(f(p))}</small></div>`).join('') : `<p class="muted">${vazio}</p>`;
+  const card = g => {
+    const tot = g.leram.length + g.faltam.length, pct = tot ? Math.round(g.leram.length / tot * 100) : 0;
+    return `<div class="ger"><div class="ger-h"><div><b>${esc(g.titulo)}</b><small>Versão ${esc(g.versao)} · atualizado em ${esc(g.atualizado_em)}</small></div>
+        ${g.obrigatorio ? '<span class="chip s-cor">Leitura obrigatória</span>' : '<span class="chip s-desc">Só para consulta</span>'}</div>
+      ${g.obrigatorio ? `<div class="barra-prog"><i style="width:${pct}%"></i></div>
+      <p style="margin:0 0 4px"><b>${g.leram.length} de ${tot}</b> funcionários ativos já leram e confirmaram</p>
+      <details class="ger-d"><summary>Ver quem leu e quem falta</summary><div class="ger-l">
+        <div><h4>Faltam (${g.faltam.length})</h4>${lista(g.faltam, 'Ninguém. Todos já leram.', p => p.temApp ? 'lê na próxima entrada' : 'ainda não entrou no app')}</div>
+        <div><h4>Já leram (${g.leram.length})</h4>${lista(g.leram, 'Ninguém ainda.', p => p.quando)}</div></div></details>` : ''}
+      <div class="det-acoes" style="margin-top:8px"><a class="btn sec sm" href="${esc(g.url)}" target="_blank" rel="noopener">${ic('file')}Abrir</a>
+        <button class="btn sec sm" data-gedit="${esc(g.id)}">Alterar / nova versão</button><button class="btn sec sm" data-gdel="${esc(g.id)}">Tirar do app</button></div></div>`;
+  };
+  const m = abrirModal(`<h2>Documentos para todos</h2>
+    <p class="muted">Aparecem no app Meu RH de todos os funcionários. Com <b>leitura obrigatória</b>, o funcionário só usa o app depois de ler o documento até o fim e confirmar, e fica registrado quem leu e quando.</p>
+    ${R.gerais.map(card).join('') || '<p class="muted">Nenhum documento ainda. Comece pelo Manual de Conduta.</p>'}
+    <div class="modal-acoes"><button class="btn sec" data-act="fechar">Fechar</button><button class="btn pri" id="g_novo">+ Adicionar documento</button></div>`, true);
+  m.querySelector('#g_novo').onclick = () => modalGeral(null);
+  m.querySelectorAll('[data-gedit]').forEach(b => b.onclick = () => modalGeral(R.gerais.find(g => g.id === b.dataset.gedit)));
+  m.querySelectorAll('[data-gdel]').forEach(b => b.onclick = async () => {
+    const g = R.gerais.find(x => x.id === b.dataset.gdel);
+    if (!confirm(`Tirar "${g.titulo}" do app Meu RH? O arquivo e o registro de quem leu continuam guardados.`)) return;
+    b.disabled = true;
+    try { await api('removerGeral', { senha: R.senha, id: g.id }); toast('Documento tirado do app'); modalGerais(); } catch (e) { b.disabled = false; erroRH(e); }
+  });
+}
+function modalGeral(g) {
+  const m = abrirModal(`<h2>${g ? 'Alterar documento' : 'Novo documento para todos'}</h2>
+    <div class="fld"><label for="g_tit">Nome do documento</label><input id="g_tit" maxlength="100" value="${esc(g ? g.titulo : 'Manual de Conduta')}"></div>
+    <div class="fld" style="margin-top:12px"><label for="g_arq">${g ? 'PDF novo (só se mudou o documento)' : 'Arquivo em PDF'}</label><input id="g_arq" type="file" accept="application/pdf,.pdf">
+      <small>${g ? `Um PDF novo vira a <b>versão ${+g.versao + 1}</b> e todos precisam ler de novo. A versão anterior continua guardada no Drive.` : 'Até 10 MB.'}</small></div>
+    <label class="aceite" style="margin:16px 0 0"><input type="checkbox" id="g_obr"${!g || g.obrigatorio ? ' checked' : ''}><span>Leitura obrigatória
+      <small class="muted" style="display:block;font-weight:400">O funcionário só usa o app depois de ler até o fim e confirmar. Vale para quem entrar pela primeira vez e para quem já usa o app (na próxima entrada).</small></span></label>
+    <div class="modal-acoes"><button class="btn sec" id="g_volta">Voltar</button><button class="btn pri" id="g_ok">${g ? 'Salvar' : 'Publicar no app'}</button></div>`);
+  m.querySelector('#g_volta').onclick = () => modalGerais();
+  m.querySelector('#g_ok').onclick = async ev => {
+    const b = ev.currentTarget, tit = $('#g_tit').value.trim(), f = $('#g_arq').files[0], obr = $('#g_obr').checked;
+    if (!tit) return toast('Informe o nome do documento', 'erro');
+    if (!g && !f) return toast('Escolha o arquivo em PDF', 'erro');
+    if (f && !/pdf/i.test(f.type || f.name)) return toast('O arquivo precisa ser PDF', 'erro');
+    if (f && f.size > 10 * 1024 * 1024) return toast('Arquivo maior que 10 MB', 'erro');
+    if (g && f && !confirm(`Publicar como versão ${+g.versao + 1}? Todos vão precisar ler de novo.`)) return;
+    b.disabled = true; b.textContent = 'Salvando…';
+    try {
+      await api('salvarGeral', { senha: R.senha, id: g ? g.id : '', titulo: tit, obrigatorio: obr, ...(f ? { nome: f.name, mime: 'application/pdf', base64: await paraB64(f) } : {}) });
+      toast(g ? 'Documento atualizado' : 'Documento publicado no app Meu RH'); modalGerais();
+    } catch (e) { b.disabled = false; b.textContent = 'Salvar'; erroRH(e); }
+  };
 }
 function rotuloDoc(f) { return f.origem === 'rh' ? (f.categoria || 'Documento') : (DOC_L[f.tipo] || f.tipo); }
 async function modalEnviarFicha(sel) {
@@ -3512,6 +3649,7 @@ const ACOES_RH = {
   },
   holerites: () => modalHolerites(),
   apptodos: () => modalAppTodos(),
+  gerais: () => modalGerais(),
   async praescala(b) {
     const t = b.innerHTML; b.disabled = true; b.innerHTML = '<span class="spin"></span> Enviando…';
     try { await api('enviarParaEscala', { senha: R.senha, codigo: R.det.adm.codigo }); toast('Enviado. Aparece em "Novos do RH" no app da escala.'); }
